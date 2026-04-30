@@ -1,4 +1,3 @@
-// app/contact/page.tsx
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -31,7 +30,7 @@ export default function Contact() {
             </CardContent>
           </Card>
 
-          {/* Informations de contact */}
+          {/* Coordonnées */}
           <div className="space-y-10 pt-8">
             <div>
               <h3 className="text-2xl font-semibold mb-6">Nos coordonnées</h3>
@@ -62,12 +61,6 @@ export default function Contact() {
                 </div>
               </div>
             </div>
-
-            <Card className="p-8 bg-emerald-50 border-emerald-100">
-              <p className="text-emerald-800">
-                En tant qu’<strong>Intermédiaire en Opérations de Banque et Services de Paiement (IOBSP)</strong>, nous sommes enregistrés à l’ORIAS.
-              </p>
-            </Card>
           </div>
         </div>
       </div>

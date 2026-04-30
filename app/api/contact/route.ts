@@ -31,4 +31,4 @@ export async function POST(request: Request) {
       message: "Erreur interne du serveur" 
     }, { status: 500 });
   }
-}
+}   

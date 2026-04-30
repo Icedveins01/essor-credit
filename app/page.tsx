@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shield, Clock, Award, Users, CheckCircle } from "lucide-react";
+import Header from "./components/Header";
 
 export default function Home() {
   const [montant, setMontant] = useState<number>(0);
@@ -15,6 +16,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentWhySlide, setCurrentWhySlide] = useState(0);
 
   const TAUX_FIXE = 3.0;
 
@@ -51,16 +53,24 @@ export default function Home() {
     { name: "Marie Dubois", location: "Brest", text: "Je ne regrette pas d'avoir choisi Essor Crédit." }
   ];
 
-  // Auto-slide
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % testimonials.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, []);
+  const whyUsCards = [
+    { icon: <CheckCircle className="w-16 h-16 text-emerald-600" />, title: "Taux fixe à 3%", description: "Le meilleur taux du marché, fixe et garanti dès la simulation." },
+    { icon: <Clock className="w-16 h-16 text-emerald-600" />, title: "Réponse en 24h", description: "Votre dossier étudié rapidement par un expert dédié." },
+    { icon: <Users className="w-16 h-16 text-emerald-600" />, title: "Accompagnement humain", description: "Un conseiller vous suit personnellement du début à la fin." },
+    { icon: <Shield className="w-16 h-16 text-emerald-600" />, title: "100% Sécurisé", description: "Données protégées et confidentialité garantie." },
+    { icon: <Award className="w-16 h-16 text-emerald-600" />, title: "IOBSP Officiel", description: "Intermédiaire en Opérations de Banque immatriculé ORIAS." },
+    { icon: <CheckCircle className="w-16 h-16 text-emerald-600" />, title: "Déblocage rapide", description: "Fonds disponibles sous 48h après acceptation." },
+  ];
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % testimonials.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  // Auto-slide (sans flèches)
+  useEffect(() => {
+    const whyInt = setInterval(() => setCurrentWhySlide((prev) => (prev + 1) % whyUsCards.length), 4500);
+    const testInt = setInterval(() => setCurrentSlide((prev) => (prev + 1) % testimonials.length), 5000);
+    return () => {
+      clearInterval(whyInt);
+      clearInterval(testInt);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,30 +110,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* HEADER AVEC NAVIGATION MISE À JOUR */}
-      <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b z-50">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
-            <h1 className="text-2xl font-bold text-[#0A2540]">Essor Crédit</h1>
-          </div>
-
-          <nav className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
-            <a href="#accueil" className="hover:text-emerald-600 transition-colors">Accueil</a>
-            <a href="#simulateur" className="hover:text-emerald-600 transition-colors">Simulateur</a>
-            <a href="#demande" className="hover:text-emerald-600 transition-colors">Demande</a>
-            <a href="/faq" className="hover:text-emerald-600 transition-colors">FAQ</a>
-            <a href="/contact" className="hover:text-emerald-600 transition-colors">Contact</a>
-          </nav>
-
-          <Button onClick={() => document.getElementById('demande')?.scrollIntoView({ behavior: 'smooth' })}>
-            Faire une demande
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       {/* HERO */}
-      <section id="accueil" className="bg-[#0A2540] text-white pt-28 pb-32">
+      <section id="accueil" className="bg-[#0A2540] text-white pt-24 pb-32">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <div className="mb-6 inline-flex items-center gap-2 bg-white/10 px-6 py-2.5 rounded-full text-sm">⚡ Simulation gratuite en 2 minutes</div>
           <h1 className="text-6xl md:text-7xl font-bold tracking-tighter mb-8 leading-tight">
@@ -133,6 +123,16 @@ export default function Home() {
         </div>
       </section>
 
+      {/* BADGES DE CONFIANCE */}
+      <div className="bg-white py-6 border-b">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap justify-center gap-8 md:gap-16 text-sm text-zinc-500">
+          <div className="flex items-center gap-3"><Shield className="w-5 h-5 text-emerald-600" /> Sécurisé & Confidentiel</div>
+          <div className="flex items-center gap-3"><Award className="w-5 h-5 text-emerald-600" /> Intermédiaire IOBSP</div>
+          <div className="flex items-center gap-3"><Clock className="w-5 h-5 text-emerald-600" /> Réponse sous 24h</div>
+          <div className="flex items-center gap-3"><Users className="w-5 h-5 text-emerald-600" /> +12 450 clients satisfaits</div>
+        </div>
+      </div>
+
       {/* SIMULATEUR */}
       <div id="simulateur" className="max-w-4xl mx-auto px-6 py-20">
         <Card className="shadow-2xl border-0 overflow-hidden">
@@ -141,7 +141,6 @@ export default function Home() {
             <p className="text-center text-emerald-100 mt-3 text-lg">Taux fixe à 3% — Résultat instantané</p>
           </CardHeader>
           <CardContent className="p-10 space-y-14">
-            {/* Montant */}
             <div className="group">
               <div className="flex justify-between mb-3">
                 <Label className="text-xl">Montant du prêt</Label>
@@ -151,7 +150,6 @@ export default function Home() {
               <Input type="number" value={montant || ""} onChange={(e) => setMontant(Number(e.target.value) || 0)} className="no-spinner text-center text-4xl font-semibold h-20 rounded-3xl border-2 border-zinc-200 focus:border-emerald-600" placeholder="Entrez le montant souhaité" />
             </div>
 
-            {/* Durée */}
             <div className="group">
               <div className="flex justify-between mb-3">
                 <Label className="text-xl">Durée du remboursement souhaité</Label>
@@ -161,7 +159,6 @@ export default function Home() {
               <Input type="number" value={duree || ""} onChange={(e) => setDuree(Number(e.target.value) || 0)} onBlur={() => { if (duree < 6) setDuree(6); if (duree > 360) setDuree(360); }} className="no-spinner text-center text-4xl font-semibold h-20 rounded-3xl border-2 border-zinc-200 focus:border-emerald-600" placeholder="Nombre de mois (ex: 180)" />
             </div>
 
-            {/* Résultats */}
             <div className="pt-6">
               <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-10 rounded-3xl text-center">
                 <p className="text-emerald-700 font-medium mb-2">Taux d'intérêt fixe</p>
@@ -182,6 +179,50 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {/* POURQUOI NOUS CHOISIR - SANS RECTANGLE NI FLÈCHES */}
+      <section className="bg-white py-20">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-4">Pourquoi nous choisir ?</h2>
+            <p className="text-xl text-zinc-600">Un service simple, transparent et humain</p>
+          </div>
+
+          <div className="overflow-hidden">
+            <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentWhySlide * 100}%)` }}>
+              {whyUsCards.map((card, i) => (
+                <div key={i} className="min-w-full px-8 py-16 text-center">
+                  <div className="w-20 h-20 mx-auto mb-8 bg-emerald-50 rounded-3xl flex items-center justify-center">
+                    {card.icon}
+                  </div>
+                  <h3 className="text-3xl font-semibold mb-4">{card.title}</h3>
+                  <p className="text-lg text-zinc-600 max-w-sm mx-auto">{card.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NOS PARTENAIRES BANCAIRES */}
+      <section className="bg-white py-20 border-t">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-5xl font-bold text-center mb-4">Nos partenaires bancaires</h2>
+          <p className="text-center text-zinc-600 mb-12">Nous travaillons avec les plus grandes institutions financières</p>
+
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+            <img src="/partners/boursorama-banque.png" alt="Boursorama Banque" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/axa_investment.png" alt="Axa Investment" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/banque-palatine.png" alt="Banque Palatine" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/caisse-d-epargne.png" alt="Caisse d'Epargne" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/hsbc-bank.png" alt="Hsbc Bank" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/natixis.png" alt="Natixis" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/bnp-paribas.png" alt="Bnp Paribas" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/rothschild-co.png" alt="Rothschild Co" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/milleis-banque.png" alt="Milleis Banque" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+          </div>
+        </div>
+      </section>
 
       {/* DEMANDE DE FINANCEMENT */}
       <div id="demande" className="max-w-4xl mx-auto px-6 pb-24">
@@ -246,47 +287,25 @@ export default function Home() {
         </div>
       </div>
 
-      {/* TÉMOIGNAGES SLIDER */}
-      <section id="avis" className="bg-white py-24">
-        <div className="max-w-6xl mx-auto px-6">
+      {/* TÉMOIGNAGES - SLIDER SANS RECTANGLE NI FLÈCHES */}
+      <section id="avis" className="bg-white py-20">
+        <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-4">Ils nous ont fait confiance</h2>
-            <p className="text-xl text-zinc-600">Plus de 12 450 clients satisfaits</p>
+            <h2 className="text-5xl font-bold mb-4">Les derniers avis</h2>
+            <p className="text-xl text-zinc-600">Ce que nos clients disent de nous</p>
           </div>
 
-          <div className="relative max-w-4xl mx-auto">
-            <div className="overflow-hidden rounded-3xl shadow-2xl">
-              <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-                {testimonials.map((t, i) => (
-                  <div key={i} className="min-w-full px-6">
-                    <Card className="border-0 h-full">
-                      <CardContent className="pt-12 pb-12 px-12 text-center">
-                        <div className="mx-auto w-28 h-28 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center shadow-inner mb-8">
-                          <div className="text-6xl text-gray-500">👤</div>
-                        </div>
-                        <div className="text-6xl text-emerald-200 mb-6">“</div>
-                        <p className="text-xl leading-relaxed text-gray-700 mb-10">{t.text}</p>
-                        <div>
-                          <p className="font-semibold text-emerald-700 text-2xl">{t.name}</p>
-                          <p className="text-zinc-500 text-lg">{t.location}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
+          <div className="overflow-hidden">
+            <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+              {testimonials.map((t, i) => (
+                <div key={i} className="min-w-full px-8 py-12 text-center">
+                  <div className="mx-auto w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center shadow-inner mb-6">
+                    <div className="text-6xl text-gray-500">👤</div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <Button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white shadow-xl rounded-full p-4">
-              <ChevronLeft className="w-7 h-7" />
-            </Button>
-            <Button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white shadow-xl rounded-full p-4">
-              <ChevronRight className="w-7 h-7" />
-            </Button>
-
-            <div className="flex justify-center gap-3 mt-10">
-              {testimonials.map((_, i) => (
-                <button key={i} onClick={() => setCurrentSlide(i)} className={`w-4 h-4 rounded-full transition-all ${currentSlide === i ? 'bg-emerald-600 scale-125' : 'bg-zinc-300'}`} />
+                  <p className="text-lg italic text-zinc-700 mb-8">"{t.text}"</p>
+                  <p className="font-semibold text-emerald-700">{t.name}</p>
+                  <p className="text-sm text-zinc-500">{t.location}</p>
+                </div>
               ))}
             </div>
           </div>
