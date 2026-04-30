@@ -314,14 +314,25 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="bg-[#0A2540] text-white py-16">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
-            <p className="text-2xl font-bold">Essor Crédit</p>
-          </div>
-          <p className="text-zinc-400">Votre partenaire de confiance pour tous vos projets financiers.</p>
-        </div>
-      </footer>
+  <div className="max-w-6xl mx-auto px-6 text-center">
+    <div className="flex items-center justify-center gap-3 mb-6">
+      <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
+      <p className="text-2xl font-bold">Essor Crédit</p>
+    </div>
+    
+    <p className="text-zinc-400 mb-6">Votre partenaire de confiance pour tous vos projets financiers.</p>
+
+    <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400">
+      <a href="/mentions-legales" className="hover:text-white">Mentions légales</a>
+      <a href="/cgu" className="hover:text-white">Conditions Générales d'Utilisation</a>
+      <a href="/politique-de-confidentialite" className="hover:text-white">Politique de Confidentialité</a>
+    </div>
+
+    <p className="text-xs text-zinc-500 mt-10">
+      © 2026 Essor Crédit - Intermédiaire en Opérations de Banque et Services de Paiement (IOBSP) | ORIAS n° XXXXXXX
+    </p>
+  </div>
+</footer>
     </main>
   );
 }
