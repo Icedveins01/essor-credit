@@ -80,7 +80,7 @@ export default function Page() {
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <Header />
 
-      {/* HERO - OPTIMISÉ MOBILE */}
+      {/* HERO */}
       <section id="accueil" className="relative min-h-[100dvh] bg-[#0A1428] overflow-hidden flex items-center pt-20 pb-12">
         <div className="absolute inset-0 z-0">
           <Canvas camera={{ position: [0, 0, 15] }}>
@@ -149,7 +149,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* SIMULATEUR - OPTIMISÉ MOBILE */}
+      {/* SIMULATEUR */}
       <div id="simulateur" className="max-w-5xl mx-auto px-5 sm:px-6 py-16 md:py-20">
         <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <Card className="shadow-2xl border-0 overflow-hidden">
@@ -215,7 +215,8 @@ export default function Page() {
                 </div>
               </motion.div>
 
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              {/* Bouton corrigé pour mobile */}
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="pt-2">
                 <Button
                   onClick={() => {
                     const params = new URLSearchParams({
@@ -228,7 +229,7 @@ export default function Page() {
                     });
                     window.location.href = `/faire-demande?${params.toString()}`;
                   }}
-                  className="w-full py-7 md:py-8 text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium"
+                  className="w-full py-7 md:py-8 text-lg md:text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium whitespace-normal h-auto min-h-[58px] flex items-center justify-center px-6"
                 >
                   Valider cette simulation et faire ma demande
                 </Button>

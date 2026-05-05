@@ -1,174 +1,14 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-}
-
-/* Styles personnalisés */
-.no-spinner::-webkit-outer-spin-button,
-.no-spinner::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.no-spinner {
-  -moz-appearance: textfield;
-}
-/* === AMÉLIORATIONS MOBILE === */
-@media (max-width: 768px) {
-  .max-w-6xl, .max-w-5xl, .max-w-4xl {
-    max-width: 100% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  h1 {
-    font-size: 2.25rem !important;
-    line-height: 1.1 !important;
-  }
-
-  .text-5xl { font-size: 2.25rem !important; }
-  .text-4xl { font-size: 2rem !important; }
-  
-  .p-8, .p-10, .p-12, .p-14 {
-    padding: 1.5rem !important;
-  }
-
-  .rounded-3xl {
-    border-radius: 1.5rem !important;
-  }
-}
-
-/* Meilleur espacement pour les cartes sur mobile */
-.card-mobile {
-  margin-bottom: 1.25rem;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.8s ease-out forwards;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.delay-200 { animation-delay: 200ms; }
-
-@keyframes pop {
-  0% { transform: scale(0.5); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(1.8);
-    opacity: 0;
-  }
-}
-
-/* ===================== AMÉLIORATIONS GLOBALES ===================== */
-
-/* Meilleur responsive */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2.5rem !important;
-    line-height: 1.1 !important;
-  }
-  
-  .text-5xl { font-size: 2.25rem !important; }
-  .text-4xl { font-size: 2rem !important; }
-  
-  section {
-    padding-top: 4rem !important;
-    padding-bottom: 4rem !important;
-  }
-}
-
-/* Animations douces */
-.card-hover {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-/* Boutons plus premium */
+/* ===================== ANIMATIONS & EFFETS PREMIUM ===================== */
 .btn-premium {
   position: relative;
   overflow: hidden;
-}
-
-.btn-premium::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 40%;
-  height: 200%;
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,0.4),
-    transparent
-  );
-  transition: all 0.6s;
-}
-
-.btn-premium:hover::after {
-  left: 150%;
-}
-
-.btn-premium {
-  position: relative;
-  overflow: hidden;
+  white-space: normal;
+  line-height: 1.3;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-premium::after {
@@ -191,23 +31,83 @@
   left: 150%;
 }
 
-/* ===================== RESPONSIVE GLOBAL ===================== */
-@media (max-width: 640px) {
-  h1 { font-size: 2.5rem !important; }
-  h2 { font-size: 2rem !important; }
-  .text-5xl { font-size: 2.25rem !important; }
-  .text-4xl { font-size: 2rem !important; }
-  
-  section {
-    padding-top: 4rem !important;
-    padding-bottom: 4rem !important;
-  }
+/* Effet de ripple au clic */
+.btn-premium:active {
+  transform: scale(0.97);
 }
 
-.btn-premium {
-  transition: all 0.3s ease;
+/* ===================== CARD HOVER ===================== */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
-  transform: translateY(-6px);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 
+              0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@layer base {
+  h1 {
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+
+  @media (min-width: 640px) {
+    h1 {
+      font-size: 3rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 3.75rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    h1 {
+      font-size: 5.125rem; /* ~82px */
+    }
+  }
+}
+
+/* Meilleur espacement sur mobile */
+@media (max-width: 768px) {
+  section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+
+  .card-hover {
+    transform: none;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+  }
+}
+
+/* ===================== AUTRES AMÉLIORATIONS ===================== */
+.prose h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Amélioration du simulateur sur mobile */
+@media (max-width: 640px) {
+  .bg-zinc-900 {
+    padding: 1.75rem 1.25rem;
+  }
 }
