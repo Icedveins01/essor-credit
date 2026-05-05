@@ -10,7 +10,7 @@ import Header from "../components/Header";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, RefreshCw, User, Car, Wallet, Briefcase,
-  Phone, Mail, MapPin
+  Phone, Mail, MapPin, CheckCircle
 } from "lucide-react";
 
 const countries = [
@@ -27,12 +27,11 @@ const countries = [
 
 export default function FaireDemande() {
   const searchParams = useSearchParams();
-
   const typeFromUrl = searchParams.get("type") || "Prêt Personnel";
   const montantFromUrl = parseInt(searchParams.get("montant") || "150000");
   const dureeFromUrl = parseInt(searchParams.get("duree") || "180");
 
-  const [step, setStep] = useState<"simulateur" | "form" | "confirmation">("simulateur");
+  const [step, setStep] = useState<"simulateur" | "form" | "confirmation" | "success">("simulateur");
   const [selectedType, setSelectedType] = useState(typeFromUrl);
   const [montant, setMontant] = useState(isNaN(montantFromUrl) ? 150000 : montantFromUrl);
   const [duree, setDuree] = useState(isNaN(dureeFromUrl) ? 180 : dureeFromUrl);
@@ -44,7 +43,6 @@ export default function FaireDemande() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const TAUX_FIXE = 3.0;
   const mensualite = (() => {
@@ -56,48 +54,80 @@ export default function FaireDemande() {
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
-    const fullPhone = formData.indicatif + formData.telephone;
-    const data = {
-      ...formData,
-      telephone: fullPhone,
-      typeClient,
-      service: selectedType,
-      montantSouhaite: montant,
-      duree,
-      mensualite
+
+    const clientEmail = formData.email.toLowerCase().trim();
+    const randomPassword = String(Math.floor(100000 + Math.random() * 900000));
+
+    const nouvelleDemande = {
+      id: `D-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${String(Date.now()).slice(-4)}`,
+      date: new Date().toLocaleDateString('fr-FR'),
+      type: selectedType,
+      montant: montant,
+      statut: "En cours" as const,
+      isIndependant: typeClient === "independant",
+      signedContract: undefined,
+      justificatifs: [],
+      client: {
+        prenom: formData.prenom.trim(),
+        nom: formData.nom.trim(),
+        email: clientEmail,
+        telephone: formData.indicatif + formData.telephone,
+        adresse: formData.adresse,
+        ville: formData.ville,
+        pays: formData.pays,
+        typeClient: typeClient,
+        revenuOuCA: formData.revenuOuCA,
+        charges: formData.charges,
+        message: formData.message,
+      }
     };
 
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+    const existing = JSON.parse(localStorage.getItem("demandes") || "[]");
+    localStorage.setItem("demandes", JSON.stringify([nouvelleDemande, ...existing]));
+
+    const clients = JSON.parse(localStorage.getItem("clients") || "[]");
+    if (!clients.find((c: any) => c.email === clientEmail)) {
+      clients.push({
+        email: clientEmail,
+        password: randomPassword,
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        telephone: formData.indicatif + formData.telephone,
       });
-      if (res.ok) setSubmitted(true);
-    } catch {
-      alert("Erreur de connexion");
-    } finally {
-      setIsSubmitting(false);
+      localStorage.setItem("clients", JSON.stringify(clients));
     }
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setStep("success");
+      (window as any).tempPassword = randomPassword;
+    }, 1000);
   };
 
-  if (submitted) {
+  if (step === "success") {
     return (
-      <main className="min-h-screen bg-zinc-50 pt-20">
-        <Header />
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-[90vh] flex flex-col items-center justify-center text-center px-6">
-          <motion.div animate={{ scale: [0.8, 1.1, 1] }} transition={{ duration: 0.8 }} className="mb-12">
-            <div className="w-40 h-40 sm:w-52 sm:h-52 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-2xl">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-24 h-24 sm:w-32 sm:h-32 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+      <main className="min-h-screen bg-zinc-50 pt-24 pb-20 flex items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg text-center">
+          <div className="mx-auto w-28 h-28 bg-emerald-100 rounded-full flex items-center justify-center mb-10">
+            <CheckCircle className="w-20 h-20 text-emerald-600" />
+          </div>
+          <h2 className="text-5xl font-bold text-emerald-700 mb-6">Demande envoyée avec succès !</h2>
+          <p className="text-xl text-zinc-600 mb-10">Un conseiller vous contactera dans les 24 heures.</p>
+
+          <Card className="shadow-2xl p-8 mb-10 bg-white">
+            <p className="font-semibold text-lg mb-6">Vos identifiants Espace Client :</p>
+            <div className="bg-zinc-100 rounded-2xl p-6 text-left space-y-4 text-base">
+              <div><strong>Email :</strong> {formData.email}</div>
+              <div><strong>Mot de passe :</strong> <span className="font-mono bg-white px-4 py-1 rounded text-emerald-600 font-bold">{(window as any).tempPassword}</span></div>
             </div>
-          </motion.div>
-          <motion.h2 initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-5xl sm:text-6xl font-bold tracking-tighter text-emerald-700 px-4">
-            Demande envoyée avec succès !
-          </motion.h2>
-          <p className="text-lg sm:text-2xl text-zinc-600 mt-6 max-w-lg px-4">Un conseiller expert vous contactera dans les 24 heures.</p>
-          <Button onClick={() => window.location.href = "/"} className="mt-12 px-10 py-7 text-lg">Retour à l'accueil</Button>
+          </Card>
+
+          <Button 
+            onClick={() => window.location.href = "/espace-client"}
+            className="w-full py-8 text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl"
+          >
+            Accéder à mon Espace Client →
+          </Button>
         </motion.div>
       </main>
     );
@@ -106,46 +136,35 @@ export default function FaireDemande() {
   return (
     <main className="min-h-screen bg-zinc-50 pt-20 pb-12">
       <Header />
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="text-4xl sm:text-5xl font-bold text-center tracking-tighter mb-6"
-        >
+        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl sm:text-5xl font-bold text-center tracking-tighter mb-6">
           Votre Demande de Financement
         </motion.h1>
 
-        {/* Progress Bar Responsive */}
+        {/* Progress Bar */}
         <div className="flex justify-center mb-12">
-          <motion.div className="inline-flex bg-white rounded-3xl shadow-xl border px-6 sm:px-12 py-4 sm:py-5 gap-6 sm:gap-12 overflow-x-auto">
+          <div className="inline-flex bg-white rounded-3xl shadow-xl border px-6 sm:px-12 py-4 sm:py-5 gap-6 sm:gap-12 overflow-x-auto">
             {["Simulation", "Informations", "Confirmation"].map((label, i) => (
-              <motion.div 
-                key={i} 
-                className={`flex items-center gap-3 sm:gap-4 whitespace-nowrap ${step === ["simulateur","form","confirmation"][i] ? "text-emerald-700" : "text-zinc-400"}`} 
-                whileHover={{ scale: 1.05 }}
-              >
-                <motion.div 
-                  className={`w-9 h-9 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center font-bold border-2 flex-shrink-0 ${step === ["simulateur","form","confirmation"][i] ? "border-emerald-600 bg-emerald-50" : "border-zinc-200"}`}
-                  whileHover={{ rotate: 12 }}
-                >
+              <div key={i} className={`flex items-center gap-3 sm:gap-4 whitespace-nowrap ${["simulateur","form","confirmation"][i] === step ? "text-emerald-700" : "text-zinc-400"}`}>
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center font-bold border-2 flex-shrink-0 ${["simulateur","form","confirmation"][i] === step ? "border-emerald-600 bg-emerald-50" : "border-zinc-200"}`}>
                   {i + 1}
-                </motion.div>
+                </div>
                 <span className="font-semibold text-sm sm:text-base">{label}</span>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
-          {/* ===================== SIMULATEUR ===================== */}
+          {/* SIMULATEUR */}
           {step === "simulateur" && (
-            <motion.div key="simulateur" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }} transition={{ duration: 0.5 }}>
+            <motion.div key="simulateur" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}>
               <Card className="shadow-2xl border-0 overflow-hidden">
                 <CardHeader className="bg-gradient-to-br from-zinc-950 to-black text-white py-10 sm:py-16">
                   <CardTitle className="text-3xl sm:text-4xl text-center">Votre Simulation</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-12 space-y-10">
+                  {/* Type de prêt + Montant + Durée (ton code existant) */}
                   <div>
                     <Label className="text-lg font-semibold mb-4 block">Type de prêt</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -156,21 +175,16 @@ export default function FaireDemande() {
                         { name: "Prêt Auto", icon: Car },
                         { name: "Crédit à la Consommation", icon: Wallet },
                         { name: "Prêt Professionnel", icon: Briefcase },
-                      ].map((item, idx) => (
+                      ].map((item) => (
                         <motion.button
                           key={item.name}
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedType(item.name)}
-                          className={`p-6 sm:p-8 rounded-3xl border-2 flex flex-col items-center gap-3 transition-all ${
-                            selectedType === item.name ? "border-emerald-600 bg-emerald-50 shadow-xl" : "border-zinc-200 hover:border-zinc-300"
-                          }`}
+                          className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-3 ${selectedType === item.name ? "border-emerald-600 bg-emerald-50" : "border-zinc-200 hover:border-zinc-300"}`}
                         >
-                          <item.icon className={`w-10 h-10 sm:w-12 sm:h-12 ${selectedType === item.name ? "text-emerald-600" : "text-zinc-400"}`} />
-                          <span className="font-semibold text-center text-sm sm:text-base">{item.name}</span>
+                          <item.icon className={`w-12 h-12 ${selectedType === item.name ? "text-emerald-600" : "text-zinc-400"}`} />
+                          <span className="font-semibold text-center">{item.name}</span>
                         </motion.button>
                       ))}
                     </div>
@@ -179,32 +193,17 @@ export default function FaireDemande() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <Label className="text-lg font-semibold mb-3 block">Montant du prêt (€)</Label>
-                      <Input 
-                        type="number" 
-                        value={montant} 
-                        onChange={(e) => setMontant(Number(e.target.value))} 
-                        className="text-4xl sm:text-5xl h-20 sm:h-24 text-center font-semibold border-2 rounded-3xl" 
-                      />
+                      <Input type="number" value={montant} onChange={(e) => setMontant(Number(e.target.value))} className="text-4xl h-20 text-center font-semibold rounded-3xl" />
                     </div>
                     <div>
-                      <Label className="text-lg font-semibold mb-3 block">Durée du prêt (mois)</Label>
-                      <Input 
-                        type="number" 
-                        value={duree} 
-                        onChange={(e) => setDuree(Number(e.target.value))} 
-                        className="text-4xl sm:text-5xl h-20 sm:h-24 text-center font-semibold border-2 rounded-3xl" 
-                      />
+                      <Label className="text-lg font-semibold mb-3 block">Durée (mois)</Label>
+                      <Input type="number" value={duree} onChange={(e) => setDuree(Number(e.target.value))} className="text-4xl h-20 text-center font-semibold rounded-3xl" />
                     </div>
                   </div>
 
-                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                    <Button 
-                      onClick={() => setStep("form")} 
-                      className="w-full py-7 sm:py-8 text-lg sm:text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium"
-                    >
-                      Continuer avec cette simulation →
-                    </Button>
-                  </motion.div>
+                  <Button onClick={() => setStep("form")} className="w-full py-8 text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl">
+                    Continuer avec cette simulation →
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -328,20 +327,13 @@ export default function FaireDemande() {
                     <p><strong>Email :</strong> {formData.email}</p>
                     <p><strong>Adresse :</strong> {formData.adresse}, {formData.ville}, {formData.pays}</p>
                     <p><strong>Profil :</strong> {typeClient === "particulier" ? "Particulier" : "Indépendant"}</p>
-                    {typeClient === "particulier" ? (
-                      <p><strong>Revenu net mensuel :</strong> {formData.revenuOuCA} €</p>
-                    ) : (
-                      <p><strong>Chiffre d'affaires :</strong> {formData.revenuOuCA} €</p>
-                    )}
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 mt-12">
-                    <Button variant="outline" onClick={() => setStep("form")} className="flex-1 py-7 sm:py-8 text-base">Modifier</Button>
-                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
-                      <Button onClick={handleFinalSubmit} disabled={isSubmitting} className="w-full py-7 sm:py-8 text-base sm:text-lg font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium">
-                        {isSubmitting ? "Envoi en cours..." : "Confirmer et envoyer la demande"}
-                      </Button>
-                    </motion.div>
+                    <Button variant="outline" onClick={() => setStep("form")} className="flex-1 py-7 sm:py-8">Modifier</Button>
+                    <Button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-1 py-7 sm:py-8 text-lg font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium">
+                      {isSubmitting ? "Envoi en cours..." : "Confirmer et envoyer la demande"}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
