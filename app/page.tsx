@@ -80,7 +80,7 @@ export default function Page() {
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <Header />
 
-      {/* ==================== HERO ==================== */}
+      {/* HERO - OPTIMISÉ MOBILE */}
       <section id="accueil" className="relative min-h-[100dvh] bg-[#0A1428] overflow-hidden flex items-center pt-20 pb-12">
         <div className="absolute inset-0 z-0">
           <Canvas camera={{ position: [0, 0, 15] }}>
@@ -115,7 +115,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ==================== BADGES ==================== */}
+      {/* BADGES */}
       <div className="bg-white py-6 border-b">
         <div className="max-w-6xl mx-auto px-5 flex flex-wrap justify-center gap-6 md:gap-12 text-sm text-zinc-500">
           <div className="flex items-center gap-3"><Shield className="w-5 h-5 text-emerald-600" /> Sécurisé & Confidentiel</div>
@@ -125,7 +125,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* ==================== NOS SERVICES ==================== */}
+      {/* NOS SERVICES */}
       <section className="bg-white py-16 md:py-20">
         <div className="max-w-6xl mx-auto px-5">
           <div className="text-center mb-12 md:mb-16">
@@ -149,7 +149,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ==================== SIMULATEUR ==================== */}
+      {/* SIMULATEUR - OPTIMISÉ MOBILE */}
       <div id="simulateur" className="max-w-5xl mx-auto px-5 sm:px-6 py-16 md:py-20">
         <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <Card className="shadow-2xl border-0 overflow-hidden">
@@ -238,7 +238,7 @@ export default function Page() {
         </motion.div>
       </div>
 
-      {/* ==================== POURQUOI NOUS CHOISIR ==================== */}
+      {/* POURQUOI NOUS CHOISIR */}
       <section className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-5">
           <div className="text-center mb-16">
@@ -261,7 +261,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ==================== PARTENAIRES ==================== */}
+      {/* PARTENAIRES */}
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-5">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-4">Nos partenaires bancaires</h2>
@@ -280,7 +280,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ==================== TÉMOIGNAGES ==================== */}
+      {/* TÉMOIGNAGES */}
       <section className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-5">
           <div className="text-center mb-16">
@@ -301,7 +301,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ==================== FOOTER ==================== */}
+      {/* FOOTER */}
       <footer className="bg-[#0A2540] text-white py-16">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-6">
