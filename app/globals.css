@@ -2,13 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===================== ANIMATIONS & EFFETS PREMIUM ===================== */
+/* ===================== COULEURS PROFONDES & CONTRASTE ===================== */
+body {
+  color: #0f172a;
+}
+
+/* Hero plus sombre et riche */
+.bg-hero {
+  background: radial-gradient(circle at center, #1e2937 0%, #0a1428 70%) !important;
+}
+
+.bg-emerald-600 {
+  background-color: #10b981 !important;
+}
+
+.hover\:bg-emerald-700:hover {
+  background-color: #059669 !important;
+}
+
+.text-emerald-400 {
+  color: #34d399 !important;
+}
+
+.text-emerald-600 {
+  color: #10b981 !important;
+}
+
+/* ===================== BOUTON PREMIUM ===================== */
 .btn-premium {
   position: relative;
   overflow: hidden;
   white-space: normal;
-  line-height: 1.3;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.35;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .btn-premium::after {
@@ -21,7 +48,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.5),
     transparent
   );
   transition: 0.7s;
@@ -31,70 +58,29 @@
   left: 150%;
 }
 
-/* Effet de ripple au clic */
-.btn-premium:active {
-  transform: scale(0.97);
-}
-
-/* ===================== CARD HOVER ===================== */
-.card-hover {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 
-              0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-/* ===================== RESPONSIVE ===================== */
-@layer base {
-  h1 {
-    font-size: 2.5rem;
-    line-height: 1.1;
-  }
-
-  @media (min-width: 640px) {
-    h1 {
-      font-size: 3rem;
-    }
-  }
-
-  @media (min-width: 768px) {
-    h1 {
-      font-size: 3.75rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    h1 {
-      font-size: 5.125rem; /* ~82px */
-    }
-  }
-}
-
-/* Meilleur espacement sur mobile */
+/* ===================== MOBILE & RESPONSIVE ===================== */
 @media (max-width: 768px) {
   section {
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
   }
 
-  .card-hover {
-    transform: none;
+  .bg-zinc-900 {
+    background-color: #111827 !important;
   }
 
-  .card-hover:hover {
-    transform: translateY(-4px);
+  h1 {
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  }
+
+  .btn-premium {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+    min-height: 64px;
   }
 }
 
-/* ===================== AUTRES AMÉLIORATIONS ===================== */
-.prose h2 {
-  font-size: 1.75rem;
-  margin-bottom: 1rem;
-}
-
+/* Nettoyage des inputs number */
 input[type="number"] {
   -moz-appearance: textfield;
 }
@@ -103,11 +89,4 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-/* Amélioration du simulateur sur mobile */
-@media (max-width: 640px) {
-  .bg-zinc-900 {
-    padding: 1.75rem 1.25rem;
-  }
 }

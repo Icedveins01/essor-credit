@@ -80,14 +80,14 @@ export default function Page() {
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <Header />
 
-      {/* HERO */}
-      <section id="accueil" className="relative min-h-[100dvh] bg-[#0A1428] overflow-hidden flex items-center pt-20 pb-12">
+      {/* HERO - Couleurs renforcées */}
+      <section id="accueil" className="relative min-h-[100dvh] bg-hero overflow-hidden flex items-center pt-20 pb-12">
         <div className="absolute inset-0 z-0">
           <Canvas camera={{ position: [0, 0, 15] }}>
             <ambientLight intensity={0.6} />
             <pointLight position={[10, 10, 10]} color="#67e8f9" intensity={1.5} />
-            <Stars radius={300} depth={60} count={12000} factor={7} saturation={0} fade speed={0.8} />
-            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.2} />
+            <Stars radius={300} depth={60} count={8000} factor={7} fade speed={0.5} />
+            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.15} />
           </Canvas>
         </div>
 
@@ -215,8 +215,7 @@ export default function Page() {
                 </div>
               </motion.div>
 
-              {/* Bouton corrigé pour mobile */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="pt-2">
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="pt-4">
                 <Button
                   onClick={() => {
                     const params = new URLSearchParams({
@@ -229,7 +228,7 @@ export default function Page() {
                     });
                     window.location.href = `/faire-demande?${params.toString()}`;
                   }}
-                  className="w-full py-7 md:py-8 text-lg md:text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium whitespace-normal h-auto min-h-[58px] flex items-center justify-center px-6"
+                  className="w-full py-8 md:py-9 text-lg md:text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium whitespace-normal h-auto min-h-[64px] flex items-center justify-center px-6"
                 >
                   Valider cette simulation et faire ma demande
                 </Button>
@@ -238,6 +237,8 @@ export default function Page() {
           </Card>
         </motion.div>
       </div>
+
+    
 
       {/* POURQUOI NOUS CHOISIR */}
       <section className="bg-white py-20">
@@ -262,36 +263,41 @@ export default function Page() {
         </div>
       </section>
 
-      {/* PARTENAIRES */}
+      {/* NOS PARTENAIRES BANCAIRES */}
       <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-5">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-4">Nos partenaires bancaires</h2>
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-5xl font-bold text-center mb-4">Nos partenaires bancaires</h2>
           <p className="text-center text-zinc-600 mb-12">Nous travaillons avec les plus grandes institutions financières</p>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-12 opacity-75 hover:opacity-100 transition-all">
-            <img src="/partners/boursorama-banque.png" alt="Boursorama" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/axa_investment.png" alt="Axa" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/banque-palatine.png" alt="Palatine" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/caisse-d-epargne.png" alt="Caisse d'Epargne" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/hsbc-bank.png" alt="HSBC" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/natixis.png" alt="Natixis" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/bnp-paribas.png" alt="BNP Paribas" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/rothschild-co.png" alt="Rothschild" className="h-12 md:h-16 w-auto" />
-            <img src="/partners/milleis-banque.png" alt="Milleis" className="h-12 md:h-16 w-auto" />
+
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+            <img src="/partners/boursorama-banque.png" alt="Boursorama Banque" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/axa_investment.png" alt="Axa Investment" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/banque-palatine.png" alt="Banque Palatine" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/caisse-d-epargne.png" alt="Caisse d'Epargne" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/hsbc-bank.png" alt="Hsbc Bank" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/natixis.png" alt="Natixis" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/bnp-paribas.png" alt="Bnp Paribas" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/rothschild-co.png" alt="Rothschild Co" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
+            <img src="/partners/milleis-banque.png" alt="Milleis Banque" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
           </div>
         </div>
       </section>
 
       {/* TÉMOIGNAGES */}
       <section className="bg-white py-20">
-        <div className="max-w-3xl mx-auto px-5">
+        <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Les derniers avis</h2>
+            <h2 className="text-5xl font-bold mb-4">Les derniers avis</h2>
             <p className="text-xl text-zinc-600">Ce que nos clients disent de nous</p>
           </div>
+
           <div className="overflow-hidden rounded-3xl">
             <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
               {testimonials.map((t, i) => (
-                <div key={i} className="min-w-full px-6 py-12 text-center">
+                <div key={i} className="min-w-full px-8 py-12 text-center">
+                  <div className="mx-auto w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center shadow-inner mb-6">
+                    <div className="text-6xl text-gray-500">👤</div>
+                  </div>
                   <p className="text-lg italic text-zinc-700 mb-8">"{t.text}"</p>
                   <p className="font-semibold text-emerald-700">{t.name}</p>
                   <p className="text-sm text-zinc-500">{t.location}</p>
@@ -309,17 +315,28 @@ export default function Page() {
             <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
             <p className="text-2xl font-bold">Essor Crédit</p>
           </div>
+
           <p className="text-zinc-400 mb-8 max-w-md mx-auto">
             Votre partenaire de confiance pour tous vos projets financiers.
           </p>
 
+          {/* Boutons Réseaux Sociaux */}
           <div className="flex justify-center gap-6 mb-10">
-            <a href="https://wa.me/33600000000" target="_blank" className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110">
+            <a
+              href="https://wa.me/33600000000"
+              target="_blank"
+              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
+            >
               <Phone className="w-7 h-7" />
             </a>
-            <a href="https://facebook.com/essorcredit" target="_blank" className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110">
+            <a
+              href="https://facebook.com/essorcredit"
+              target="_blank"
+              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
+            >
               <MessageCircle className="w-7 h-7" />
             </a>
+            
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400 mb-8">
@@ -333,6 +350,8 @@ export default function Page() {
           </p>
         </div>
       </footer>
+
+    
     </main>
   );
 }
