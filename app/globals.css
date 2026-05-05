@@ -2,12 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===================== COULEURS PROFONDES & CONTRASTE ===================== */
-body {
-  color: #0f172a;
-}
-
-/* Hero plus sombre et riche */
+/* ===================== COULEURS & CONTRASTE HERO ===================== */
 .bg-hero {
   background: radial-gradient(circle at center, #1e2937 0%, #0a1428 70%) !important;
 }
@@ -28,7 +23,7 @@ body {
   color: #10b981 !important;
 }
 
-/* ===================== BOUTON PREMIUM ===================== */
+/* ===================== BOUTON PREMIUM SHINE ===================== */
 .btn-premium {
   position: relative;
   overflow: hidden;
@@ -58,15 +53,11 @@ body {
   left: 150%;
 }
 
-/* ===================== MOBILE & RESPONSIVE ===================== */
+/* ===================== RESPONSIVE & MOBILE ===================== */
 @media (max-width: 768px) {
   section {
     padding-top: 4rem !important;
     padding-bottom: 4rem !important;
-  }
-
-  .bg-zinc-900 {
-    background-color: #111827 !important;
   }
 
   h1 {
@@ -78,9 +69,13 @@ body {
     padding-bottom: 1.25rem !important;
     min-height: 64px;
   }
+
+  .bg-zinc-900 {
+    background-color: #111827 !important;
+  }
 }
 
-/* Nettoyage des inputs number */
+/* Nettoyage des inputs */
 input[type="number"] {
   -moz-appearance: textfield;
 }
@@ -89,4 +84,13 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Amélioration globale du contraste */
+.text-zinc-100 {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.drop-shadow-lg {
+  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.3));
 }

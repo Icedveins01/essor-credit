@@ -80,27 +80,29 @@ export default function Page() {
     <main className="min-h-screen bg-zinc-50 text-zinc-900">
       <Header />
 
-      {/* HERO - Couleurs renforcées */}
-      <section id="accueil" className="relative min-h-[100dvh] bg-hero overflow-hidden flex items-center pt-20 pb-12">
+      {/* HERO - Restauré comme dans ton ancienne vidéo */}
+      <section id="accueil" className="relative min-h-[100dvh] bg-[#0A1428] overflow-hidden flex items-center pt-20 pb-12">
         <div className="absolute inset-0 z-0">
           <Canvas camera={{ position: [0, 0, 15] }}>
             <ambientLight intensity={0.6} />
-            <pointLight position={[10, 10, 10]} color="#67e8f9" intensity={1.5} />
+            <pointLight position={[10, 10, 10]} color="#67e8f9" intensity={1.8} />
             <Stars radius={300} depth={60} count={8000} factor={7} fade speed={0.5} />
             <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.15} />
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-6 text-center text-white">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/70 z-10" />
+
+        <div className="relative z-20 max-w-5xl mx-auto px-5 sm:px-6 text-center text-white">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-2xl px-5 py-2.5 rounded-3xl mb-8 text-sm border border-white/30 mx-auto">
             ⚡ Simulation gratuite en quelques secondes
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[82px] font-bold tracking-[-2px] leading-[1.05] mb-8">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[82px] font-bold tracking-[-2px] leading-[1.05] mb-8 drop-shadow-2xl">
             L'essor de votre patrimoine<br className="hidden md:block" /> commence aujourd’hui
           </h1>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-zinc-200 max-w-3xl mx-auto leading-relaxed mb-10 px-4">
+          <p className="text-lg sm:text-xl md:text-2xl text-zinc-100 max-w-3xl mx-auto leading-relaxed mb-10 px-4 drop-shadow-lg">
             Des solutions de financement d’exception, à taux fixe avantageux, avec un accompagnement humain.
           </p>
 
@@ -238,8 +240,6 @@ export default function Page() {
         </motion.div>
       </div>
 
-    
-
       {/* POURQUOI NOUS CHOISIR */}
       <section className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-5">
@@ -263,12 +263,11 @@ export default function Page() {
         </div>
       </section>
 
-      {/* NOS PARTENAIRES BANCAIRES */}
+      {/* PARTENAIRES */}
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-5xl font-bold text-center mb-4">Nos partenaires bancaires</h2>
           <p className="text-center text-zinc-600 mb-12">Nous travaillons avec les plus grandes institutions financières</p>
-
           <div className="flex flex-wrap justify-center gap-8 md:gap-12">
             <img src="/partners/boursorama-banque.png" alt="Boursorama Banque" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
             <img src="/partners/axa_investment.png" alt="Axa Investment" className="h-16 w-auto opacity-75 hover:opacity-100 transition-all" />
@@ -290,7 +289,6 @@ export default function Page() {
             <h2 className="text-5xl font-bold mb-4">Les derniers avis</h2>
             <p className="text-xl text-zinc-600">Ce que nos clients disent de nous</p>
           </div>
-
           <div className="overflow-hidden rounded-3xl">
             <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
               {testimonials.map((t, i) => (
@@ -315,43 +313,27 @@ export default function Page() {
             <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
             <p className="text-2xl font-bold">Essor Crédit</p>
           </div>
-
           <p className="text-zinc-400 mb-8 max-w-md mx-auto">
             Votre partenaire de confiance pour tous vos projets financiers.
           </p>
-
-          {/* Boutons Réseaux Sociaux */}
           <div className="flex justify-center gap-6 mb-10">
-            <a
-              href="https://wa.me/33600000000"
-              target="_blank"
-              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
-            >
+            <a href="https://wa.me/33600000000" target="_blank" className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110">
               <Phone className="w-7 h-7" />
             </a>
-            <a
-              href="https://facebook.com/essorcredit"
-              target="_blank"
-              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
-            >
+            <a href="https://facebook.com/essorcredit" target="_blank" className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110">
               <MessageCircle className="w-7 h-7" />
             </a>
-            
           </div>
-
           <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400 mb-8">
             <a href="/mentions-legales" className="hover:text-white">Mentions légales</a>
             <a href="/cgu" className="hover:text-white">Conditions Générales d'Utilisation</a>
             <a href="/politique-de-confidentialite" className="hover:text-white">Politique de Confidentialité</a>
           </div>
-
           <p className="text-xs text-zinc-500">
             © 2026 Essor Crédit - Intermédiaire en Opérations de Banque et Services de Paiement (IOBSP) | ORIAS n° XXXXXXX
           </p>
         </div>
       </footer>
-
-    
     </main>
   );
 }
