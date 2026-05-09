@@ -40,20 +40,13 @@
 }
 
 /* ===================== COULEURS HERO & CONTRASTE ===================== */
-.bg-hero {
-  background: radial-gradient(circle at center, #1e2937 0%, #0a1428 70%) !important;
+.text-emerald-premium {
+  color: #34d399;
 }
 
-.bg-emerald-600 {
-  background-color: #10b981 !important;
+.bg-emerald-premium {
+  background-color: #10b981;
 }
-
-.hover\:bg-emerald-700:hover {
-  background-color: #059669 !important;
-}
-
-.text-emerald-400 { color: #34d399 !important; }
-.text-emerald-600 { color: #10b981 !important; }
 
 /* ===================== BOUTON PREMIUM ===================== */
 .btn-premium {

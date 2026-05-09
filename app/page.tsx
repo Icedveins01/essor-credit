@@ -1,357 +1,904 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
-import { Canvas } from "@react-three/fiber";
-import { Stars, OrbitControls } from "@react-three/drei";
+import { Label } from "@/components/ui/label";
 import Header from "./components/Header";
+import { motion } from "framer-motion";
 import {
-  Home as HomeIcon,
+  ArrowRight,
+  Award,
+  BadgeCheck,
+  Banknote,
+  Briefcase,
   Car,
-  User,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  FileCheck2,
+  Headphones,
+  Home as HomeIcon,
+  Landmark,
+  Lock,
+  MessageCircle,
+  Phone,
   RefreshCw,
   Shield,
-  Briefcase,
-  Heart,
+  Sparkles,
+  TrendingUp,
+  User,
   Wallet,
-  Clock,
-  Award,
-  Users,
-  CheckCircle,
-  Phone,
-  MessageCircle,
 } from "lucide-react";
+
+type Service = {
+  title: string;
+  shortDesc: string;
+  description: string;
+  icon: React.ReactNode;
+};
+
+const services: Service[] = [
+  {
+    icon: <HomeIcon className="w-8 h-8" />,
+    title: "Prêt Immobilier",
+    shortDesc: "Achat, construction, rénovation",
+    description:
+      "Une solution structurée pour financer votre projet immobilier avec un accompagnement personnalisé.",
+  },
+  {
+    icon: <RefreshCw className="w-8 h-8" />,
+    title: "Rachat de Crédits",
+    shortDesc: "Regroupement et mensualité unique",
+    description:
+      "Simplifiez vos remboursements en regroupant plusieurs crédits dans une seule mensualité.",
+  },
+  {
+    icon: <User className="w-8 h-8" />,
+    title: "Prêt Personnel",
+    shortDesc: "Projets personnels et trésorerie",
+    description:
+      "Un financement flexible pour concrétiser vos projets personnels selon votre situation.",
+  },
+  {
+    icon: <Car className="w-8 h-8" />,
+    title: "Prêt Auto",
+    shortDesc: "Véhicule neuf ou occasion",
+    description:
+      "Financez l’achat d’un véhicule avec une solution claire, lisible et adaptée à votre budget.",
+  },
+  {
+    icon: <Wallet className="w-8 h-8" />,
+    title: "Crédit à la Consommation",
+    shortDesc: "Besoin ponctuel ou projet rapide",
+    description:
+      "Une solution pour vos dépenses importantes, vos équipements ou vos besoins de financement.",
+  },
+  {
+    icon: <Briefcase className="w-8 h-8" />,
+    title: "Prêt Professionnel",
+    shortDesc: "Indépendants et entreprises",
+    description:
+      "Accompagnement des professionnels pour financer un lancement, une activité ou un développement.",
+  },
+];
+
+const processSteps = [
+  {
+    icon: <FileCheck2 className="w-6 h-6" />,
+    title: "Simulation",
+    description: "Estimez votre mensualité et préparez votre projet en quelques secondes.",
+  },
+  {
+    icon: <Shield className="w-6 h-6" />,
+    title: "Analyse",
+    description: "Votre demande est étudiée avec attention selon les informations transmises.",
+  },
+  {
+    icon: <BadgeCheck className="w-6 h-6" />,
+    title: "Décision",
+    description: "Vous suivez l’avancement de votre dossier depuis votre espace client sécurisé.",
+  },
+  {
+    icon: <Landmark className="w-6 h-6" />,
+    title: "Finalisation",
+    description: "Signature, documents et accompagnement jusqu’à la clôture du dossier.",
+  },
+];
+
+const assurances = [
+  "Simulation gratuite et sans engagement",
+  "Espace client sécurisé",
+  "Suivi du dossier en ligne",
+  "Accompagnement humain",
+];
 
 export default function Page() {
   const [montant, setMontant] = useState<number>(150000);
   const [duree, setDuree] = useState<number>(180);
   const [selectedType, setSelectedType] = useState("Prêt Personnel");
-  const [currentWhySlide, setCurrentWhySlide] = useState(0);
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const services = [
-    { icon: <HomeIcon className="w-14 h-14" />, title: "Prêt Immobilier", shortDesc: "À partir de 2,85% sur 15 ans", description: "Financement pour l'achat, la construction ou la rénovation." },
-    { icon: <RefreshCw className="w-14 h-14" />, title: "Rachat de Crédits", shortDesc: "Jusqu'à -60% sur vos mensualités", description: "Regroupez tous vos crédits en un seul prêt." },
-    { icon: <Shield className="w-14 h-14" />, title: "Assurance de Prêt", shortDesc: "Jusqu'à 65% d'économies", description: "Protégez votre prêt avec une assurance adaptée." },
-    { icon: <Wallet className="w-14 h-14" />, title: "Crédit à la Consommation", shortDesc: "À partir de 0,90% sur 12 mois", description: "Financement rapide pour vos projets personnels." },
-    { icon: <Car className="w-14 h-14" />, title: "Prêt Auto", shortDesc: "Financement rapide", description: "Pour l'achat d'une voiture neuve ou d'occasion." },
-    { icon: <User className="w-14 h-14" />, title: "Prêt Personnel", shortDesc: "Pour tous vos projets", description: "Crédit flexible sans justificatif." },
-    { icon: <Heart className="w-14 h-14" />, title: "Mutuelle Santé", shortDesc: "Protégez votre famille", description: "Complémentaire santé performante." },
-    { icon: <Briefcase className="w-14 h-14" />, title: "Prêt Professionnel", shortDesc: "Pour les indépendants", description: "Solutions pour artisans et professions libérales." },
-  ];
-
-  const whyUsCards = [
-    { icon: <CheckCircle className="w-16 h-16 text-emerald-600" />, title: "Taux fixe à 3%", description: "Le meilleur taux du marché, fixe et garanti." },
-    { icon: <Clock className="w-16 h-16 text-emerald-600" />, title: "Réponse en 24h", description: "Votre dossier étudié rapidement par un expert." },
-    { icon: <Users className="w-16 h-16 text-emerald-600" />, title: "Accompagnement humain", description: "Un conseiller vous suit personnellement." },
-    { icon: <Shield className="w-16 h-16 text-emerald-600" />, title: "100% Sécurisé", description: "Données protégées et confidentialité garantie." },
-    { icon: <Award className="w-16 h-16 text-emerald-600" />, title: "IOBSP Officiel", description: "Intermédiaire en Opérations de Banque." },
-  ];
-
-  const testimonials = [
-    { name: "Sophie Martin", location: "Paris", text: "J'ai obtenu mon crédit immobilier en 8 jours seulement." },
-    { name: "Marc Dubois", location: "Lyon", text: "En tant qu'indépendant, le rachat de crédit a été très simple." },
-    { name: "Laura Benali", location: "Marseille", text: "Accompagnement humain et professionnel. Je recommande !" },
-    { name: "Thomas Leclerc", location: "Bordeaux", text: "Prêt auto obtenu en moins de 10 jours." },
-  ];
+  const [activeService, setActiveService] = useState(0);
 
   const TAUX_FIXE = 3.0;
-  const mensualite = (() => {
+
+  const mensualite = useMemo(() => {
     if (montant <= 0 || duree < 6) return 0;
+
     const tauxMensuel = TAUX_FIXE / 100 / 12;
-    const m = (montant * tauxMensuel) / (1 - Math.pow(1 + tauxMensuel, -duree));
+    const m =
+      (montant * tauxMensuel) /
+      (1 - Math.pow(1 + tauxMensuel, -duree));
+
     return Math.round(m * 100) / 100;
-  })();
+  }, [montant, duree]);
 
   const coutTotal = duree >= 6 ? Math.round(mensualite * duree * 100) / 100 : 0;
   const interets = duree >= 6 ? Math.round((coutTotal - montant) * 100) / 100 : 0;
 
-  // Tableau d'amortissement (12 premiers mois)
-  const amortizationTable = Array.from({ length: Math.min(12, duree) }, (_, i) => {
-    const month = i + 1;
-    const interest = Math.round(montant * (TAUX_FIXE / 100 / 12) * 100) / 100;
-    const principal = Math.round((mensualite - interest) * 100) / 100;
-    const remaining = Math.max(0, Math.round((montant - principal * (i + 1)) * 100) / 100);
-    return { month, mensualite, principal, interest, remaining };
-  });
+  const amortissement = useMemo(() => {
+    const rows = [];
+    let capitalRestant = montant;
+
+    for (let i = 1; i <= 12; i++) {
+      const interetMois = capitalRestant * (TAUX_FIXE / 100 / 12);
+      const capitalMois = mensualite - interetMois;
+      capitalRestant = Math.max(0, capitalRestant - capitalMois);
+
+      rows.push({
+        mois: i,
+        mensualite: Math.round(mensualite * 100) / 100,
+        capital: Math.round(capitalMois * 100) / 100,
+        interet: Math.round(interetMois * 100) / 100,
+        restant: Math.round(capitalRestant * 100) / 100,
+      });
+    }
+
+    return rows;
+  }, [montant, mensualite]);
 
   useEffect(() => {
-    const whyInt = setInterval(() => setCurrentWhySlide((prev) => (prev + 1) % whyUsCards.length), 4500);
-    const testInt = setInterval(() => setCurrentSlide((prev) => (prev + 1) % testimonials.length), 5000);
-    return () => { clearInterval(whyInt); clearInterval(testInt); };
+    const interval = setInterval(() => {
+      setActiveService((prev) => (prev + 1) % services.length);
+    }, 3500);
+
+    return () => clearInterval(interval);
   }, []);
 
+  const goToApplication = () => {
+    const params = new URLSearchParams({
+      type: selectedType,
+      montant: montant.toString(),
+      duree: duree.toString(),
+      mensualite: mensualite.toString(),
+      coutTotal: coutTotal.toString(),
+      interets: interets.toString(),
+    });
+
+    window.location.href = `/faire-demande?${params.toString()}`;
+  };
+
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900">
+    <main className="min-h-screen bg-[#050816] text-white overflow-hidden">
       <Header />
 
-      {/* HERO (inchangé) */}
-      <section id="accueil" className="relative min-h-screen bg-[#0A1428] overflow-hidden flex items-center pt-24">
-        <div className="absolute inset-0 z-0">
-          <Canvas camera={{ position: [0, 0, 15] }}>
-            <ambientLight intensity={0.6} />
-            <pointLight position={[10, 10, 10]} color="#67e8f9" intensity={1.5} />
-            <Stars radius={300} depth={60} count={12000} factor={7} saturation={0} fade speed={0.8} />
-            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.2} />
-          </Canvas>
+      <section
+        id="accueil"
+        className="relative min-h-screen pt-28 pb-20 flex items-center"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#10b98133,transparent_32%),radial-gradient(circle_at_bottom_right,#2563eb33,transparent_36%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(5,8,22,0.94))]" />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="lg:col-span-7"
+          >
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 backdrop-blur-2xl px-5 py-2 rounded-full text-sm text-zinc-300 mb-8">
+              <Sparkles className="w-4 h-4 text-emerald-300" />
+              Plateforme de financement premium
+            </div>
+
+            <h1 className="text-5xl md:text-7xl font-bold tracking-[-0.05em] leading-[0.95]">
+              Financez vos projets avec une expérience claire, moderne et sécurisée.
+            </h1>
+
+            <p className="text-lg md:text-xl text-zinc-300 max-w-3xl mt-8 leading-relaxed">
+              Essor Crédit vous accompagne dans vos demandes de financement avec
+              un parcours fluide : simulation, dépôt de demande, suivi en ligne et
+              espace client sécurisé.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+              <a href="#simulateur">
+                <Button className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-base">
+                  Simuler mon financement
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </a>
+
+              <Link href="/espace-client">
+                <Button
+                  variant="outline"
+                  className="h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10 text-base"
+                >
+                  Accéder à mon espace client
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-3xl">
+              {assurances.map((item) => (
+                <div
+                  key={item}
+                  className="bg-white/8 border border-white/10 rounded-2xl p-4 text-sm text-zinc-300"
+                >
+                  <CheckCircle className="w-5 h-5 text-emerald-300 mb-3" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="lg:col-span-5"
+          >
+            <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl">
+              <CardContent className="p-7 md:p-8">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <p className="text-zinc-400 text-sm">Simulation rapide</p>
+                    <p className="text-3xl font-bold text-white mt-1">
+                      {montant.toLocaleString("fr-FR")} €
+                    </p>
+                  </div>
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+                    <CreditCard className="w-7 h-7 text-emerald-300" />
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-3 text-sm">
+                      <span className="text-zinc-400">Montant</span>
+                      <span>{montant.toLocaleString("fr-FR")} €</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1000}
+                      max={2000000}
+                      step={1000}
+                      value={montant}
+                      onChange={(e) => setMontant(Number(e.target.value))}
+                      className="w-full accent-emerald-400"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-3 text-sm">
+                      <span className="text-zinc-400">Durée</span>
+                      <span>
+                        {Math.floor(duree / 12)} ans {duree % 12} mois
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={6}
+                      max={360}
+                      step={6}
+                      value={duree}
+                      onChange={(e) => setDuree(Number(e.target.value))}
+                      className="w-full accent-emerald-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 bg-black/25 border border-white/10 rounded-3xl p-6">
+                  <p className="text-zinc-400 text-sm">Mensualité estimée</p>
+                  <p className="text-4xl font-bold text-white mt-2">
+                    {mensualite.toLocaleString("fr-FR")} €
+                    <span className="text-base text-zinc-400"> / mois</span>
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
+                    <div>
+                      <p className="text-zinc-500">Taux affiché</p>
+                      <p className="font-semibold text-emerald-300">3,00%</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Durée</p>
+                      <p className="font-semibold">{duree} mois</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={goToApplication}
+                  className="w-full h-14 mt-7 rounded-2xl bg-emerald-500 hover:bg-emerald-600"
+                >
+                  Continuer ma demande
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
+      </section>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
-          {/* Badge très compact */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-2xl px-7 py-2.5 rounded-3xl mb-8 text-sm border border-white/30 tracking-widest mx-auto">
-            ⚡ Simulation gratuite en quelques secondes
+      <section className="relative z-10 border-y border-white/10 bg-white/[0.03] backdrop-blur-xl py-6">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-5 text-sm text-zinc-300">
+          <div className="flex items-center gap-3">
+            <Lock className="w-5 h-5 text-emerald-300" /> Connexion sécurisée
           </div>
-
-          <h1 className="text-7xl md:text-[82px] font-bold tracking-[-4px] leading-none mb-8">
-            L'essor de votre patrimoine<br />commence aujourd’hui
-          </h1>
-
-          <p className="text-2xl md:text-3xl text-zinc-200 max-w-4xl mx-auto leading-relaxed mb-12">
-            Des solutions de financement d’exception, à taux fixe avantageux,
-            avec un accompagnement humain et une expertise sur mesure.<br />
-            Que votre projet soit immobilier, personnel, professionnel ou un rachat de crédit,
-            nous transformons vos ambitions en réalité.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <a href="#simulateur" className="px-14 py-7 bg-emerald-600 hover:bg-emerald-700 rounded-3xl font-semibold text-2xl transition-all hover:scale-105 shadow-2xl">
-              Simuler mon prêt gratuitement
-            </a>
-            <a href="/faire-demande" className="px-14 py-7 border-2 border-white/70 hover:bg-white/10 rounded-3xl font-semibold text-2xl transition-all">
-              Faire une demande personnalisée
-            </a>
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-emerald-300" /> Suivi en ligne
           </div>
-
-          <div className="mt-16 flex items-center justify-center gap-10 text-sm text-zinc-400">
-            <div>Déblocage des fonds en moyenne sous 48H</div>
-            <div>Conseillers experts à votre écoute</div>
+          <div className="flex items-center gap-3">
+            <Headphones className="w-5 h-5 text-emerald-300" /> Accompagnement humain
+          </div>
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-emerald-300" /> Données protégées
           </div>
         </div>
       </section>
 
-      {/* BADGES, SERVICES, etc. (identiques à ta version précédente) */}
+      <section className="py-24 bg-[#050816]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <p className="text-emerald-300 font-medium mb-3">Solutions</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+                Des financements adaptés à chaque projet
+              </h2>
+            </div>
+            <p className="text-zinc-400 max-w-xl">
+              Sélectionnez le type de financement correspondant à votre besoin,
+              puis lancez une simulation personnalisée.
+            </p>
+          </div>
 
-      {/* SIMULATEUR AMÉLIORÉ */}
-      <div id="simulateur" className="max-w-5xl mx-auto px-5 sm:px-6 py-16 md:py-20">
-        <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          <Card className="shadow-2xl border-0 overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-emerald-700 to-teal-700 text-white py-10 md:py-12">
-              <CardTitle className="text-3xl md:text-4xl text-center">Simulateur de Prêt</CardTitle>
-              <p className="text-center text-emerald-100 mt-3 text-lg">Taux fixe à 3% pour tous les prêts</p>
-            </CardHeader>
-
-            <CardContent className="p-6 md:p-10 space-y-12">
-              {/* Type de prêt + Montant + Durée (identique) */}
-              <div>
-                <Label className="text-xl mb-4 block">Type de prêt</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {services.map((service, i) => (
-                    <motion.button
-                      key={i}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedType(service.title)}
-                      className={`p-4 rounded-2xl text-sm font-medium transition-all border ${
-                        selectedType === service.title ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "border-zinc-200 hover:border-emerald-200 hover:bg-emerald-50"
-                      }`}
-                    >
-                      {service.title}
-                    </motion.button>
-                  ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {services.map((service, index) => (
+              <motion.button
+                key={service.title}
+                whileHover={{ y: -6 }}
+                onClick={() => {
+                  setSelectedType(service.title);
+                  setActiveService(index);
+                }}
+                className={`text-left rounded-[2rem] p-7 border transition-all ${
+                  selectedType === service.title || activeService === index
+                    ? "bg-emerald-500/15 border-emerald-400/35"
+                    : "bg-white/7 border-white/10 hover:bg-white/10"
+                }`}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-emerald-300 mb-6">
+                  {service.icon}
                 </div>
-              </div>
-
-              {/* Montant & Durée avec sliders */}
-              <div className="grid md:grid-cols-2 gap-10">
-                <div>
-                  <Label className="text-xl mb-3 block">Montant du prêt (€)</Label>
-                  <Input type="number" value={montant} onChange={(e) => setMontant(Number(e.target.value))} className="text-3xl h-16 text-center font-semibold" />
-                  <input type="range" min="10000" max="2000000" step="1000" value={montant} onChange={(e) => setMontant(Number(e.target.value))} className="w-full accent-emerald-600 mt-4" />
-                </div>
-                <div>
-                  <Label className="text-xl mb-3 block">Durée du prêt (mois)</Label>
-                  <Input type="number" value={duree} onChange={(e) => setDuree(Number(e.target.value))} className="text-3xl h-16 text-center font-semibold" />
-                  <input type="range" min="6" max="360" step="6" value={duree} onChange={(e) => setDuree(Number(e.target.value))} className="w-full accent-emerald-600 mt-4" />
-                  <p className="text-center mt-3 text-lg font-medium text-emerald-600">
-                    {Math.floor(duree / 12)} ans et {duree % 12} mois
-                  </p>
-                </div>
-              </div>
-
-              {/* Résultats */}
-              <motion.div className="bg-zinc-900 text-white rounded-3xl p-10">
-                <div className="grid md:grid-cols-3 gap-8 text-center">
-                  <div>
-                    <p className="text-emerald-400 text-sm">TAUX FIXE</p>
-                    <p className="text-6xl font-bold text-emerald-400">3.0%</p>
-                  </div>
-                  <div>
-                    <p className="text-zinc-400">Mensualité estimée</p>
-                    <p className="text-5xl font-bold mt-1">{mensualite.toLocaleString('fr-FR')} €</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-700 md:border-none md:pt-0">
-                    <div>
-                      <p className="text-zinc-400">Coût total</p>
-                      <p className="font-semibold text-lg">{coutTotal.toLocaleString('fr-FR')} €</p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400">Intérêts</p>
-                      <p className="font-semibold text-orange-400 text-lg">{interets.toLocaleString('fr-FR')} €</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* TABLEAU D'AMORTISSEMENT AMÉLIORÉ */}
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Tableau d'amortissement (12 premiers mois)</h3>
-                <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
-                  <table className="w-full text-sm min-w-[620px]">
-                    <thead className="bg-zinc-100 sticky top-0">
-                      <tr>
-                        <th className="p-4 text-left font-semibold text-zinc-700">Mois</th>
-                        <th className="p-4 text-right font-semibold text-zinc-700">Mensualité</th>
-                        <th className="p-4 text-right font-semibold text-emerald-600">Capital</th>
-                        <th className="p-4 text-right font-semibold text-orange-600">Intérêts</th>
-                        <th className="p-4 text-right font-semibold text-zinc-700">Capital restant</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {amortizationTable.map((row) => (
-                        <tr key={row.month} className="hover:bg-emerald-50/50 transition-colors">
-                          <td className="p-4 font-medium text-center">{row.month}</td>
-                          <td className="p-4 text-right font-medium">{row.mensualite.toLocaleString('fr-FR')} €</td>
-                          <td className="p-4 text-right text-emerald-600 font-medium">{row.principal.toLocaleString('fr-FR')} €</td>
-                          <td className="p-4 text-right text-orange-600">{row.interest.toLocaleString('fr-FR')} €</td>
-                          <td className="p-4 text-right font-medium text-zinc-800">{row.remaining.toLocaleString('fr-FR')} €</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-center text-sm text-zinc-500 mt-4">
-                  Total des intérêts sur {duree} mois : <span className="text-orange-600 font-semibold">{interets.toLocaleString('fr-FR')} €</span>
+                <h3 className="text-xl font-semibold">{service.title}</h3>
+                <p className="text-emerald-300 text-sm mt-2">{service.shortDesc}</p>
+                <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
+                  {service.description}
                 </p>
-              </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {/* Bouton final */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button
-                  onClick={() => {
-                    const params = new URLSearchParams({
-                      type: selectedType,
-                      montant: montant.toString(),
-                      duree: duree.toString(),
-                      mensualite: mensualite.toString(),
-                      coutTotal: coutTotal.toString(),
-                      interets: interets.toString(),
-                    });
-                    window.location.href = `/faire-demande?${params.toString()}`;
-                  }}
-                  className="w-full py-8 text-xl font-semibold bg-emerald-600 hover:bg-emerald-700 rounded-3xl shadow-xl btn-premium"
-                >
-                  Valider cette simulation et faire ma demande
-                </Button>
-              </motion.div>
+      <section id="simulateur" className="py-24 bg-[#07111f]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <p className="text-emerald-300 font-medium mb-3">Simulation</p>
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Estimez votre financement
+            </h2>
+            <p className="text-zinc-400 mt-5 text-lg">
+              Ajustez le montant et la durée pour obtenir une estimation claire
+              de votre mensualité.
+            </p>
+          </div>
+
+          <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+            <CardContent className="p-6 md:p-10">
+              <div className="grid lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-7 space-y-8">
+                  <div>
+                    <Label className="text-zinc-300 mb-4 block">
+                      Type de financement
+                    </Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {services.slice(0, 6).map((service) => (
+                        <button
+                          key={service.title}
+                          onClick={() => setSelectedType(service.title)}
+                          className={`rounded-2xl border p-4 text-left transition ${
+                            selectedType === service.title
+                              ? "bg-emerald-500/20 border-emerald-400/40"
+                              : "bg-black/20 border-white/10 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="text-emerald-300 mb-3">{service.icon}</div>
+                          <p className="text-sm font-semibold">{service.title}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+                      <Label className="text-zinc-400">Montant du prêt</Label>
+                      <Input
+                        type="number"
+                        value={montant}
+                        onChange={(e) =>
+                          setMontant(
+                            Math.max(0, Math.min(2000000, Number(e.target.value) || 0))
+                          )
+                        }
+                        className="mt-4 h-14 bg-white/10 border-white/10 text-white text-2xl font-semibold rounded-2xl"
+                      />
+                      <input
+                        type="range"
+                        min={1000}
+                        max={2000000}
+                        step={1000}
+                        value={montant}
+                        onChange={(e) => setMontant(Number(e.target.value))}
+                        className="w-full accent-emerald-400 mt-5"
+                      />
+                    </div>
+
+                    <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+                      <Label className="text-zinc-400">Durée du prêt</Label>
+                      <Input
+                        type="number"
+                        value={duree}
+                        onChange={(e) =>
+                          setDuree(
+                            Math.max(6, Math.min(360, Number(e.target.value) || 6))
+                          )
+                        }
+                        className="mt-4 h-14 bg-white/10 border-white/10 text-white text-2xl font-semibold rounded-2xl"
+                      />
+                      <input
+                        type="range"
+                        min={6}
+                        max={360}
+                        step={6}
+                        value={duree}
+                        onChange={(e) => setDuree(Number(e.target.value))}
+                        className="w-full accent-emerald-400 mt-5"
+                      />
+                      <p className="text-sm text-zinc-400 mt-3">
+                        {Math.floor(duree / 12)} ans {duree % 12} mois
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-3xl border border-white/10">
+                    <table className="w-full text-sm">
+                      <thead className="bg-white/10 text-zinc-400">
+                        <tr>
+                          <th className="p-4 text-left">Mois</th>
+                          <th className="p-4 text-right">Mensualité</th>
+                          <th className="p-4 text-right">Intérêts</th>
+                          <th className="p-4 text-right">Capital</th>
+                          <th className="p-4 text-right">Restant</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/10">
+                        {amortissement.map((row) => (
+                          <tr key={row.mois} className="hover:bg-white/5">
+                            <td className="p-4">{row.mois}</td>
+                            <td className="p-4 text-right font-semibold">
+                              {row.mensualite.toLocaleString("fr-FR")} €
+                            </td>
+                            <td className="p-4 text-right text-amber-300">
+                              {row.interet.toLocaleString("fr-FR")} €
+                            </td>
+                            <td className="p-4 text-right text-emerald-300">
+                              {row.capital.toLocaleString("fr-FR")} €
+                            </td>
+                            <td className="p-4 text-right text-zinc-300">
+                              {row.restant.toLocaleString("fr-FR")} €
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5">
+                  <div className="sticky top-28 bg-gradient-to-br from-emerald-500/20 to-white/5 border border-emerald-400/20 rounded-[2rem] p-7 md:p-8">
+                    <p className="text-zinc-400">Résultat estimatif</p>
+                    <p className="text-5xl md:text-6xl font-bold mt-4">
+                      {mensualite.toLocaleString("fr-FR")} €
+                      <span className="text-base text-zinc-400"> / mois</span>
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4 mt-8">
+                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                        <p className="text-zinc-500 text-sm">Montant</p>
+                        <p className="font-semibold mt-1">
+                          {montant.toLocaleString("fr-FR")} €
+                        </p>
+                      </div>
+                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                        <p className="text-zinc-500 text-sm">Durée</p>
+                        <p className="font-semibold mt-1">{duree} mois</p>
+                      </div>
+                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                        <p className="text-zinc-500 text-sm">Coût total</p>
+                        <p className="font-semibold mt-1">
+                          {coutTotal.toLocaleString("fr-FR")} €
+                        </p>
+                      </div>
+                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                        <p className="text-zinc-500 text-sm">Intérêts</p>
+                        <p className="font-semibold text-amber-300 mt-1">
+                          {interets.toLocaleString("fr-FR")} €
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={goToApplication}
+                      className="w-full h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-base"
+                    >
+                      Valider cette simulation
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+
+                    <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
+                      Cette simulation est indicative et ne constitue pas une offre
+                      définitive. Les conditions finales dépendent de l’analyse du dossier.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </motion.div>
-      </div>
+        </div>
+      </section>
 
-      {/* POURQUOI NOUS CHOISIR */}
-      <section className="bg-white py-20">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Pourquoi nous choisir ?</h2>
-            <p className="text-xl text-zinc-600">Un service simple, transparent et humain</p>
+      <section className="py-24 bg-[#050816]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <p className="text-emerald-300 font-medium mb-3">Parcours client</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Un suivi simple, étape par étape
+            </h2>
           </div>
-          <div className="overflow-hidden rounded-3xl">
-            <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentWhySlide * 100}%)` }}>
-              {whyUsCards.map((card, i) => (
-                <div key={i} className="min-w-full px-6 py-16 text-center">
-                  <div className="w-20 h-20 mx-auto mb-8 bg-emerald-50 rounded-3xl flex items-center justify-center">
-                    {card.icon}
+
+          <div className="grid md:grid-cols-4 gap-5">
+            {processSteps.map((step, index) => (
+              <Card
+                key={step.title}
+                className="bg-white/7 border-white/10 rounded-[2rem]"
+              >
+                <CardContent className="p-7">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 mb-6">
+                    {step.icon}
                   </div>
-                  <h3 className="text-3xl font-semibold mb-4">{card.title}</h3>
-                  <p className="text-lg text-zinc-600 max-w-sm mx-auto">{card.description}</p>
+                  <p className="text-sm text-zinc-500 mb-2">Étape {index + 1}</p>
+                  <h3 className="text-xl font-semibold text-white">{step.title}</h3>
+                  <p className="text-sm text-zinc-400 mt-4 leading-relaxed">
+                    {step.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 bg-[#07111f]">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-6">
+            <p className="text-emerald-300 font-medium mb-3">Espace client</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Un tableau de bord premium pour suivre votre dossier
+            </h2>
+            <p className="text-zinc-400 mt-6 leading-relaxed text-lg">
+              Après votre demande, vous recevez des identifiants pour accéder à
+              votre espace client : statut, étapes, documents, contrat signé et
+              suivi de votre dossier.
+            </p>
+            <Link href="/espace-client">
+              <Button className="mt-8 h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200">
+                Ouvrir l’espace client
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="bg-white/10 border border-white/10 backdrop-blur-2xl rounded-[2.5rem] p-6 shadow-2xl">
+              <div className="bg-[#050816] rounded-[2rem] p-6 border border-white/10">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-zinc-500 text-sm">Dossier D-248913</p>
+                    <p className="text-3xl font-bold mt-2">75 000 €</p>
+                    <p className="text-zinc-400 mt-1">Prêt Personnel</p>
+                  </div>
+                  <span className="bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 rounded-full px-4 py-2 text-sm">
+                    Accepté
+                  </span>
                 </div>
-              ))}
+
+                <div className="grid grid-cols-3 gap-3 mt-8">
+                  <div className="bg-white/7 rounded-2xl p-4 border border-white/10">
+                    <p className="text-zinc-500 text-xs">Durée</p>
+                    <p className="font-semibold mt-1">120 mois</p>
+                  </div>
+                  <div className="bg-white/7 rounded-2xl p-4 border border-white/10">
+                    <p className="text-zinc-500 text-xs">Mensualité</p>
+                    <p className="font-semibold mt-1">724 €</p>
+                  </div>
+                  <div className="bg-white/7 rounded-2xl p-4 border border-white/10">
+                    <p className="text-zinc-500 text-xs">Documents</p>
+                    <p className="font-semibold mt-1">4 reçus</p>
+                  </div>
+                </div>
+
+                <div className="mt-8 space-y-4">
+                  {["Demande reçue", "Analyse", "Validation", "Signature"].map(
+                    (item, index) => (
+                      <div key={item} className="flex items-center gap-4">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+                          <CheckCircle className="w-4 h-4" />
+                        </div>
+                        <p className="text-zinc-300">{item}</p>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TÉMOIGNAGES */}
-      <section className="bg-white py-20">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-4">Les derniers avis</h2>
-            <p className="text-xl text-zinc-600">Ce que nos clients disent de nous</p>
+      <section className="py-24 bg-[#07111f]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <p className="text-emerald-300 font-medium mb-3">Partenaires</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Un réseau de partenaires financiers
+            </h2>
+            <p className="text-zinc-400 mt-5 text-lg">
+              Nous travaillons avec différents acteurs bancaires, financiers et technologiques afin d’accompagner les demandes selon les profils et les projets.
+            </p>
           </div>
 
-          <div className="overflow-hidden rounded-3xl">
-            <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-              {testimonials.map((t, i) => (
-                <div key={i} className="min-w-full px-8 py-12 text-center">
-                  <div className="mx-auto w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center shadow-inner mb-6">
-                    <div className="text-6xl text-gray-500">👤</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[
+              { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
+              { name: "AXA Investment", logo: "/partners/axa_investment.png" },
+              { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
+              { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
+              { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
+              { name: "Natixis", logo: "/partners/natixis.png" },
+              { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
+              { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
+              { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
+              { name: "Partenaires spécialisés", logo: "" },
+            ].map((partner) => (
+              <div
+                key={partner.name}
+                className="h-28 bg-white/7 border border-white/10 rounded-3xl flex items-center justify-center p-5 hover:bg-white/10 transition"
+              >
+                {partner.logo ? (
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="max-h-12 max-w-[140px] object-contain opacity-80 hover:opacity-100 transition"
+                  />
+                ) : (
+                  <p className="text-sm text-zinc-400 text-center font-medium">
+                    {partner.name}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-zinc-600 mt-8 max-w-3xl mx-auto">
+            Les logos et noms affichés doivent être utilisés uniquement si vous disposez d’un droit d’usage ou d’une relation vérifiable avec les entités concernées.
+          </p>
+        </div>
+      </section>
+
+      <section className="py-24 bg-[#050816]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <p className="text-emerald-300 font-medium mb-3">Avis clients</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Une expérience pensée pour rassurer
+            </h2>
+            <p className="text-zinc-400 mt-5 text-lg">
+              Des clients accompagnés dans leurs démarches, avec un suivi clair et un espace en ligne professionnel.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                name: "Sophie Martin",
+                location: "Paris",
+                text: "Interface très claire, suivi sérieux et réponse rapide. J’ai pu transmettre mes documents directement depuis mon espace client.",
+              },
+              {
+                name: "Marc Dubois",
+                location: "Lyon",
+                text: "Le parcours est simple et professionnel. La simulation m’a permis de mieux comprendre ma mensualité avant de déposer ma demande.",
+              },
+              {
+                name: "Laura Benali",
+                location: "Marseille",
+                text: "Très bonne expérience. Le tableau de bord donne une vraie visibilité sur les étapes du dossier et les documents attendus.",
+              },
+            ].map((avis) => (
+              <Card
+                key={avis.name}
+                className="bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition"
+              >
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-1 text-emerald-300 mb-6">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star}>★</span>
+                    ))}
                   </div>
-                  <p className="text-lg italic text-zinc-700 mb-8">"{t.text}"</p>
-                  <p className="font-semibold text-emerald-700">{t.name}</p>
-                  <p className="text-sm text-zinc-500">{t.location}</p>
+
+                  <p className="text-zinc-300 leading-relaxed">
+                    “{avis.text}”
+                  </p>
+
+                  <div className="flex items-center gap-4 mt-8">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 font-semibold">
+                      {avis.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{avis.name}</p>
+                      <p className="text-sm text-zinc-500">{avis.location}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          
+        </div>
+      </section>
+
+      <section className="py-24 bg-[#050816]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-3 gap-5">
+            <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
+              <CardContent className="p-8 md:p-10">
+                <Banknote className="w-10 h-10 text-emerald-300 mb-8" />
+                <h2 className="text-4xl font-bold tracking-tight">
+                  Prêt à lancer votre demande ?
+                </h2>
+                <p className="text-zinc-300 mt-5 max-w-2xl">
+                  Commencez par une simulation, puis transmettez votre demande
+                  depuis un parcours clair et sécurisé.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                  <a href="#simulateur">
+                    <Button className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600">
+                      Simuler maintenant
+                    </Button>
+                  </a>
+                  <Link href="/faire-demande">
+                    <Button
+                      variant="outline"
+                      className="h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10"
+                    >
+                      Faire une demande
+                    </Button>
+                  </Link>
                 </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/7 border-white/10 rounded-[2rem]">
+              <CardContent className="p-8">
+                <Headphones className="w-10 h-10 text-emerald-300 mb-8" />
+                <h3 className="text-2xl font-semibold">Besoin d’aide ?</h3>
+                <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
+                  Un conseiller peut vous accompagner pour clarifier votre demande
+                  et préparer votre dossier.
+                </p>
+                <div className="flex gap-3 mt-8">
+                  <a
+                    href="https://wa.me/33600000000"
+                    target="_blank"
+                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+                  >
+                    <Phone className="w-5 h-5" />
+                  </a>
+                  <a
+                    href="https://facebook.com/essorcredit"
+                    target="_blank"
+                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-[#0A2540] text-white py-16">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">EC</div>
-            <p className="text-2xl font-bold">Essor Crédit</p>
+      <footer className="bg-[#030712] border-t border-white/10 py-14">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between gap-8">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center font-bold">
+                  EC
+                </div>
+                <p className="text-2xl font-bold">Essor Crédit</p>
+              </div>
+              <p className="text-zinc-500 mt-5 max-w-md text-sm leading-relaxed">
+                Plateforme de simulation, demande et suivi de financement. Les
+                informations affichées doivent être vérifiées et adaptées à votre
+                statut réel avant mise en production.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-10 text-sm">
+              <div className="space-y-3 text-zinc-400">
+                <p className="font-semibold text-white mb-4">Navigation</p>
+                <a href="#simulateur" className="block hover:text-white">
+                  Simulateur
+                </a>
+                <Link href="/faire-demande" className="block hover:text-white">
+                  Faire une demande
+                </Link>
+                <Link href="/espace-client" className="block hover:text-white">
+                  Espace client
+                </Link>
+              </div>
+
+              <div className="space-y-3 text-zinc-400">
+                <p className="font-semibold text-white mb-4">Informations</p>
+                <Link href="/mentions-legales" className="block hover:text-white">
+                  Mentions légales
+                </Link>
+                <Link href="/cgu" className="block hover:text-white">
+                  CGU
+                </Link>
+                <Link
+                  href="/politique-de-confidentialite"
+                  className="block hover:text-white"
+                >
+                  Confidentialité
+                </Link>
+              </div>
+            </div>
           </div>
 
-          <p className="text-zinc-400 mb-8 max-w-md mx-auto">
-            Votre partenaire de confiance pour tous vos projets financiers.
-          </p>
-
-          {/* Boutons Réseaux Sociaux */}
-          <div className="flex justify-center gap-6 mb-10">
-            <a
-              href="https://wa.me/33600000000"
-              target="_blank"
-              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
-            >
-              <Phone className="w-7 h-7" />
-            </a>
-            <a
-              href="https://facebook.com/essorcredit"
-              target="_blank"
-              className="flex items-center justify-center w-14 h-14 bg-white/10 hover:bg-emerald-600 rounded-2xl transition-all hover:scale-110"
-            >
-              <MessageCircle className="w-7 h-7" />
-            </a>
-            
+          <div className="border-t border-white/10 mt-12 pt-6 text-xs text-zinc-600 flex flex-col md:flex-row justify-between gap-4">
+            <p>© 2026 Essor Crédit. Tous droits réservés.</p>
+            <p>Simulation indicative — conditions soumises à étude du dossier.</p>
           </div>
-
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400 mb-8">
-            <a href="/mentions-legales" className="hover:text-white">Mentions légales</a>
-            <a href="/cgu" className="hover:text-white">Conditions Générales d'Utilisation</a>
-            <a href="/politique-de-confidentialite" className="hover:text-white">Politique de Confidentialité</a>
-          </div>
-
-          <p className="text-xs text-zinc-500">
-            © 2026 Essor Crédit - Intermédiaire en Opérations de Banque et Services de Paiement (IOBSP) | ORIAS n° XXXXXXX
-          </p>
         </div>
       </footer>
-
     </main>
   );
 }

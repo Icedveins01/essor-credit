@@ -1,0 +1,46 @@
+model Client {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  sexe      String?
+  prenom    String
+  nom       String
+  telephone String?
+  adresse   String?
+  ville     String?
+  pays      String?
+  createdAt DateTime @default(now())
+
+  demandes  Demande[]
+}
+
+model Demande {
+  id             String   @id @default(cuid())
+  numero         String   @unique @default(cuid())
+  date           DateTime @default(now())
+  type           String
+  montant        Float
+  duree          Int
+  mensualite     Float
+  coutTotal      Float?
+  interets       Float?
+  statut         String   @default("En cours")
+
+  typeClient     String?
+  isIndependant  Boolean  @default(false)
+
+  paysPret       String?
+  revenuOuCA     String?
+  charges        String?
+  message        String?
+
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+
+  signedContract String?
+  justificatifs  String?  @default("[]")
+
+  commentaire    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+} 

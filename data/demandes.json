@@ -1,0 +1,104 @@
+[
+  {
+    "id": "D-220827",
+    "createdAt": "2026-05-09T11:30:20.827Z",
+    "type": "Prêt Personnel",
+    "montant": 88000,
+    "duree": 120,
+    "mensualite": 849.73,
+    "coutTotal": 101967.6,
+    "interets": 13967.6,
+    "statut": "Accepté",
+    "message": "",
+    "commentaire": "",
+    "isIndependant": false,
+    "justificatifs": [],
+    "signedContract": "",
+    "client": {
+      "prenom": "Jana",
+      "nom": "Krueger",
+      "email": "janakrueger@jourrapide.com",
+      "telephone": "+330134774296",
+      "adresse": "66, rue de la Mare aux Carats, MONTREUIL",
+      "ville": "MONTREUIL",
+      "pays": "France",
+      "typeClient": "particulier"
+    },
+    "updatedAt": "2026-05-09T21:15:48.438Z",
+    "timeline": [
+      {
+        "id": "T-1778361348438-qqqdja",
+        "type": "status",
+        "title": "Statut mis à jour : Accepté",
+        "description": "Votre dossier est désormais : Accepté.",
+        "createdAt": "2026-05-09T21:15:48.438Z"
+      },
+      {
+        "id": "T-1778361238462-rjnghb",
+        "type": "status",
+        "title": "Statut mis à jour : Refusé",
+        "description": "Votre dossier est désormais : Refusé.",
+        "createdAt": "2026-05-09T21:13:58.462Z"
+      },
+      {
+        "id": "T-1778354126636-2w5a14",
+        "type": "status",
+        "title": "Statut mis à jour : Accepté",
+        "description": "Demande de prêt Acceptée une fois votre contrat signé reçu et les justificatifs nos mettrons le montants du prêt a votre dispositions.",
+        "createdAt": "2026-05-09T19:15:26.636Z"
+      },
+      {
+        "id": "T-1778353840138-2ci5ol",
+        "type": "status",
+        "title": "Statut mis à jour : Refusé",
+        "description": "Votre dossier est désormais : Refusé.",
+        "createdAt": "2026-05-09T19:10:40.138Z"
+      },
+      {
+        "id": "T-1778353767562-zz9g0j",
+        "type": "status",
+        "title": "Statut mis à jour : Accepté",
+        "description": "Votre dossier est désormais : Accepté.",
+        "createdAt": "2026-05-09T19:09:27.562Z"
+      },
+      {
+        "id": "T-1778353726955-4snjsl",
+        "type": "status",
+        "title": "Statut mis à jour : En cours",
+        "description": "Votre dossier est désormais : En cours.",
+        "createdAt": "2026-05-09T19:08:46.955Z"
+      },
+      {
+        "id": "T-1778351432186-83qxtp",
+        "type": "status",
+        "title": "Décision favorable",
+        "description": "Votre demande a été acceptée par notre service.",
+        "createdAt": "2026-05-09T18:30:32.186Z"
+      }
+    ]
+  },
+  {
+    "id": "D-544154",
+    "createdAt": "2026-05-09T09:22:24.154Z",
+    "type": "Prêt Professionnel",
+    "montant": 150000,
+    "duree": 180,
+    "mensualite": 1035.87,
+    "statut": "Accepté",
+    "isIndependant": true,
+    "signedContract": "",
+    "justificatifs": [],
+    "client": {
+      "prenom": "Laura",
+      "nom": "Schiffer",
+      "email": "laura.schiffer@yahoo.de",
+      "telephone": "+330600654867",
+      "adresse": "45, Rue St Ferréol, 92360",
+      "ville": "Meudon-La-Forêt",
+      "pays": "France",
+      "typeClient": "independant"
+    },
+    "commentaire": "",
+    "updatedAt": "2026-05-09T10:36:26.368Z"
+  }
+]
