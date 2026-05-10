@@ -1,4 +1,4 @@
-"use client";
+	"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -10,7 +10,6 @@ import Header from "./components/Header";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Award,
   BadgeCheck,
   Banknote,
   Briefcase,
@@ -28,7 +27,6 @@ import {
   RefreshCw,
   Shield,
   Sparkles,
-  TrendingUp,
   User,
   Wallet,
 } from "lucide-react";
@@ -190,7 +188,7 @@ export default function Page() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#10b98133,transparent_32%),radial-gradient(circle_at_bottom_right,#2563eb33,transparent_36%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(5,8,22,0.94))]" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -202,7 +200,7 @@ export default function Page() {
               Plateforme de financement premium
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold tracking-[-0.05em] leading-[0.95]">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-[-0.05em] leading-[1.02]">
               Financez vos projets avec une expérience claire, moderne et sécurisée.
             </h1>
 
@@ -214,7 +212,7 @@ export default function Page() {
 
             <div className="flex flex-col sm:flex-row gap-4 mt-10">
               <a href="#simulateur">
-                <Button className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-base">
+                <Button className="w-full sm:w-auto h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-base">
                   Simuler mon financement
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -230,7 +228,7 @@ export default function Page() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-3xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-3xl">
               {assurances.map((item) => (
                 <div
                   key={item}
@@ -306,7 +304,7 @@ export default function Page() {
                     <span className="text-base text-zinc-400"> / mois</span>
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-sm">
                     <div>
                       <p className="text-zinc-500">Taux affiché</p>
                       <p className="font-semibold text-emerald-300">3,00%</p>
@@ -332,7 +330,7 @@ export default function Page() {
       </section>
 
       <section className="relative z-10 border-y border-white/10 bg-white/[0.03] backdrop-blur-xl py-6">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-5 text-sm text-zinc-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 text-sm text-zinc-300">
           <div className="flex items-center gap-3">
             <Lock className="w-5 h-5 text-emerald-300" /> Connexion sécurisée
           </div>
@@ -349,7 +347,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <p className="text-emerald-300 font-medium mb-3">Solutions</p>
@@ -393,7 +391,7 @@ export default function Page() {
       </section>
 
       <section id="simulateur" className="py-24 bg-[#07111f]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <p className="text-emerald-300 font-medium mb-3">Simulation</p>
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
@@ -413,7 +411,7 @@ export default function Page() {
                     <Label className="text-zinc-300 mb-4 block">
                       Type de financement
                     </Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {services.slice(0, 6).map((service) => (
                         <button
                           key={service.title}
@@ -482,8 +480,8 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto rounded-3xl border border-white/10">
-                    <table className="w-full text-sm">
+                  <div className="w-full overflow-x-auto rounded-3xl border border-white/10">
+  <table className="min-w-[650px] w-full">
                       <thead className="bg-white/10 text-zinc-400">
                         <tr>
                           <th className="p-4 text-left">Mois</th>
@@ -517,14 +515,14 @@ export default function Page() {
                 </div>
 
                 <div className="lg:col-span-5">
-                  <div className="sticky top-28 bg-gradient-to-br from-emerald-500/20 to-white/5 border border-emerald-400/20 rounded-[2rem] p-7 md:p-8">
+                  <div className="lg:sticky lg:top-28 bg-gradient-to-br from-emerald-500/20 to-white/5 border border-emerald-400/20 rounded-[2rem] p-5 sm:p-7 md:p-8">
                     <p className="text-zinc-400">Résultat estimatif</p>
-                    <p className="text-5xl md:text-6xl font-bold mt-4">
+                    <p className="text-4xl sm:text-5xl md:text-6xl font-bold mt-4 break-words">
                       {mensualite.toLocaleString("fr-FR")} €
                       <span className="text-base text-zinc-400"> / mois</span>
                     </p>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                       <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
                         <p className="text-zinc-500 text-sm">Montant</p>
                         <p className="font-semibold mt-1">
@@ -570,7 +568,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <p className="text-emerald-300 font-medium mb-3">Parcours client</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -601,7 +599,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#07111f]">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-10 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6">
             <p className="text-emerald-300 font-medium mb-3">Espace client</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -634,7 +632,7 @@ export default function Page() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                   <div className="bg-white/7 rounded-2xl p-4 border border-white/10">
                     <p className="text-zinc-500 text-xs">Durée</p>
                     <p className="font-semibold mt-1">120 mois</p>
@@ -668,7 +666,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#07111f]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <p className="text-emerald-300 font-medium mb-3">Partenaires</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -679,7 +677,7 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {[
               { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
               { name: "AXA Investment", logo: "/partners/axa_investment.png" },
@@ -718,7 +716,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <p className="text-emerald-300 font-medium mb-3">Avis clients</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -784,7 +782,7 @@ export default function Page() {
       </section>
 
       <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-5">
             <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
               <CardContent className="p-8 md:p-10">
@@ -845,7 +843,7 @@ export default function Page() {
       </section>
 
       <footer className="bg-[#030712] border-t border-white/10 py-14">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between gap-8">
             <div>
               <div className="flex items-center gap-3">
@@ -861,7 +859,7 @@ export default function Page() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-10 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm">
               <div className="space-y-3 text-zinc-400">
                 <p className="font-semibold text-white mb-4">Navigation</p>
                 <a href="#simulateur" className="block hover:text-white">
