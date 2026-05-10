@@ -178,7 +178,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050816] text-white overflow-hidden">
+    <main className="min-h-screen bg-[#050816] text-white overflow-x-hidden">
       <Header />
 
       <section
@@ -247,8 +247,8 @@ export default function Page() {
             transition={{ duration: 0.7, delay: 0.15 }}
             className="lg:col-span-5"
           >
-            <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl">
-              <CardContent className="p-7 md:p-8">
+            <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden max-w-full">
+              <CardContent className="p-4 sm:p-6 md:p-10">
                 <div className="flex justify-between items-start mb-8">
                   <div>
                     <p className="text-zinc-400 text-sm">Simulation rapide</p>
@@ -403,7 +403,7 @@ export default function Page() {
             </p>
           </div>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+          <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden max-w-full">
             <CardContent className="p-6 md:p-10">
               <div className="grid lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-7 space-y-8">
@@ -416,14 +416,14 @@ export default function Page() {
                         <button
                           key={service.title}
                           onClick={() => setSelectedType(service.title)}
-                          className={`rounded-2xl border p-4 text-left transition ${
+                          className={`rounded-2xl border p-4 text-left transition min-w-0 ${
                             selectedType === service.title
                               ? "bg-emerald-500/20 border-emerald-400/40"
                               : "bg-black/20 border-white/10 hover:bg-white/10"
                           }`}
                         >
                           <div className="text-emerald-300 mb-3">{service.icon}</div>
-                          <p className="text-sm font-semibold">{service.title}</p>
+                          <p className="text-sm font-semibold break-words">{service.title}</p>
                         </button>
                       ))}
                     </div>
@@ -549,10 +549,11 @@ export default function Page() {
 
                     <Button
                       onClick={goToApplication}
-                      className="w-full h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-base"
+                      className="w-full min-w-0 h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-sm sm:text-base px-4"
                     >
                       Valider cette simulation
-                      <ArrowRight className="ml-2 w-5 h-5" />
+                      <span className="truncate">Valider cette simulation</span>
+                      <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
                     </Button>
 
                     <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
@@ -677,37 +678,39 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {[
-              { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
-              { name: "AXA Investment", logo: "/partners/axa_investment.png" },
-              { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
-              { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
-              { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
-              { name: "Natixis", logo: "/partners/natixis.png" },
-              { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
-              { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
-              { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
-              { name: "Partenaires spécialisés", logo: "" },
-            ].map((partner) => (
-              <div
-                key={partner.name}
-                className="h-28 bg-white/7 border border-white/10 rounded-3xl flex items-center justify-center p-5 hover:bg-white/10 transition"
-              >
-                {partner.logo ? (
-                  <img
-                    src={partner.logo}
-                    alt={partner.name}
-                    className="max-h-12 max-w-[140px] object-contain opacity-80 hover:opacity-100 transition"
-                  />
-                ) : (
-                  <p className="text-sm text-zinc-400 text-center font-medium">
-                    {partner.name}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+          <div className="overflow-x-auto pb-4">
+  <div className="flex gap-4 min-w-max">
+    {[
+      { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
+      { name: "AXA Investment", logo: "/partners/axa_investment.png" },
+      { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
+      { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
+      { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
+      { name: "Natixis", logo: "/partners/natixis.png" },
+      { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
+      { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
+      { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
+      { name: "Partenaires spécialisés", logo: "" },
+    ].map((partner) => (
+      <div
+        key={partner.name}
+        className="w-56 h-28 shrink-0 bg-white/7 border border-white/10 rounded-3xl flex items-center justify-center p-5 hover:bg-white/10 transition"
+      >
+        {partner.logo ? (
+          <img
+            src={partner.logo}
+            alt={partner.name}
+            className="max-h-12 max-w-[150px] object-contain opacity-80 hover:opacity-100 transition"
+          />
+        ) : (
+          <p className="text-sm text-zinc-400 text-center font-medium">
+            {partner.name}
+          </p>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
 
           <p className="text-center text-xs text-zinc-600 mt-8 max-w-3xl mx-auto">
             Les logos et noms affichés doivent être utilisés uniquement si vous disposez d’un droit d’usage ou d’une relation vérifiable avec les entités concernées.
