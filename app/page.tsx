@@ -390,223 +390,279 @@ export default function Page() {
         </div>
       </section>
 
-      <section id="simulateur" className="py-24 bg-[#07111f]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <p className="text-emerald-300 font-medium mb-3">Simulation</p>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Estimez votre financement
-            </h2>
-            <p className="text-zinc-400 mt-5 text-lg">
-              Ajustez le montant et la durée pour obtenir une estimation claire
-              de votre mensualité.
-            </p>
+      <section id="simulateur" className="py-16 sm:py-24 bg-[#07111f]">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+      <p className="text-emerald-300 font-medium mb-3">Simulation</p>
+
+      <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-tight">
+        Estimez votre financement
+      </h2>
+
+      <p className="text-zinc-400 mt-4 sm:mt-5 text-base sm:text-lg leading-relaxed">
+        Ajustez le montant et la durée pour obtenir une estimation claire
+        de votre mensualité.
+      </p>
+    </div>
+
+    <Card className="w-full bg-white/10 border-white/10 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden">
+      <CardContent className="p-3 sm:p-6 md:p-10">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
+
+          {/* COLONNE GAUCHE */}
+          <div className="xl:col-span-7 space-y-6 sm:space-y-8">
+
+            {/* TYPE */}
+            <div>
+
+  <Label className="text-zinc-300 mb-4 block text-base sm:text-lg">
+
+    Type de financement
+
+  </Label>
+
+  <div className="-mx-4 px-4 overflow-x-auto lg:overflow-visible pb-3">
+
+    <div className="flex lg:grid lg:grid-cols-3 gap-3 min-w-max lg:min-w-0">
+
+      {services.slice(0, 6).map((service) => (
+
+        <button
+
+          key={service.title}
+
+          onClick={() => setSelectedType(service.title)}
+
+          className={`w-[210px] lg:w-full shrink-0 rounded-3xl border p-5 text-left transition min-h-[150px] flex flex-col justify-between ${
+
+            selectedType === service.title
+
+              ? "bg-emerald-500/20 border-emerald-400/40"
+
+              : "bg-black/20 border-white/10 hover:bg-white/10"
+
+          }`}
+
+        >
+
+          <div className="text-emerald-300 mb-5">
+
+            {service.icon}
+
           </div>
 
-          <Card className="w-full max-w-full bg-white/10 border-white/10 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden">
-            <CardContent className="p-4 sm:p-6 md:p-10">
-              <div className="grid lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-7 space-y-8">
-                  <div>
-                    <Label className="text-zinc-300 mb-4 block">
-                      Type de financement
-                    </Label>
-                     <div className="grid grid-cols-1 gap-3">
-                      {services.slice(0, 6).map((service) => (
-                        <button
-                          key={service.title}
-                          onClick={() => setSelectedType(service.title)}
-                          className={`rounded-2xl border p-4 text-left transition min-w-0 ${
-                            selectedType === service.title
-                              ? "bg-emerald-500/20 border-emerald-400/40"
-                              : "bg-black/20 border-white/10 hover:bg-white/10"
-                          }`}
-                        >
-                          <div className="text-emerald-300 mb-3">{service.icon}</div>
-                          <p className="text-sm font-semibold break-words">{service.title}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+          <p className="text-base font-semibold leading-snug">
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
-                      <Label className="text-zinc-400">Montant du prêt</Label>
-                      <Input
-                        type="number"
-                        value={montant}
-                        onChange={(e) =>
-                          setMontant(
-                            Math.max(0, Math.min(2000000, Number(e.target.value) || 0))
-                          )
-                        }
-                        className="mt-4 h-14 bg-white/10 border-white/10 text-white text-2xl font-semibold rounded-2xl"
-                      />
-                      <input
-                        type="range"
-                        min={1000}
-                        max={2000000}
-                        step={1000}
-                        value={montant}
-                        onChange={(e) => setMontant(Number(e.target.value))}
-                        className="w-full accent-emerald-400 mt-5"
-                      />
-                    </div>
+            {service.title}
 
-                    <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
-                      <Label className="text-zinc-400">Durée du prêt</Label>
-                      <Input
-                        type="number"
-                        value={duree}
-                        onChange={(e) =>
-                          setDuree(
-                            Math.max(6, Math.min(360, Number(e.target.value) || 6))
-                          )
-                        }
-                        className="mt-4 h-14 bg-white/10 border-white/10 text-white text-2xl font-semibold rounded-2xl"
-                      />
-                      <input
-                        type="range"
-                        min={6}
-                        max={360}
-                        step={6}
-                        value={duree}
-                        onChange={(e) => setDuree(Number(e.target.value))}
-                        className="w-full accent-emerald-400 mt-5"
-                      />
-                      <p className="text-sm text-zinc-400 mt-3">
-                        {Math.floor(duree / 12)} ans {duree % 12} mois
-                      </p>
-                    </div>
-                  </div>
+          </p>
 
-                  <div className="space-y-3 md:hidden">
-  {amortissement.map((row) => (
-    <div
-      key={row.mois}
-      className="bg-black/20 border border-white/10 rounded-2xl p-4"
-    >
-      <div className="flex justify-between mb-3">
-        <span className="text-zinc-400">Mois</span>
-        <span className="font-semibold">{row.mois}</span>
-      </div>
+        </button>
 
-      <div className="flex justify-between mb-2">
-        <span className="text-zinc-400">Mensualité</span>
-        <span className="font-semibold">
-          {row.mensualite.toLocaleString("fr-FR")} €
-        </span>
-      </div>
+      ))}
 
-      <div className="flex justify-between mb-2">
-        <span className="text-zinc-400">Intérêts</span>
-        <span className="text-amber-300">
-          {row.interet.toLocaleString("fr-FR")} €
-        </span>
-      </div>
-
-      <div className="flex justify-between mb-2">
-        <span className="text-zinc-400">Capital</span>
-        <span className="text-emerald-300">
-          {row.capital.toLocaleString("fr-FR")} €
-        </span>
-      </div>
-
-      <div className="flex justify-between">
-        <span className="text-zinc-400">Restant</span>
-        <span>{row.restant.toLocaleString("fr-FR")} €</span>
-      </div>
     </div>
-  ))}
+
+  </div>
+
 </div>
 
-<div className="hidden md:block w-full overflow-x-auto rounded-3xl border border-white/10">
-  <table className="w-full text-sm">
-    <thead className="bg-white/10 text-zinc-400">
-      <tr>
-        <th className="p-4 text-left">Mois</th>
-        <th className="p-4 text-right">Mensualité</th>
-        <th className="p-4 text-right">Intérêts</th>
-        <th className="p-4 text-right">Capital</th>
-        <th className="p-4 text-right">Restant</th>
-      </tr>
-    </thead>
+            {/* MONTANT + DURÉE */}
+          
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-black/20 border border-white/10 rounded-3xl p-4 sm:p-6">
+                <Label className="text-zinc-400">Montant du prêt</Label>
 
-    <tbody className="divide-y divide-white/10">
-      {amortissement.map((row) => (
-        <tr key={row.mois} className="hover:bg-white/5">
-          <td className="p-4">{row.mois}</td>
-          <td className="p-4 text-right font-semibold">
-            {row.mensualite.toLocaleString("fr-FR")} €
-          </td>
-          <td className="p-4 text-right text-amber-300">
-            {row.interet.toLocaleString("fr-FR")} €
-          </td>
-          <td className="p-4 text-right text-emerald-300">
-            {row.capital.toLocaleString("fr-FR")} €
-                 </td>
-                 <td className="p-4 text-right text-zinc-300">
-                 {row.restant.toLocaleString("fr-FR")} €
-                 </td>
-                 </tr>
-                 ))}
-                 </tbody>
-                 </table>
-                 </div>
-                </div>
+                <Input
+                  type="number"
+                  value={montant}
+                  onChange={(e) =>
+                    setMontant(
+                      Math.max(0, Math.min(2000000, Number(e.target.value) || 0))
+                    )
+                  }
+                  className="mt-4 h-12 sm:h-14 bg-white/10 border-white/10 text-white text-xl sm:text-2xl font-semibold rounded-2xl"
+                />
 
-                <div className="lg:col-span-5">
-                  <div className="lg:sticky lg:top-28 bg-gradient-to-br from-emerald-500/20 to-white/5 border border-emerald-400/20 rounded-[2rem] p-5 sm:p-7 md:p-8">
-                    <p className="text-zinc-400">Résultat estimatif</p>
-                    <p className="text-4xl sm:text-5xl md:text-6xl font-bold mt-4 break-words">
-                      {mensualite.toLocaleString("fr-FR")} €
-                      <span className="text-base text-zinc-400"> / mois</span>
-                    </p>
+                <input
+                  type="range"
+                  min={1000}
+                  max={2000000}
+                  step={1000}
+                  value={montant}
+                  onChange={(e) => setMontant(Number(e.target.value))}
+                  className="w-full accent-emerald-400 mt-5"
+                />
+              </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                        <p className="text-zinc-500 text-sm">Montant</p>
-                        <p className="font-semibold mt-1">
-                          {montant.toLocaleString("fr-FR")} €
-                        </p>
-                      </div>
-                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                        <p className="text-zinc-500 text-sm">Durée</p>
-                        <p className="font-semibold mt-1">{duree} mois</p>
-                      </div>
-                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                        <p className="text-zinc-500 text-sm">Coût total</p>
-                        <p className="font-semibold mt-1">
-                          {coutTotal.toLocaleString("fr-FR")} €
-                        </p>
-                      </div>
-                      <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                        <p className="text-zinc-500 text-sm">Intérêts</p>
-                        <p className="font-semibold text-amber-300 mt-1">
-                          {interets.toLocaleString("fr-FR")} €
-                        </p>
-                      </div>
-                    </div>
+              <div className="bg-black/20 border border-white/10 rounded-3xl p-4 sm:p-6">
+                <Label className="text-zinc-400">Durée du prêt</Label>
 
-                    <Button
-  onClick={goToApplication}
-  className="w-full min-w-0 h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-sm sm:text-base px-4 overflow-hidden"
->
-  <span className="truncate">Valider cette simulation</span>
-  <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
-</Button>
+                <Input
+                  type="number"
+                  value={duree}
+                  onChange={(e) =>
+                    setDuree(
+                      Math.max(6, Math.min(360, Number(e.target.value) || 6))
+                    )
+                  }
+                  className="mt-4 h-12 sm:h-14 bg-white/10 border-white/10 text-white text-xl sm:text-2xl font-semibold rounded-2xl"
+                />
 
-                    <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
-                      Cette simulation est indicative et ne constitue pas une offre
-                      définitive. Les conditions finales dépendent de l’analyse du dossier.
-                    </p>
+                <input
+                  type="range"
+                  min={6}
+                  max={360}
+                  step={6}
+                  value={duree}
+                  onChange={(e) => setDuree(Number(e.target.value))}
+                  className="w-full accent-emerald-400 mt-5"
+                />
+
+                <p className="text-sm text-zinc-400 mt-3">
+                  {Math.floor(duree / 12)} ans {duree % 12} mois
+                </p>
+              </div>
+            </div>
+
+            {/* MOBILE CARDS */}
+            <div className="space-y-3 md:hidden">
+              {amortissement.map((row) => (
+                <div
+                  key={row.mois}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-4"
+                >
+                  <div className="flex justify-between mb-3">
+                    <span className="text-zinc-400">Mois</span>
+                    <span className="font-semibold">{row.mois}</span>
+                  </div>
+
+                  <div className="flex justify-between mb-2">
+                    <span className="text-zinc-400">Mensualité</span>
+                    <span className="font-semibold">
+                      {row.mensualite.toLocaleString("fr-FR")} €
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between mb-2">
+                    <span className="text-zinc-400">Intérêts</span>
+                    <span className="text-amber-300">
+                      {row.interet.toLocaleString("fr-FR")} €
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between mb-2">
+                    <span className="text-zinc-400">Capital</span>
+                    <span className="text-emerald-300">
+                      {row.capital.toLocaleString("fr-FR")} €
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Restant</span>
+                    <span>{row.restant.toLocaleString("fr-FR")} €</span>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* DESKTOP TABLE */}
+            <div className="hidden md:block w-full overflow-x-auto rounded-3xl border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/10 text-zinc-400">
+                  <tr>
+                    <th className="p-4 text-left">Mois</th>
+                    <th className="p-4 text-right">Mensualité</th>
+                    <th className="p-4 text-right">Intérêts</th>
+                    <th className="p-4 text-right">Capital</th>
+                    <th className="p-4 text-right">Restant</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-white/10">
+                  {amortissement.map((row) => (
+                    <tr key={row.mois} className="hover:bg-white/5">
+                      <td className="p-4">{row.mois}</td>
+                      <td className="p-4 text-right font-semibold">
+                        {row.mensualite.toLocaleString("fr-FR")} €
+                      </td>
+                      <td className="p-4 text-right text-amber-300">
+                        {row.interet.toLocaleString("fr-FR")} €
+                      </td>
+                      <td className="p-4 text-right text-emerald-300">
+                        {row.capital.toLocaleString("fr-FR")} €
+                      </td>
+                      <td className="p-4 text-right text-zinc-300">
+                        {row.restant.toLocaleString("fr-FR")} €
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* COLONNE DROITE */}
+          <div className="xl:col-span-5">
+            <div className="xl:sticky xl:top-28 bg-gradient-to-br from-emerald-500/20 to-white/5 border border-emerald-400/20 rounded-[2rem] p-4 sm:p-7 md:p-8">
+              <p className="text-zinc-400">Résultat estimatif</p>
+
+              <p className="text-3xl sm:text-5xl md:text-6xl font-bold mt-4 break-words leading-tight">
+                {mensualite.toLocaleString("fr-FR")} €
+                <span className="text-sm sm:text-base text-zinc-400">
+                  {" "}
+                  / mois
+                </span>
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                  <p className="text-zinc-500 text-sm">Montant</p>
+                  <p className="font-semibold mt-1">
+                    {montant.toLocaleString("fr-FR")} €
+                  </p>
+                </div>
+
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                  <p className="text-zinc-500 text-sm">Durée</p>
+                  <p className="font-semibold mt-1">{duree} mois</p>
+                </div>
+
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                  <p className="text-zinc-500 text-sm">Coût total</p>
+                  <p className="font-semibold mt-1">
+                    {coutTotal.toLocaleString("fr-FR")} €
+                  </p>
+                </div>
+
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+                  <p className="text-zinc-500 text-sm">Intérêts</p>
+                  <p className="font-semibold text-amber-300 mt-1">
+                    {interets.toLocaleString("fr-FR")} €
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              <Button
+                onClick={goToApplication}
+                className="w-full h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-sm sm:text-base px-4 flex items-center justify-center gap-2"
+              >
+                <span className="truncate">Valider cette simulation</span>
+                <ArrowRight className="w-5 h-5 shrink-0" />
+              </Button>
+
+              <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
+                Cette simulation est indicative et ne constitue pas une offre
+                définitive. Les conditions finales dépendent de l’analyse du
+                dossier.
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
+      </CardContent>
+    </Card>
+  </div>
+</section>
 
       <section className="py-24 bg-[#050816]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -706,57 +762,80 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="py-24 bg-[#07111f]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <p className="text-emerald-300 font-medium mb-3">Partenaires</p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Un réseau de partenaires financiers
-            </h2>
-            <p className="text-zinc-400 mt-5 text-lg">
-              Nous travaillons avec différents acteurs bancaires, financiers et technologiques afin d’accompagner les demandes selon les profils et les projets.
-            </p>
-          </div>
+      <section className="py-24 bg-[#07111f] overflow-hidden">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center max-w-3xl mx-auto mb-14">
+      <p className="text-emerald-300 font-medium mb-3">Partenaires</p>
 
-          <div className="overflow-x-auto pb-4">
-  <div className="flex gap-4 min-w-max">
-    {[
-      { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
-      { name: "AXA Investment", logo: "/partners/axa_investment.png" },
-      { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
-      { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
-      { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
-      { name: "Natixis", logo: "/partners/natixis.png" },
-      { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
-      { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
-      { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
-      { name: "Partenaires spécialisés", logo: "" },
-    ].map((partner) => (
-      <div
-        key={partner.name}
-        className="w-56 h-28 shrink-0 bg-white/7 border border-white/10 rounded-3xl flex items-center justify-center p-5 hover:bg-white/10 transition"
-      >
-        {partner.logo ? (
-          <img
-            src={partner.logo}
-            alt={partner.name}
-            className="max-h-12 max-w-[150px] object-contain opacity-80 hover:opacity-100 transition"
-          />
-        ) : (
-          <p className="text-sm text-zinc-400 text-center font-medium">
-            {partner.name}
-          </p>
-        )}
+      <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+        Un réseau de partenaires financiers
+      </h2>
+
+      <p className="text-zinc-400 mt-5 text-lg">
+        Nous travaillons avec différents acteurs bancaires, financiers et
+        technologiques afin d’accompagner les demandes selon les profils et les
+        projets.
+      </p>
+    </div>
+
+    {/* SLIDER */}
+    <div className="relative">
+      {/* Fade gauche */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#07111f] to-transparent z-10 pointer-events-none" />
+
+      {/* Fade droite */}
+      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#07111f] to-transparent z-10 pointer-events-none" />
+
+      <div className="flex overflow-hidden">
+        <motion.div
+          className="flex gap-4 min-w-max"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{
+            repeat: Infinity,
+            ease: "linear",
+            duration: 28,
+          }}
+        >
+          {[
+            { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
+            { name: "AXA Investment", logo: "/partners/axa_investment.png" },
+            { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
+            { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
+            { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
+            { name: "Natixis", logo: "/partners/natixis.png" },
+            { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
+            { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
+            { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
+
+            /* DUPLICATION pour boucle fluide */
+            { name: "Boursorama Banque", logo: "/partners/boursorama-banque.png" },
+            { name: "AXA Investment", logo: "/partners/axa_investment.png" },
+            { name: "Banque Palatine", logo: "/partners/banque-palatine.png" },
+            { name: "Caisse d’Epargne", logo: "/partners/caisse-d-epargne.png" },
+            { name: "HSBC Bank", logo: "/partners/hsbc-bank.png" },
+            { name: "Natixis", logo: "/partners/natixis.png" },
+            { name: "BNP Paribas", logo: "/partners/bnp-paribas.png" },
+            { name: "Rothschild & Co", logo: "/partners/rothschild-co.png" },
+            { name: "Milleis Banque", logo: "/partners/milleis-banque.png" },
+          ].map((partner, index) => (
+            <div
+              key={`${partner.name}-${index}`}
+              className="w-44 sm:w-52 h-24 sm:h-28 shrink-0 bg-white/7 border border-white/10 rounded-3xl flex items-center justify-center p-5 hover:bg-white/10 transition"
+            >
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="max-h-10 sm:max-h-12 max-w-[130px] sm:max-w-[150px] object-contain opacity-80 hover:opacity-100 transition"
+              />
+            </div>
+          ))}
+        </motion.div>
       </div>
-    ))}
-  </div>
-</div>
+    </div>
 
-          <p className="text-center text-xs text-zinc-600 mt-8 max-w-3xl mx-auto">
-            Les logos et noms affichés doivent être utilisés uniquement si vous disposez d’un droit d’usage ou d’une relation vérifiable avec les entités concernées.
-          </p>
-        </div>
-      </section>
+    
+  </div>
+</section>
 
       <section className="py-24 bg-[#050816]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
