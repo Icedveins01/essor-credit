@@ -178,7 +178,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050816] text-white overflow-x-hidden">
+    <main className="min-h-screen w-full max-w-full bg-[#050816] text-white overflow-x-hidden">
       <Header />
 
       <section
@@ -247,7 +247,7 @@ export default function Page() {
             transition={{ duration: 0.7, delay: 0.15 }}
             className="lg:col-span-5"
           >
-            <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden max-w-full">
+            <Card className="w-full max-w-full bg-white/10 border-white/10 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden">
               <CardContent className="p-4 sm:p-6 md:p-10">
                 <div className="flex justify-between items-start mb-8">
                   <div>
@@ -404,14 +404,14 @@ export default function Page() {
           </div>
 
           <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden max-w-full">
-            <CardContent className="p-6 md:p-10">
+            <CardContent className="p-4 sm:p-6 md:p-10">
               <div className="grid lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-7 space-y-8">
                   <div>
                     <Label className="text-zinc-300 mb-4 block">
                       Type de financement
                     </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                     <div className="grid grid-cols-1 gap-3">
                       {services.slice(0, 6).map((service) => (
                         <button
                           key={service.title}
@@ -480,8 +480,8 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="w-full overflow-x-auto rounded-3xl border border-white/10">
-  <table className="min-w-[650px] w-full">
+                  <div className="w-full max-w-full overflow-x-auto rounded-3xl border border-white/10">
+                  <table className="min-w-[560px] w-full text-xs sm:text-sm">
                       <thead className="bg-white/10 text-zinc-400">
                         <tr>
                           <th className="p-4 text-left">Mois</th>
@@ -548,13 +548,12 @@ export default function Page() {
                     </div>
 
                     <Button
-                      onClick={goToApplication}
-                      className="w-full min-w-0 h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-sm sm:text-base px-4"
-                    >
-                      Valider cette simulation
-                      <span className="truncate">Valider cette simulation</span>
-                      <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
-                    </Button>
+  onClick={goToApplication}
+  className="w-full min-w-0 h-14 mt-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-sm sm:text-base px-4 overflow-hidden"
+>
+  <span className="truncate">Valider cette simulation</span>
+  <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
+</Button>
 
                     <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
                       Cette simulation est indicative et ne constitue pas une offre
