@@ -403,7 +403,7 @@ export default function Page() {
             </p>
           </div>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden max-w-full">
+          <Card className="w-full max-w-full bg-white/10 border-white/10 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden">
             <CardContent className="p-4 sm:p-6 md:p-10">
               <div className="grid lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-7 space-y-8">
@@ -480,38 +480,79 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="w-full max-w-full overflow-x-auto rounded-3xl border border-white/10">
-                  <table className="min-w-[560px] w-full text-xs sm:text-sm">
-                      <thead className="bg-white/10 text-zinc-400">
-                        <tr>
-                          <th className="p-4 text-left">Mois</th>
-                          <th className="p-4 text-right">Mensualité</th>
-                          <th className="p-4 text-right">Intérêts</th>
-                          <th className="p-4 text-right">Capital</th>
-                          <th className="p-4 text-right">Restant</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/10">
-                        {amortissement.map((row) => (
-                          <tr key={row.mois} className="hover:bg-white/5">
-                            <td className="p-4">{row.mois}</td>
-                            <td className="p-4 text-right font-semibold">
-                              {row.mensualite.toLocaleString("fr-FR")} €
-                            </td>
-                            <td className="p-4 text-right text-amber-300">
-                              {row.interet.toLocaleString("fr-FR")} €
-                            </td>
-                            <td className="p-4 text-right text-emerald-300">
-                              {row.capital.toLocaleString("fr-FR")} €
-                            </td>
-                            <td className="p-4 text-right text-zinc-300">
-                              {row.restant.toLocaleString("fr-FR")} €
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <div className="space-y-3 md:hidden">
+  {amortissement.map((row) => (
+    <div
+      key={row.mois}
+      className="bg-black/20 border border-white/10 rounded-2xl p-4"
+    >
+      <div className="flex justify-between mb-3">
+        <span className="text-zinc-400">Mois</span>
+        <span className="font-semibold">{row.mois}</span>
+      </div>
+
+      <div className="flex justify-between mb-2">
+        <span className="text-zinc-400">Mensualité</span>
+        <span className="font-semibold">
+          {row.mensualite.toLocaleString("fr-FR")} €
+        </span>
+      </div>
+
+      <div className="flex justify-between mb-2">
+        <span className="text-zinc-400">Intérêts</span>
+        <span className="text-amber-300">
+          {row.interet.toLocaleString("fr-FR")} €
+        </span>
+      </div>
+
+      <div className="flex justify-between mb-2">
+        <span className="text-zinc-400">Capital</span>
+        <span className="text-emerald-300">
+          {row.capital.toLocaleString("fr-FR")} €
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-zinc-400">Restant</span>
+        <span>{row.restant.toLocaleString("fr-FR")} €</span>
+      </div>
+    </div>
+  ))}
+</div>
+
+<div className="hidden md:block w-full overflow-x-auto rounded-3xl border border-white/10">
+  <table className="w-full text-sm">
+    <thead className="bg-white/10 text-zinc-400">
+      <tr>
+        <th className="p-4 text-left">Mois</th>
+        <th className="p-4 text-right">Mensualité</th>
+        <th className="p-4 text-right">Intérêts</th>
+        <th className="p-4 text-right">Capital</th>
+        <th className="p-4 text-right">Restant</th>
+      </tr>
+    </thead>
+
+    <tbody className="divide-y divide-white/10">
+      {amortissement.map((row) => (
+        <tr key={row.mois} className="hover:bg-white/5">
+          <td className="p-4">{row.mois}</td>
+          <td className="p-4 text-right font-semibold">
+            {row.mensualite.toLocaleString("fr-FR")} €
+          </td>
+          <td className="p-4 text-right text-amber-300">
+            {row.interet.toLocaleString("fr-FR")} €
+          </td>
+          <td className="p-4 text-right text-emerald-300">
+            {row.capital.toLocaleString("fr-FR")} €
+                 </td>
+                 <td className="p-4 text-right text-zinc-300">
+                 {row.restant.toLocaleString("fr-FR")} €
+                 </td>
+                 </tr>
+                 ))}
+                 </tbody>
+                 </table>
+                 </div>
                 </div>
 
                 <div className="lg:col-span-5">
