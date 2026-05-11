@@ -1,48 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { prisma } from "@/lib/prisma";
 
-const demandesPath = path.join(process.cwd(), "data", "demandes.json");
+export const runtime = "nodejs";
+
 const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-type UploadedFile = {
-  name: string;
-  url: string;
-  uploadedAt: string;
-};
-
-function readDemandes(): any[] {
-  try {
-    const data = fs.readFileSync(demandesPath, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-function writeDemandes(demandes: any[]) {
-  fs.writeFileSync(demandesPath, JSON.stringify(demandes, null, 2));
-}
 
 function cleanFileName(name: string) {
   return name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-function createTimelineEvent(
-  type: "created" | "status" | "document" | "comment" | "funding",
-  title: string,
-  description: string
-) {
-  return {
-    id: `T-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    type,
-    title,
-    description,
-    createdAt: new Date().toISOString(),
-  };
 }
 
 export async function POST(req: NextRequest) {
@@ -54,7 +23,10 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     const demandeId = formData.get("demandeId") as string;
-    const type = formData.get("type") as "contract" | "justificatifs";
+    const type = formData.get("type") as
+  | "contract_to_sign"
+  | "signed_contract"
+  | "justificatifs";
     const files = formData.getAll("files") as File[];
 
     if (!demandeId || !type || files.length === 0) {
@@ -64,21 +36,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const demandes = readDemandes();
-    const index = demandes.findIndex((d) => d.id === demandeId);
+    const demande = await prisma.demande.findUnique({
+      where: { id: demandeId },
+    });
 
-    if (index === -1) {
+    if (!demande) {
       return NextResponse.json(
         { success: false, error: "Demande introuvable" },
         { status: 404 }
       );
     }
 
-    if (!demandes[index].timeline) {
-      demandes[index].timeline = [];
-    }
-
-    const uploadedFiles: UploadedFile[] = [];
+    const uploadedFiles = [];
 
     for (const file of files) {
       const bytes = await file.arrayBuffer();
@@ -89,53 +58,60 @@ export async function POST(req: NextRequest) {
 
       fs.writeFileSync(filePath, buffer);
 
+      const url = `/uploads/${fileName}`;
+
+      const document = await prisma.document.create({
+        data: {
+          demandeId,
+          nom: file.name,
+          url,
+          type,
+        },
+      });
+
+      await prisma.timelineEvent.create({
+  data: {
+    demandeId,
+    titre:
+      type === "contract_to_sign"
+        ? "Contrat à signer déposé"
+        : type === "signed_contract"
+        ? "Contrat signé reçu"
+        : "Justificatif ajouté",
+    description:
+      type === "contract_to_sign"
+        ? `Le contrat à signer a été ajouté au dossier : ${file.name}`
+        : type === "signed_contract"
+        ? `Le contrat signé a été reçu : ${file.name}`
+        : `Nouveau justificatif ajouté au dossier : ${file.name}`,
+  },
+});
+
       uploadedFiles.push({
-        name: file.name,
-        url: `/uploads/${fileName}`,
-        uploadedAt: new Date().toISOString(),
+        id: document.id,
+        name: document.nom,
+        url: document.url,
+        type: document.type,
+        uploadedAt: document.uploadedAt.toISOString(),
       });
     }
 
-    if (type === "contract") {
-      demandes[index].signedContract = uploadedFiles[0];
-
-      demandes[index].timeline.unshift(
-        createTimelineEvent(
-          "document",
-          "Contrat signé déposé",
-          `Le contrat signé a été ajouté au dossier : ${uploadedFiles[0].name}`
-        )
-      );
-    }
-
-    if (type === "justificatifs") {
-      demandes[index].justificatifs = [
-        ...(demandes[index].justificatifs || []),
-        ...uploadedFiles,
-      ];
-
-      uploadedFiles.forEach((file) => {
-        demandes[index].timeline.unshift(
-          createTimelineEvent(
-            "document",
-            "Justificatif reçu",
-            `Nouveau justificatif ajouté : ${file.name}`
-          )
-        );
-      });
-    }
-
-    demandes[index].updatedAt = new Date().toISOString();
-
-    writeDemandes(demandes);
+    const updatedDemande = await prisma.demande.findUnique({
+      where: { id: demandeId },
+      include: {
+        client: true,
+        documents: true,
+        timeline: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
       files: uploadedFiles,
-      demande: demandes[index],
+      demande: updatedDemande,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Erreur upload serveur :", error);
 
     return NextResponse.json(
       { success: false, error: "Erreur upload serveur" },

@@ -29,6 +29,7 @@ import {
   Download,
   Landmark,
   BarChart3,
+  Upload,
 } from "lucide-react";
 
 type Statut = "En cours" | "Accepté" | "Refusé";
@@ -86,6 +87,7 @@ export default function Admin() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   const loadDemandes = async () => {
     setIsLoading(true);
@@ -195,6 +197,53 @@ export default function Admin() {
       setIsUpdating(false);
     }
   };
+
+  const uploadDocument = async (
+  event: React.ChangeEvent<HTMLInputElement>,
+  type: "contract_to_sign" | "justificatifs"
+) => {
+  if (!selectedId) {
+    alert("Sélectionnez une demande");
+    return;
+  }
+
+  const files = event.target.files;
+
+  if (!files || files.length === 0) return;
+
+  setIsUploading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("demandeId", selectedId);
+    formData.append("type", type);
+
+    Array.from(files).forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || !result.success) {
+      alert(result.error || "Erreur lors de l’upload");
+      return;
+    }
+
+    await loadDemandes();
+    alert("✅ Document ajouté avec succès !");
+  } catch (error) {
+    console.error(error);
+    alert("Erreur upload serveur");
+  } finally {
+    setIsUploading(false);
+    event.target.value = "";
+  }
+};
 
   const getBadgeClass = (statut: Statut) => {
     if (statut === "Accepté") {
@@ -530,11 +579,34 @@ export default function Admin() {
                         Documents reçus
                       </h3>
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <label className="h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
+    <Upload className="w-4 h-4" />
+    {isUploading ? "Upload..." : "Contrat à signer"}
+    <input
+      type="file"
+      className="hidden"
+      onChange={(e) => uploadDocument(e, "contract_to_sign")}
+    />
+  </label>
+
+  <label className="h-12 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
+    <Upload className="w-4 h-4" />
+    Ajouter document reçu
+    <input
+      type="file"
+      multiple
+      className="hidden"
+      onChange={(e) => uploadDocument(e, "justificatifs")}
+    />
+  </label>
+</div>
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-4 bg-white/5 rounded-2xl p-4">
                           <div>
                             <p className="text-sm font-medium">
-                              Contrat signé
+                              Contrat à signer
                             </p>
                             <p className="text-xs text-zinc-500">
                               {signedContract?.name || "Non reçu"}

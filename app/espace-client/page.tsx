@@ -59,6 +59,7 @@ type Demande = {
   statut: Statut;
   commentaire?: string;
   isIndependant?: boolean;
+  contractToSign?: UploadedFile;
   signedContract?: UploadedFile;
   justificatifs: UploadedFile[];
   timeline?: TimelineEvent[];
@@ -87,6 +88,11 @@ export default function EspaceClient() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [resetEmail, setResetEmail] = useState("");
+  const [showReset, setShowReset] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
   const [currentClient, setCurrentClient] = useState<ClientAccount | null>(null);
 
   const [demandes, setDemandes] = useState<Demande[]>([]);
@@ -103,61 +109,48 @@ export default function EspaceClient() {
   const signedInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-  const savedClient = localStorage.getItem("currentClient");
+    const savedClient = sessionStorage.getItem("currentClient");
 
-  if (savedClient) {
-    const parsedClient = JSON.parse(savedClient);
+    if (savedClient) {
+      const parsedClient = JSON.parse(savedClient);
 
-    const lastActivity = localStorage.getItem("lastActivity");
-    const now = Date.now();
+      const lastActivity = sessionStorage.getItem("lastActivity");
+      const now = Date.now();
 
-    // 30 min = 1800000 ms
-    if (
-      lastActivity &&
-      now - parseInt(lastActivity, 10) > 1800000
-    ) {
-      localStorage.removeItem("currentClient");
-      localStorage.removeItem("lastActivity");
+      if (lastActivity && now - parseInt(lastActivity, 10) > 300000) {
+        sessionStorage.removeItem("currentClient");
+        sessionStorage.removeItem("lastActivity");
+        return;
+      }
+
+      setCurrentClient(parsedClient);
+      setIsLoggedIn(true);
+      setEmail(parsedClient.email);
+      sessionStorage.setItem("lastActivity", now.toString());
       return;
     }
 
-    setCurrentClient(parsedClient);
-    setIsLoggedIn(true);
-    setEmail(parsedClient.email);
+    const savedEmail = localStorage.getItem("currentClientEmail");
 
-    localStorage.setItem("lastActivity", now.toString());
-    return;
-  }
+    if (savedEmail) {
+      const clients = JSON.parse(localStorage.getItem("clients") || "[]");
 
-  const savedEmail = localStorage.getItem("currentClientEmail");
-
-  if (savedEmail) {
-    const clients = JSON.parse(localStorage.getItem("clients") || "[]");
-
-    const found = clients.find(
-      (c: ClientAccount) =>
-        c.email.toLowerCase() === savedEmail.toLowerCase()
-    );
-
-    if (found) {
-      setCurrentClient(found);
-      setIsLoggedIn(true);
-      setEmail(found.email);
-
-      localStorage.setItem(
-        "currentClient",
-        JSON.stringify(found)
+      const found = clients.find(
+        (c: ClientAccount) =>
+          c.email.toLowerCase() === savedEmail.toLowerCase()
       );
 
-      localStorage.setItem(
-        "lastActivity",
-        Date.now().toString()
-      );
+      if (found) {
+        setCurrentClient(found);
+        setIsLoggedIn(true);
+        setEmail(found.email);
 
-      localStorage.removeItem("currentClientEmail");
+        sessionStorage.setItem("currentClient", JSON.stringify(found));
+        sessionStorage.setItem("lastActivity", Date.now().toString());
+        localStorage.removeItem("currentClientEmail");
+      }
     }
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn || !currentClient?.email) return;
@@ -218,10 +211,14 @@ export default function EspaceClient() {
               }
 
               if (
-                (newDemande.justificatifs?.length || 0) >
-                (oldDemande.justificatifs?.length || 0)
+                !oldDemande.contractToSign &&
+                newDemande.contractToSign
               ) {
-                setNotifications((n) => ["Nouveau document ajouté", ...n]);
+                setNotifications((n) => [
+                  "Un contrat à signer est disponible",
+                  ...n,
+                ]);
+
                 markAsNew();
               }
 
@@ -231,6 +228,14 @@ export default function EspaceClient() {
                   ...n,
                 ]);
 
+                markAsNew();
+              }
+
+              if (
+                (newDemande.justificatifs?.length || 0) >
+                (oldDemande.justificatifs?.length || 0)
+              ) {
+                setNotifications((n) => ["Nouveau document ajouté", ...n]);
                 markAsNew();
               }
             });
@@ -249,16 +254,15 @@ export default function EspaceClient() {
 
     loadDemandes();
 
-const interval = setInterval(loadDemandes, 3000);
+    const interval = setInterval(loadDemandes, 3000);
 
-return () => clearInterval(interval);
-
-}, [isLoggedIn, currentClient, selectedDemandeId]);
+    return () => clearInterval(interval);
+  }, [isLoggedIn, currentClient, selectedDemandeId]);
 
   useEffect(() => {
     const updateActivity = () => {
       if (isLoggedIn) {
-        localStorage.setItem("lastActivity", Date.now().toString());
+        sessionStorage.setItem("lastActivity", Date.now().toString());
       }
     };
 
@@ -276,68 +280,168 @@ return () => clearInterval(interval);
   }, [isLoggedIn]);
 
   useEffect(() => {
-  if (!isLoggedIn) return;
+    if (!isLoggedIn) return;
 
-  const checkInactivity = () => {
-    const lastActivity = localStorage.getItem("lastActivity");
+    const checkInactivity = () => {
+      const lastActivity = sessionStorage.getItem("lastActivity");
 
-    if (!lastActivity) return;
+      if (!lastActivity) return;
 
-    const now = Date.now();
-    const inactiveTime = now - parseInt(lastActivity, 10);
+      const now = Date.now();
+      const inactiveTime = now - parseInt(lastActivity, 10);
 
-    // Déconnexion après 30 min
-    if (inactiveTime > 1800000) {
-      logout();
+      if (inactiveTime > 300000) {
+        logout();
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 60000);
+
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
+  const resetAccessCode = async () => {
+  const emailToReset = resetEmail || email;
+
+  if (!emailToReset.trim()) {
+    alert("Veuillez entrer votre adresse email.");
+    return;
+  }
+
+  setIsResetting(true);
+
+  try {
+    const res = await fetch("/api/client/reset-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: emailToReset.toLowerCase().trim(),
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || !result.success) {
+      alert(result.error || "Impossible de générer un nouveau code.");
+      return;
     }
-  };
 
-  const interval = setInterval(checkInactivity, 60000);
+    const clients = JSON.parse(localStorage.getItem("clients") || "[]");
 
-return () => clearInterval(interval);
-
-}, [isLoggedIn]);
-
-const login = () => {
-  const clients = JSON.parse(localStorage.getItem("clients") || "[]");
-
-  const found = clients.find(
-    (c: ClientAccount) =>
-      c.email.toLowerCase() === email.toLowerCase() &&
-      c.password === password
-  );
-
-  if (found) {
-    setCurrentClient(found);
-    setIsLoggedIn(true);
-
-    localStorage.setItem(
-      "currentClient",
-      JSON.stringify(found)
+    const updatedClients = clients.map((c: ClientAccount) =>
+      c.email.toLowerCase() === emailToReset.toLowerCase()
+        ? { ...c, password: result.accessCode }
+        : c
     );
 
-    localStorage.setItem(
-      "lastActivity",
-      Date.now().toString()
+    localStorage.setItem("clients", JSON.stringify(updatedClients));
+
+    alert(
+      `Nouveau code d’accès généré.\n\nEmail : ${emailToReset}\nNouveau code : ${result.accessCode}\n\nConservez ce code pour vous connecter.`
     );
-  } else {
-    alert("Email ou mot de passe incorrect");
+
+    setEmail(emailToReset.toLowerCase().trim());
+    setPassword(result.accessCode);
+    setShowReset(false);
+  } catch (error) {
+    console.error(error);
+    alert("Erreur de connexion au serveur.");
+  } finally {
+    setIsResetting(false);
   }
 };
 
-  const logout = () => {
-  localStorage.removeItem("currentClient");
-  localStorage.removeItem("lastActivity");
+ const login = async () => {
 
-  setIsLoggedIn(false);
-  setCurrentClient(null);
-  setEmail("");
-  setPassword("");
-  setDemandes([]);
-  setNotifications([]);
-  setHasNewUpdate(false);
-  setNewUpdateIds([]);
+  if (!email.trim() || !password.trim()) {
+
+    alert("Veuillez entrer votre email et votre code d’accès.");
+
+    return;
+
+  }
+
+  try {
+
+    const res = await fetch("/api/client/login", {
+
+      method: "POST",
+
+      headers: {
+
+        "Content-Type": "application/json",
+
+      },
+
+      body: JSON.stringify({
+
+        email: email.toLowerCase().trim(),
+
+        password: password.trim(),
+
+      }),
+
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || !result.success) {
+
+      alert(result.error || "Email ou code d’accès incorrect");
+
+      return;
+
+    }
+
+    const client = {
+
+      email: result.client.email,
+
+      password: password.trim(),
+
+      nom: result.client.nom,
+
+      prenom: result.client.prenom,
+
+      telephone: result.client.telephone || "",
+
+    };
+
+    setCurrentClient(client);
+
+    setIsLoggedIn(true);
+
+    sessionStorage.setItem("currentClient", JSON.stringify(client));
+
+    sessionStorage.setItem("lastActivity", Date.now().toString());
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Erreur de connexion au serveur.");
+
+  }
+
 };
+
+  const logout = () => {
+    sessionStorage.removeItem("currentClient");
+    sessionStorage.removeItem("lastActivity");
+
+    setIsLoggedIn(false);
+    setCurrentClient(null);
+    setEmail("");
+    setPassword("");
+    setDemandes([]);
+    setNotifications([]);
+    setHasNewUpdate(false);
+    setNewUpdateIds([]);
+  };
+
+
 
   const selectedDemande =
     demandes.find((d) => d.id === selectedDemandeId) || demandes[0];
@@ -372,86 +476,196 @@ const login = () => {
 
   const formatDate = (date?: string) => {
     if (!date) return "—";
-
     return new Date(date).toLocaleDateString("fr-FR");
   };
 
+  const formatDateTime = (date?: string) => {
+    if (!date) return "—";
+
+    return new Date(date).toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const getRequiredDocuments = (isIndependant?: boolean) => {
-  if (isIndependant) {
+    if (isIndependant) {
+      return {
+        essentiels: [
+          "Pièce d'identité",
+          "Relevé d'identité bancaire (RIB / IBAN)",
+          "Justificatif d’activité (registre, SIRET, ou équivalent)",
+          "Relevés bancaires 3 mois",
+        ],
+        secondaires: [
+          "Avis d'imposition",
+          "Liasse fiscale",
+          "Attestation URSSAF",
+          "Justificatif domicile",
+        ],
+      };
+    }
+
     return {
       essentiels: [
         "Pièce d'identité",
         "Relevé d'identité bancaire (RIB / IBAN)",
-        "Justificatif d’activité (registre, SIRET, ou équivalent)",
+        "3 dernières fiches de paie ou avis de retraite",
         "Relevés bancaires 3 mois",
       ],
-      secondaires: [
-        "Avis d'imposition",
-        "Liasse fiscale",
-        "Attestation URSSAF",
-        "Justificatif domicile",
-      ],
+      secondaires: ["Avis d'imposition", "Justificatif domicile"],
     };
-  }
-
-  return {
-    essentiels: [
-      "Pièce d'identité",
-      "Relevé d'identité bancaire (RIB / IBAN)",
-      "3 dernières fiches de paie ou avis de retraite",
-      "Relevés bancaires 3 mois",
-    ],
-    secondaires: [
-      "Avis d'imposition",
-      "Justificatif domicile",
-    ],
   };
-};
+
+  const hasEssentialDocs = (demande?: Demande) => {
+    if (!demande?.justificatifs?.length) return false;
+
+    const names = demande.justificatifs
+      .map((file) => file.name.toLowerCase())
+      .join(" ");
+
+    const hasIdentity =
+      names.includes("ident") ||
+      names.includes("passport") ||
+      names.includes("cni");
+
+    const hasBank =
+      names.includes("rib") ||
+      names.includes("iban") ||
+      names.includes("bank");
+
+    const hasIncome =
+      names.includes("paie") ||
+      names.includes("salaire") ||
+      names.includes("retraite") ||
+      names.includes("bulletin") ||
+      names.includes("revenu") ||
+      names.includes("urssaf") ||
+      names.includes("siret");
+
+    const hasStatements = names.includes("relev") || names.includes("compte");
+
+    return hasIdentity && hasBank && hasIncome && hasStatements;
+  };
+
+  const getMissingEssentialDocs = (demande?: Demande) => {
+    if (!demande) return [];
+
+    const uploadedNames =
+      demande.justificatifs?.map((file) => file.name.toLowerCase()) || [];
+
+    const essentiels = getRequiredDocuments(demande.isIndependant).essentiels;
+
+    return essentiels.filter((doc) => {
+      const lowerDoc = doc.toLowerCase();
+
+      if (lowerDoc.includes("pièce") || lowerDoc.includes("identité")) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("ident") ||
+            name.includes("passport") ||
+            name.includes("cni")
+        );
+      }
+
+      if (lowerDoc.includes("rib") || lowerDoc.includes("iban")) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("rib") ||
+            name.includes("iban") ||
+            name.includes("bank")
+        );
+      }
+
+      if (
+        lowerDoc.includes("paie") ||
+        lowerDoc.includes("retraite") ||
+        lowerDoc.includes("revenu") ||
+        lowerDoc.includes("urssaf")
+      ) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("paie") ||
+            name.includes("salaire") ||
+            name.includes("retraite") ||
+            name.includes("revenu") ||
+            name.includes("urssaf")
+        );
+      }
+
+      if (lowerDoc.includes("relevé")) {
+        return !uploadedNames.some(
+          (name) => name.includes("relev") || name.includes("compte")
+        );
+      }
+
+      return true;
+    });
+  };
 
   const getProgressPercent = (demande?: Demande) => {
-  if (!demande) return 0;
+    if (!demande) return 0;
 
-  let progress = 10; // dossier créé
+    let progress = 10;
 
-  if (demande.statut === "En cours") {
-    progress = 35;
-  }
+    if (demande.statut === "En cours") {
+      progress = 35;
+    }
 
-  if (demande.commentaire?.trim()) {
-    progress += 10;
-  }
+    if (demande.commentaire?.trim()) {
+      progress += 10;
+    }
 
-  if (demande.statut === "Accepté") {
-    progress = 60;
-  }
+    if (demande.statut === "Accepté") {
+      progress = 60;
+    }
 
-  if (demande.signedContract) {
-    progress += 20;
-  }
+    if (demande.contractToSign) {
+      progress += 10;
+    }
 
-  const requiredDocs = getRequiredDocuments(
-  demande.isIndependant
-).essentiels.length;
+    if (demande.signedContract) {
+      progress += 15;
+    }
 
-  const uploadedDocs = demande.justificatifs?.length || 0;
+    const requiredDocs = getRequiredDocuments(demande.isIndependant).essentiels
+      .length;
 
-  if (requiredDocs > 0) {
-    progress += Math.min(
-      20,
-      Math.round((uploadedDocs / requiredDocs) * 20)
-    );
-  }
+    const uploadedDocs = demande.justificatifs?.length || 0;
 
-  if (demande.statut === "Refusé") {
-    progress = 100;
-  }
+    if (requiredDocs > 0) {
+      progress += Math.min(15, Math.round((uploadedDocs / requiredDocs) * 15));
+    }
 
-  return Math.min(progress, 100);
-};
+    if (demande.statut === "Refusé") {
+      progress = 100;
+    }
+
+    return Math.min(progress, 100);
+  };
+
+  const missingEssentialDocs = getMissingEssentialDocs(selectedDemande);
+  const missingDocsCount = missingEssentialDocs.length;
+
+  const requiredDocsCount = selectedDemande
+    ? getRequiredDocuments(selectedDemande.isIndependant).essentiels.length
+    : 0;
+
+  const uploadedDocsCount = selectedDemande?.justificatifs?.length || 0;
+
+  const isAdministrativelyComplete =
+    selectedDemande?.statut === "Accepté" &&
+    !!selectedDemande?.signedContract &&
+    hasEssentialDocs(selectedDemande);
+
+  const progressPercent = getProgressPercent(selectedDemande);
 
   const handleFileUpload = async (
     demandeId: string,
-    type: "contract" | "justificatifs",
+    type: "signed_contract" | "justificatifs",
     files: FileList
   ) => {
     if (!demandeId || files.length === 0) return;
@@ -480,12 +694,18 @@ const login = () => {
         return;
       }
 
-      setDemandes((prev) =>
-        prev.map((d) => (d.id === demandeId ? result.demande : d))
+      const refreshed = await fetch("/api/demandes", { cache: "no-store" });
+      const allDemandes = await refreshed.json();
+
+      const userDemandes = allDemandes.filter(
+        (d: Demande) =>
+          d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
       );
 
+      setDemandes(userDemandes);
+
       setNotifications((n) => [
-        type === "contract"
+        type === "signed_contract"
           ? "Contrat signé envoyé avec succès"
           : `${files.length} document(s) envoyé(s) avec succès`,
         ...n,
@@ -507,14 +727,13 @@ const login = () => {
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
     setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
   const handleDrop = (
     e: React.DragEvent,
     demandeId: string,
-    type: "contract" | "justificatifs"
+    type: "signed_contract" | "justificatifs"
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -526,97 +745,235 @@ const login = () => {
     }
   };
 
-  const downloadContract = (id: string) => {
-    alert(`📄 Téléchargement du contrat ${id}.pdf lancé...`);
+  const downloadContract = (url?: string) => {
+    if (!url) {
+      alert("Aucun contrat disponible pour le moment.");
+      return;
+    }
+
+    window.open(url, "_blank");
   };
 
-  const formatDateTime = (date?: string) => {
-  if (!date) return "—";
+    const buildTimeline = (demande?: Demande) => {
+    if (!demande) return [];
 
-  return new Date(date).toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+    const getIcon = (type: TimelineEvent["type"]) => {
+      if (type === "created") return CheckCircle;
 
-const buildTimeline = (demande?: Demande) => {
-  if (!demande) return [];
+      if (type === "status") {
+        if (demande.statut === "Accepté") return CircleCheck;
+        if (demande.statut === "Refusé") return CircleX;
+        return Clock;
+      }
 
-  const getIcon = (type: TimelineEvent["type"]) => {
-    if (type === "created") return CheckCircle;
-    if (type === "status") {
-      if (demande.statut === "Accepté") return CircleCheck;
-      if (demande.statut === "Refusé") return CircleX;
+      if (type === "document") return FileText;
+      if (type === "comment") return MessageSquare;
+      if (type === "funding") return Landmark;
+
       return Clock;
-    }
-    if (type === "document") return FileText;
-    if (type === "comment") return MessageSquare;
-    if (type === "funding") return Landmark;
-    return Clock;
-  };
+    };
 
-  const getColor = (type: TimelineEvent["type"]) => {
-    if (type === "created") return "emerald";
-    if (type === "status") {
-      if (demande.statut === "Accepté") return "emerald";
-      if (demande.statut === "Refusé") return "red";
+    const getColor = (type: TimelineEvent["type"]) => {
+      if (type === "created") return "emerald";
+
+      if (type === "status") {
+        if (demande.statut === "Accepté") return "emerald";
+        if (demande.statut === "Refusé") return "red";
+        return "amber";
+      }
+
+      if (type === "document") return "emerald";
+      if (type === "comment") return "cyan";
+      if (type === "funding") return "emerald";
+
       return "amber";
-    }
-    if (type === "document") return "emerald";
-    if (type === "comment") return "cyan";
-    if (type === "funding") return "emerald";
-    return "amber";
-  };
+    };
 
-  if (demande.timeline && demande.timeline.length > 0) {
-    const apiEvents = [...demande.timeline]
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime()
-      )
-      .map((event) => ({
-        title: event.title,
-        desc: event.description,
-        date: formatDateTime(event.createdAt),
+    if (demande.timeline && demande.timeline.length > 0) {
+      const apiEvents = [...demande.timeline]
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime()
+        )
+        .map((event) => ({
+          title: event.title,
+          desc: event.description,
+          date: formatDateTime(event.createdAt),
+          done: true,
+          active: false,
+          icon: getIcon(event.type),
+          color: getColor(event.type),
+        }));
+
+      const extraEvents = [];
+
+      if (demande.statut === "Accepté" && !demande.contractToSign) {
+        extraEvents.push({
+          title: "Contrat à signer",
+          desc: "Votre contrat à signer n’est pas encore disponible.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: FileText,
+          color: "amber",
+        });
+      }
+
+      if (demande.contractToSign) {
+        extraEvents.push({
+          title: "Contrat à signer disponible",
+          desc: demande.contractToSign.name,
+          date: formatDateTime(demande.contractToSign.uploadedAt),
+          done: true,
+          active: false,
+          icon: FileText,
+          color: "emerald",
+        });
+      }
+
+      if (demande.statut === "Accepté" && !demande.signedContract) {
+        extraEvents.push({
+          title: "Signature du contrat",
+          desc: "Contrat en attente de signature et de dépôt.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: FileText,
+          color: "amber",
+        });
+      }
+
+      if (demande.signedContract) {
+        extraEvents.push({
+          title: "Contrat signé reçu",
+          desc: demande.signedContract.name,
+          date: formatDateTime(demande.signedContract.uploadedAt),
+          done: true,
+          active: false,
+          icon: FileText,
+          color: "emerald",
+        });
+      }
+
+      if (demande.justificatifs?.length > 0) {
+        demande.justificatifs.forEach((file, index) => {
+          extraEvents.push({
+            title: `Justificatif reçu ${index + 1}`,
+            desc: file.name,
+            date: formatDateTime(file.uploadedAt),
+            done: true,
+            active: false,
+            icon: FileText,
+            color: "emerald",
+          });
+        });
+      } else if (demande.statut === "Accepté") {
+        extraEvents.push({
+          title: "Justificatifs",
+          desc: "Aucun justificatif reçu pour le moment.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: CalendarClock,
+          color: "amber",
+        });
+      }
+
+      return [...apiEvents, ...extraEvents];
+    }
+
+    const events = [
+      {
+        title: "Demande reçue",
+        desc: "Votre demande de financement a été enregistrée avec succès.",
+        date: formatDateTime(demande.createdAt),
         done: true,
         active: false,
-        icon: getIcon(event.type),
-        color: getColor(event.type),
-      }));
-
-    const extraEvents = [];
-
-    if (demande.statut === "Accepté" && !demande.signedContract) {
-      extraEvents.push({
-        title: "Signature du contrat",
-        desc: "Contrat en attente de signature et de dépôt.",
-        date: "En attente",
-        done: false,
-        active: true,
-        icon: FileText,
+        icon: CheckCircle,
+        color: "emerald",
+      },
+      {
+        title: "Analyse du dossier",
+        desc:
+          demande.statut === "En cours"
+            ? "Votre dossier est en cours d’analyse par notre service."
+            : "L’analyse préliminaire de votre dossier est terminée.",
+        date: formatDateTime(demande.updatedAt || demande.createdAt),
+        done: demande.statut !== "En cours",
+        active: demande.statut === "En cours",
+        icon: Clock,
         color: "amber",
+      },
+    ];
+
+    if (demande.commentaire) {
+      events.push({
+        title: "Message conseiller",
+        desc: demande.commentaire,
+        date: formatDateTime(demande.updatedAt || demande.createdAt),
+        done: true,
+        active: false,
+        icon: MessageSquare,
+        color: "cyan",
       });
     }
 
-    if (demande.signedContract) {
-      extraEvents.push({
-        title: "Contrat signé reçu",
-        desc: demande.signedContract.name,
-        date: formatDateTime(demande.signedContract.uploadedAt),
+    if (demande.statut === "Accepté") {
+      events.push({
+        title: "Décision favorable",
+        desc: "Votre demande a été acceptée. Vous pouvez maintenant poursuivre les étapes de signature et de dépôt documentaire.",
+        date: formatDateTime(demande.updatedAt || demande.createdAt),
         done: true,
         active: false,
-        icon: FileText,
+        icon: CircleCheck,
         color: "emerald",
+      });
+
+      events.push({
+        title: "Contrat à signer",
+        desc: demande.contractToSign
+          ? `Contrat disponible : ${demande.contractToSign.name}`
+          : "Votre contrat à signer n’est pas encore disponible.",
+        date: demande.contractToSign
+          ? formatDateTime(demande.contractToSign.uploadedAt)
+          : "En attente",
+        done: !!demande.contractToSign,
+        active: !demande.contractToSign,
+        icon: FileText,
+        color: demande.contractToSign ? "emerald" : "amber",
+      });
+
+      events.push({
+        title: "Signature du contrat",
+        desc: demande.signedContract
+          ? `Contrat signé reçu : ${demande.signedContract.name}`
+          : "Contrat en attente de signature et de dépôt.",
+        date: demande.signedContract
+          ? formatDateTime(demande.signedContract.uploadedAt)
+          : "En attente",
+        done: !!demande.signedContract,
+        active: !demande.signedContract,
+        icon: FileText,
+        color: demande.signedContract ? "emerald" : "amber",
+      });
+    }
+
+    if (demande.statut === "Refusé") {
+      events.push({
+        title: "Décision défavorable",
+        desc: "Votre demande n’a pas été retenue après analyse.",
+        date: formatDateTime(demande.updatedAt || demande.createdAt),
+        done: true,
+        active: false,
+        icon: CircleX,
+        color: "red",
       });
     }
 
     if (demande.justificatifs?.length > 0) {
       demande.justificatifs.forEach((file, index) => {
-        extraEvents.push({
+        events.push({
           title: `Justificatif reçu ${index + 1}`,
           desc: file.name,
           date: formatDateTime(file.uploadedAt),
@@ -627,7 +984,7 @@ const buildTimeline = (demande?: Demande) => {
         });
       });
     } else if (demande.statut === "Accepté") {
-      extraEvents.push({
+      events.push({
         title: "Justificatifs",
         desc: "Aucun justificatif reçu pour le moment.",
         date: "En attente",
@@ -638,111 +995,10 @@ const buildTimeline = (demande?: Demande) => {
       });
     }
 
-    return [...apiEvents, ...extraEvents];
-  }
+    return events;
+  };
 
-  const events = [
-    {
-      title: "Demande reçue",
-      desc: "Votre demande de financement a été enregistrée avec succès.",
-      date: formatDateTime(demande.createdAt),
-      done: true,
-      active: false,
-      icon: CheckCircle,
-      color: "emerald",
-    },
-    {
-      title: "Analyse du dossier",
-      desc:
-        demande.statut === "En cours"
-          ? "Votre dossier est en cours d’analyse par notre service."
-          : "L’analyse préliminaire de votre dossier est terminée.",
-      date: formatDateTime(demande.updatedAt || demande.createdAt),
-      done: demande.statut !== "En cours",
-      active: demande.statut === "En cours",
-      icon: Clock,
-      color: "amber",
-    },
-  ];
-
-  if (demande.commentaire) {
-    events.push({
-      title: "Message conseiller",
-      desc: demande.commentaire,
-      date: formatDateTime(demande.updatedAt || demande.createdAt),
-      done: true,
-      active: false,
-      icon: MessageSquare,
-      color: "cyan",
-    });
-  }
-
-  if (demande.statut === "Accepté") {
-    events.push({
-      title: "Décision favorable",
-      desc: "Votre demande a été acceptée. Vous pouvez maintenant poursuivre les étapes de signature et de dépôt documentaire.",
-      date: formatDateTime(demande.updatedAt || demande.createdAt),
-      done: true,
-      active: false,
-      icon: CircleCheck,
-      color: "emerald",
-    });
-  }
-
-  if (demande.statut === "Refusé") {
-    events.push({
-      title: "Décision défavorable",
-      desc: "Votre demande n’a pas été retenue après analyse.",
-      date: formatDateTime(demande.updatedAt || demande.createdAt),
-      done: true,
-      active: false,
-      icon: CircleX,
-      color: "red",
-    });
-  }
-
-  if (demande.statut === "Accepté") {
-    events.push({
-      title: "Signature du contrat",
-      desc: demande.signedContract
-        ? `Contrat signé reçu : ${demande.signedContract.name}`
-        : "Contrat en attente de signature et de dépôt.",
-      date: demande.signedContract
-        ? formatDateTime(demande.signedContract.uploadedAt)
-        : "En attente",
-      done: !!demande.signedContract,
-      active: !demande.signedContract,
-      icon: FileText,
-      color: demande.signedContract ? "emerald" : "amber",
-    });
-  }
-
-  if (demande.justificatifs?.length > 0) {
-    demande.justificatifs.forEach((file, index) => {
-      events.push({
-        title: `Justificatif reçu ${index + 1}`,
-        desc: file.name,
-        date: formatDateTime(file.uploadedAt),
-        done: true,
-        active: false,
-        icon: FileText,
-        color: "emerald",
-      });
-    });
-  } else if (demande.statut === "Accepté") {
-    events.push({
-      title: "Justificatifs",
-      desc: "Aucun justificatif reçu pour le moment.",
-      date: "En attente",
-      done: false,
-      active: true,
-      icon: CalendarClock,
-      color: "amber",
-    });
-  }
-
-  return events;
-};
+  const timeline = buildTimeline(selectedDemande);
 
   if (!isLoggedIn) {
     return (
@@ -781,11 +1037,45 @@ const buildTimeline = (demande?: Demande) => {
 
               <Input
                 type="password"
-                placeholder="Mot de passe"
+                placeholder="Mot de passe / Code d’accès"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-14 bg-white/10 border-white/10 text-white placeholder:text-zinc-500 rounded-2xl"
               />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setResetEmail(email);
+                  setShowReset(!showReset);
+                }}
+                className="text-sm text-emerald-300 hover:text-emerald-200 text-left"
+              >
+                Code d’accès oublié ?
+              </button>
+
+              {showReset && (
+                <div className="bg-black/20 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-sm text-zinc-400">
+                    Entrez votre email pour générer un nouveau code d’accès.
+                  </p>
+
+                  <Input
+                    placeholder="Votre email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="h-12 bg-white/10 border-white/10 text-white placeholder:text-zinc-500 rounded-2xl"
+                  />
+
+                  <Button
+                    onClick={resetAccessCode}
+                    disabled={isResetting}
+                    className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-2xl"
+                  >
+                    {isResetting ? "Génération..." : "Générer un nouveau code"}
+                  </Button>
+                </div>
+              )}
 
               <Button
                 onClick={login}
@@ -805,131 +1095,7 @@ const buildTimeline = (demande?: Demande) => {
     );
   }
 
-  const timeline = buildTimeline(selectedDemande);
-  const progressPercent = getProgressPercent(selectedDemande);
- const requiredDocsCount = selectedDemande
-  ? getRequiredDocuments(selectedDemande.isIndependant).essentiels.length
-  : 0;
-
-const uploadedDocsCount =
-  selectedDemande?.justificatifs?.length || 0;
-
-const hasEssentialDocs = (demande?: Demande) => {
-  if (!demande?.justificatifs?.length) return false;
-
-  const names = demande.justificatifs
-    .map((file) => file.name.toLowerCase())
-    .join(" ");
-
-  const hasIdentity =
-    names.includes("ident") ||
-    names.includes("passport") ||
-    names.includes("cni");
-
-  const hasBank =
-    names.includes("rib") ||
-    names.includes("iban") ||
-    names.includes("bank");
-
-  const hasIncome =
-    names.includes("paie") ||
-    names.includes("salaire") ||
-    names.includes("retraite") ||
-    names.includes("bulletin") ||
-    names.includes("revenu") ||
-    names.includes("urssaf") ||
-    names.includes("siret");
-
-  const hasStatements =
-    names.includes("relev") ||
-    names.includes("compte");
-
-  return hasIdentity && hasBank && hasIncome && hasStatements;
-};
-
-const isAdministrativelyComplete =
-  selectedDemande?.statut === "Accepté" &&
-  !!selectedDemande?.signedContract &&
-  hasEssentialDocs(selectedDemande);
-
-const getMissingEssentialDocs = (demande?: Demande) => {
-  if (!demande) return [];
-
-  const uploadedNames =
-    demande.justificatifs?.map((file) =>
-      file.name.toLowerCase()
-    ) || [];
-
-  const essentiels = getRequiredDocuments(
-    demande.isIndependant
-  ).essentiels;
-
-  return essentiels.filter((doc) => {
-    const lowerDoc = doc.toLowerCase();
-
-    if (
-      lowerDoc.includes("pièce") ||
-      lowerDoc.includes("identité")
-    ) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("ident") ||
-          name.includes("passport") ||
-          name.includes("cni")
-      );
-    }
-
-    if (
-      lowerDoc.includes("rib") ||
-      lowerDoc.includes("iban")
-    ) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("rib") ||
-          name.includes("iban") ||
-          name.includes("bank")
-      );
-    }
-
-    if (
-      lowerDoc.includes("paie") ||
-      lowerDoc.includes("retraite") ||
-      lowerDoc.includes("revenu") ||
-      lowerDoc.includes("urssaf")
-    ) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("paie") ||
-          name.includes("salaire") ||
-          name.includes("retraite") ||
-          name.includes("revenu") ||
-          name.includes("urssaf")
-      );
-    }
-
-    if (lowerDoc.includes("relevé")) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("relev") ||
-          name.includes("compte")
-      );
-    }
-
-    return true;
-  });
-};
-
-const missingEssentialDocs =
-  getMissingEssentialDocs(selectedDemande);
-
-const missingDocsCount = missingEssentialDocs.length;
-
-const isReadyForFunding =
-  selectedDemande?.statut === "Accepté" &&
-  !!selectedDemande?.signedContract &&
-  missingDocsCount === 0;
-
-  return (
+    return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#10b98122,transparent_35%),radial-gradient(circle_at_bottom_right,#2563eb22,transparent_40%)]" />
 
@@ -1110,277 +1276,284 @@ const isReadyForFunding =
         </div>
 
         {demandes.length === 0 ? (
-  <Card className="bg-white/10 border-white/10 rounded-[2rem]">
-    <CardContent className="p-12 text-center">
-      <Wallet className="w-14 h-14 mx-auto text-zinc-500 mb-5" />
-      <p className="text-2xl font-semibold">Aucune demande trouvée</p>
-      <p className="text-zinc-400 mt-2">
-        Vos demandes apparaîtront ici après validation du formulaire.
-      </p>
-    </CardContent>
-  </Card>
-) : (
-  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <div className="lg:col-span-4 space-y-4">
-      <h2 className="text-2xl font-semibold mb-4">Mes dossiers</h2>
+          <Card className="bg-white/10 border-white/10 rounded-[2rem]">
+            <CardContent className="p-12 text-center">
+              <Wallet className="w-14 h-14 mx-auto text-zinc-500 mb-5" />
+              <p className="text-2xl font-semibold">Aucune demande trouvée</p>
+              <p className="text-zinc-400 mt-2">
+                Vos demandes apparaîtront ici après validation du formulaire.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-4 space-y-4">
+              <h2 className="text-2xl font-semibold mb-4">Mes dossiers</h2>
 
-      {demandes.map((d) => (
-        <motion.button
-          key={d.id}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={() => {
-            setSelectedDemandeId(d.id);
+              {demandes.map((d) => (
+                <motion.button
+                  key={d.id}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => {
+                    setSelectedDemandeId(d.id);
 
-            setNewUpdateIds((ids) => ids.filter((id) => id !== d.id));
+                    setNewUpdateIds((ids) =>
+                      ids.filter((id) => id !== d.id)
+                    );
 
-            if (newUpdateIds.length <= 1) {
-              setHasNewUpdate(false);
-            }
-          }}
-          className={`w-full text-left rounded-[1.75rem] p-5 border transition-all ${
-            selectedDemande?.id === d.id
-              ? "bg-white/15 border-emerald-400/40"
-              : "bg-white/7 border-white/10 hover:bg-white/10"
-          }`}
-        >
-          <div className="flex justify-between items-start gap-4">
-            <div>
-              <p className="font-mono text-xs text-zinc-500">{d.id}</p>
-              <p className="text-lg font-semibold mt-1">{d.type}</p>
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <Badge className={getBadgeClass(d.statut)}>{d.statut}</Badge>
-
-              {newUpdateIds.includes(d.id) && (
-                <span className="text-[11px] bg-emerald-500 text-white px-2.5 py-1 rounded-full">
-                  Nouveau
-                </span>
-              )}
-            </div>
-          </div>
-
-          <p className="text-3xl font-bold mt-5">
-            {d.montant.toLocaleString("fr-FR")} €
-          </p>
-
-          <p className="text-sm text-zinc-400 mt-2">
-            Demandé le {formatDate(d.createdAt)}
-          </p>
-        </motion.button>
-      ))}
-    </div>
-
-    {selectedDemande && (
-      <div className="lg:col-span-8 space-y-6">
-        <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
-          <CardContent className="p-8 md:p-10">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <Badge className={getBadgeClass(selectedDemande.statut)}>
-                    <span className="flex items-center gap-2">
-                      {getStatusIcon(selectedDemande.statut)}
-                      {getStatusText(selectedDemande.statut)}
-                    </span>
-                  </Badge>
-
-                  <span className="text-zinc-500 font-mono text-sm">
-                    {selectedDemande.id}
-                  </span>
-                </div>
-
-                <h2 className="text-4xl md:text-5xl font-bold">
-                  {selectedDemande.montant.toLocaleString("fr-FR")} €
-                </h2>
-
-                <p className="text-zinc-400 mt-3">
-                  {selectedDemande.type} — créé le{" "}
-                  {formatDate(selectedDemande.createdAt)}
-                </p>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-zinc-400">
-                      Progression du dossier
-                    </span>
-
-                    <span className="font-semibold text-emerald-300">
-                      {progressPercent}%
-                    </span>
-                  </div>
-
-                  <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressPercent}%` }}
-                      transition={{ duration: 0.6 }}
-                      className={`h-full rounded-full ${
-                        selectedDemande.statut === "Refusé"
-                          ? "bg-red-500"
-                          : "bg-emerald-500"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <div className="bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-sm">
-                    <span className="text-zinc-400">
-                      Documents restants :
-                    </span>{" "}
-                    <span className="font-semibold text-white">
-                      {missingDocsCount}
-                    </span>
-                  </div>
-
-                  <div className="bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-sm">
-                    <span className="text-zinc-400">
-                      Justificatifs reçus :
-                    </span>{" "}
-                    <span className="font-semibold text-emerald-300">
-                      {uploadedDocsCount}/{requiredDocsCount}
-                    </span>
-                  </div>
-
-                  {isAdministrativelyComplete && (
-                    <div className="bg-emerald-500/15 border border-emerald-400/30 rounded-2xl px-4 py-3 text-sm font-semibold text-emerald-300">
-                      ✓ Dossier administrativement complet
-                    </div>
-                  )}
-                </div>
-
-                {missingEssentialDocs.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {missingEssentialDocs.map((doc, index) => (
-                      <div
-                        key={index}
-                        className="text-xs text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-xl px-3 py-2"
-                      >
-                        Document manquant : {doc}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="w-20 h-20 rounded-[1.5rem] bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center">
-                <CreditCard className="w-10 h-10 text-emerald-300" />
-              </div>
-            </div>
-
-            {selectedDemande.commentaire && (
-              <div className="mt-8 bg-black/20 border border-white/10 rounded-3xl p-5">
-                <p className="text-sm text-zinc-500 mb-2">
-                  Message du service
-                </p>
-                <p className="text-zinc-200">
-                  {selectedDemande.commentaire}
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-              <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
-                <p className="text-zinc-500 text-sm">Durée</p>
-                <p className="text-2xl font-semibold mt-2">
-                  {selectedDemande.duree || "—"} mois
-                </p>
-              </div>
-
-              <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
-                <p className="text-zinc-500 text-sm">Mensualité</p>
-                <p className="text-2xl font-semibold mt-2">
-                  {selectedDemande.mensualite
-                    ? `${selectedDemande.mensualite.toLocaleString(
-                        "fr-FR"
-                      )} €`
-                    : "—"}
-                </p>
-              </div>
-
-              <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
-                <p className="text-zinc-500 text-sm">Profil</p>
-                <p className="text-2xl font-semibold mt-2">
-                  {selectedDemande.isIndependant
-                    ? "Indépendant"
-                    : "Particulier"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
-          <CardHeader>
-            <CardTitle className="text-white">
-              Progression du dossier
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-5">
-            {timeline.map((step, index) => {
-              const Icon = step.icon;
-
-              const colorClass =
-                step.color === "emerald"
-                  ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
-                  : step.color === "red"
-                  ? "bg-red-500/20 border-red-400/30 text-red-300"
-                  : step.color === "cyan"
-                  ? "bg-cyan-500/20 border-cyan-400/30 text-cyan-300"
-                  : "bg-amber-500/20 border-amber-400/30 text-amber-300";
-
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="relative flex gap-4"
+                    if (newUpdateIds.length <= 1) {
+                      setHasNewUpdate(false);
+                    }
+                  }}
+                  className={`w-full text-left rounded-[1.75rem] p-5 border transition-all ${
+                    selectedDemande?.id === d.id
+                      ? "bg-white/15 border-emerald-400/40"
+                      : "bg-white/7 border-white/10 hover:bg-white/10"
+                  }`}
                 >
-                  {index !== timeline.length - 1 && (
-                    <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
-                  )}
-
-                  <div
-                    className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center border ${colorClass}`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-
-                  <div className="flex-1 bg-black/20 border border-white/10 rounded-2xl p-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                      <p className="font-semibold">{step.title}</p>
-
-                      <span className="text-xs text-zinc-500">
-                        {step.date}
-                      </span>
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <p className="font-mono text-xs text-zinc-500">
+                        {d.id}
+                      </p>
+                      <p className="text-lg font-semibold mt-1">{d.type}</p>
                     </div>
 
-                    <p className="text-sm text-zinc-400 mt-2">{step.desc}</p>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge className={getBadgeClass(d.statut)}>
+                        {d.statut}
+                      </Badge>
 
-                    {step.active && (
-                      <div className="mt-3 inline-flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-full px-3 py-1">
-                        <Clock className="w-3 h-3" />
-                        En cours
-                      </div>
-                    )}
-
-                    {step.done && (
-                      <div className="mt-3 inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 rounded-full px-3 py-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Validé
-                      </div>
-                    )}
+                      {newUpdateIds.includes(d.id) && (
+                        <span className="text-[11px] bg-emerald-500 text-white px-2.5 py-1 rounded-full">
+                          Nouveau
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </CardContent>
-        </Card>
 
+                  <p className="text-3xl font-bold mt-5">
+                    {d.montant.toLocaleString("fr-FR")} €
+                  </p>
+
+                  <p className="text-sm text-zinc-400 mt-2">
+                    Demandé le {formatDate(d.createdAt)}
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+
+            {selectedDemande && (
+              <div className="lg:col-span-8 space-y-6">
+                <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+                  <CardContent className="p-8 md:p-10">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                          <Badge className={getBadgeClass(selectedDemande.statut)}>
+                            <span className="flex items-center gap-2">
+                              {getStatusIcon(selectedDemande.statut)}
+                              {getStatusText(selectedDemande.statut)}
+                            </span>
+                          </Badge>
+
+                          <span className="text-zinc-500 font-mono text-sm">
+                            {selectedDemande.id}
+                          </span>
+                        </div>
+
+                        <h2 className="text-4xl md:text-5xl font-bold">
+                          {selectedDemande.montant.toLocaleString("fr-FR")} €
+                        </h2>
+
+                        <p className="text-zinc-400 mt-3">
+                          {selectedDemande.type} — créé le{" "}
+                          {formatDate(selectedDemande.createdAt)}
+                        </p>
+
+                        <div className="mt-6">
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span className="text-zinc-400">
+                              Progression du dossier
+                            </span>
+
+                            <span className="font-semibold text-emerald-300">
+                              {progressPercent}%
+                            </span>
+                          </div>
+
+                          <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progressPercent}%` }}
+                              transition={{ duration: 0.6 }}
+                              className={`h-full rounded-full ${
+                                selectedDemande.statut === "Refusé"
+                                  ? "bg-red-500"
+                                  : "bg-emerald-500"
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <div className="bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-sm">
+                            <span className="text-zinc-400">
+                              Documents restants :
+                            </span>{" "}
+                            <span className="font-semibold text-white">
+                              {missingDocsCount}
+                            </span>
+                          </div>
+
+                          <div className="bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-sm">
+                            <span className="text-zinc-400">
+                              Justificatifs reçus :
+                            </span>{" "}
+                            <span className="font-semibold text-emerald-300">
+                              {uploadedDocsCount}/{requiredDocsCount}
+                            </span>
+                          </div>
+
+                          {isAdministrativelyComplete && (
+                            <div className="bg-emerald-500/15 border border-emerald-400/30 rounded-2xl px-4 py-3 text-sm font-semibold text-emerald-300">
+                              ✓ Dossier administrativement complet
+                            </div>
+                          )}
+                        </div>
+
+                        {missingEssentialDocs.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {missingEssentialDocs.map((doc, index) => (
+                              <div
+                                key={index}
+                                className="text-xs text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-xl px-3 py-2"
+                              >
+                                Document manquant : {doc}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="w-20 h-20 rounded-[1.5rem] bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center">
+                        <CreditCard className="w-10 h-10 text-emerald-300" />
+                      </div>
+                    </div>
+
+                    {selectedDemande.commentaire && (
+                      <div className="mt-8 bg-black/20 border border-white/10 rounded-3xl p-5">
+                        <p className="text-sm text-zinc-500 mb-2">
+                          Message du service
+                        </p>
+                        <p className="text-zinc-200">
+                          {selectedDemande.commentaire}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                      <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
+                        <p className="text-zinc-500 text-sm">Durée</p>
+                        <p className="text-2xl font-semibold mt-2">
+                          {selectedDemande.duree || "—"} mois
+                        </p>
+                      </div>
+
+                      <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
+                        <p className="text-zinc-500 text-sm">Mensualité</p>
+                        <p className="text-2xl font-semibold mt-2">
+                          {selectedDemande.mensualite
+                            ? `${selectedDemande.mensualite.toLocaleString(
+                                "fr-FR"
+                              )} €`
+                            : "—"}
+                        </p>
+                      </div>
+
+                      <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
+                        <p className="text-zinc-500 text-sm">Profil</p>
+                        <p className="text-2xl font-semibold mt-2">
+                          {selectedDemande.isIndependant
+                            ? "Indépendant"
+                            : "Particulier"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
+                  <CardHeader>
+                    <CardTitle className="text-white">
+                      Progression du dossier
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="space-y-5">
+                    {timeline.map((step, index) => {
+                      const Icon = step.icon;
+
+                      const colorClass =
+                        step.color === "emerald"
+                          ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                          : step.color === "red"
+                          ? "bg-red-500/20 border-red-400/30 text-red-300"
+                          : step.color === "cyan"
+                          ? "bg-cyan-500/20 border-cyan-400/30 text-cyan-300"
+                          : "bg-amber-500/20 border-amber-400/30 text-amber-300";
+
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="relative flex gap-4"
+                        >
+                          {index !== timeline.length - 1 && (
+                            <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
+                          )}
+
+                          <div
+                            className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center border ${colorClass}`}
+                          >
+                            <Icon className="w-5 h-5" />
+                          </div>
+
+                          <div className="flex-1 bg-black/20 border border-white/10 rounded-2xl p-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                              <p className="font-semibold">{step.title}</p>
+
+                              <span className="text-xs text-zinc-500">
+                                {step.date}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-zinc-400 mt-2">
+                              {step.desc}
+                            </p>
+
+                            {step.active && (
+                              <div className="mt-3 inline-flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-full px-3 py-1">
+                                <Clock className="w-3 h-3" />
+                                En cours
+                              </div>
+                            )}
+
+                            {step.done && (
+                              <div className="mt-3 inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 rounded-full px-3 py-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Validé
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
 
                 {selectedDemande.statut === "Accepté" && (
                   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
@@ -1394,13 +1567,17 @@ const isReadyForFunding =
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
                           <FileText className="w-8 h-8 text-emerald-300 mb-4" />
+
                           <p className="font-semibold">Contrat de prêt</p>
+
                           <p className="text-sm text-zinc-400 mt-2">
-                            Téléchargez, signez puis déposez votre contrat.
+                            Téléchargez le contrat à signer, signez-le puis déposez-le.
                           </p>
 
                           <Button
-                            onClick={() => downloadContract(selectedDemande.id)}
+                            onClick={() =>
+                              downloadContract(selectedDemande.contractToSign?.url)
+                            }
                             className="mt-5 w-full bg-white text-black hover:bg-zinc-200 rounded-2xl"
                           >
                             <Download className="mr-2 w-4 h-4" />
@@ -1410,9 +1587,11 @@ const isReadyForFunding =
 
                         <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
                           <ShieldCheck className="w-8 h-8 text-emerald-300 mb-4" />
+
                           <p className="font-semibold">Dépôt sécurisé</p>
+
                           <p className="text-sm text-zinc-400 mt-2">
-                            Vos documents sont ajoutés à votre dossier client.
+                            Déposez ici votre contrat signé et vos documents justificatifs.
                           </p>
 
                           <Button
@@ -1424,17 +1603,23 @@ const isReadyForFunding =
                             className="mt-5 w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl"
                           >
                             <Upload className="mr-2 w-4 h-4" />
-                            {selectedDemande.signedContract
-                              ? "Changer le contrat signé"
-                              : "Déposer le contrat signé"}
+                            {uploading ? "Envoi..." : "Déposer le contrat signé"}
                           </Button>
                         </div>
                       </div>
 
+                      {selectedDemande.contractToSign && (
+                        <div className="text-emerald-300 text-sm flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4">
+                          <CheckCircle className="w-4 h-4" />
+                          Contrat à signer disponible :{" "}
+                          {selectedDemande.contractToSign.name}
+                        </div>
+                      )}
+
                       {selectedDemande.signedContract && (
                         <div className="text-emerald-300 text-sm flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4">
                           <CheckCircle className="w-4 h-4" />
-                          Contrat signé : {selectedDemande.signedContract.name}
+                          Contrat signé reçu : {selectedDemande.signedContract.name}
                         </div>
                       )}
 
@@ -1458,33 +1643,29 @@ const isReadyForFunding =
                         </div>
 
                         <p className="font-semibold mt-8 mb-4">
-  Documents complémentaires (si disponibles)
-</p>
+                          Documents complémentaires si disponibles
+                        </p>
 
-<div className="grid md:grid-cols-2 gap-3 mb-6">
-  {getRequiredDocuments(
-    selectedDemande.isIndependant
-  ).secondaires.map((doc, i) => (
-    <div
-      key={i}
-      className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-zinc-400"
-    >
-      <FileText className="w-4 h-4 text-zinc-500" />
-      {doc}
-    </div>
-  ))}
-</div>
+                        <div className="grid md:grid-cols-2 gap-3 mb-6">
+                          {getRequiredDocuments(
+                            selectedDemande.isIndependant
+                          ).secondaires.map((doc, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-zinc-400"
+                            >
+                              <FileText className="w-4 h-4 text-zinc-500" />
+                              {doc}
+                            </div>
+                          ))}
+                        </div>
 
                         <div
                           onDragEnter={handleDrag}
                           onDragOver={handleDrag}
                           onDragLeave={handleDrag}
                           onDrop={(e) =>
-                            handleDrop(
-                              e,
-                              selectedDemande.id,
-                              "justificatifs"
-                            )
+                            handleDrop(e, selectedDemande.id, "justificatifs")
                           }
                           onClick={() => {
                             setUploadTargetId(selectedDemande.id);
@@ -1561,7 +1742,7 @@ const isReadyForFunding =
           e.target.files &&
           handleFileUpload(
             uploadTargetId || selectedDemande?.id || "",
-            "contract",
+            "signed_contract",
             e.target.files
           )
         }

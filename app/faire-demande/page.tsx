@@ -179,15 +179,22 @@ export default function FaireDemande() {
         }),
       });
 
-      const result = await response.json();
+            const result = await response.json();
 
       if (result.success) {
+        const accessCode =
+          result.accessCode || randomPassword || "Code déjà existant";
+
         const clients = JSON.parse(localStorage.getItem("clients") || "[]");
 
-        if (!clients.find((c: any) => c.email === clientEmail)) {
+        const existingClient = clients.find(
+          (c: any) => c.email === clientEmail
+        );
+
+        if (!existingClient) {
           clients.push({
             email: clientEmail,
-            password: randomPassword,
+            password: accessCode,
             nom: formData.nom.trim(),
             prenom: formData.prenom.trim(),
             telephone: formData.indicatif + formData.telephone,
@@ -196,7 +203,12 @@ export default function FaireDemande() {
           localStorage.setItem("clients", JSON.stringify(clients));
         }
 
-        (window as any).tempPassword = randomPassword;
+        (window as any).tempPassword = accessCode;
+
+        alert(
+          `Votre demande a été enregistrée avec succès.\n\nEmail : ${clientEmail}\nCode d’accès client : ${accessCode}\n\nConservez ces informations pour accéder à votre espace client.`
+        );
+
         setStep("success");
       } else {
         alert("Erreur : " + (result.error || "Inconnue"));
@@ -208,7 +220,7 @@ export default function FaireDemande() {
       setIsSubmitting(false);
     }
   };
-
+  
   const SummaryCard = () => (
     <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden sticky top-28">
       <CardContent className="p-7">
@@ -784,4 +796,4 @@ export default function FaireDemande() {
       </div>
     </main>
   );
-}  
+}

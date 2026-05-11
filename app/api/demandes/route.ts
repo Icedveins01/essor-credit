@@ -1,118 +1,170 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 
 type Statut = "En cours" | "Accepté" | "Refusé";
 
-type TimelineEvent = {
-  id: string;
-  type: "created" | "status" | "document" | "comment" | "funding";
-  title: string;
-  description: string;
-  createdAt: string;
-};
+function formatDocuments(documents: any[]) {
+  const contractToSign = documents.find(
+    (doc) => doc.type === "contract_to_sign"
+  );
 
-const filePath = path.join(process.cwd(), "data", "demandes.json");
+  const signedContract = documents.find(
+    (doc) => doc.type === "signed_contract"
+  );
 
-async function readDemandes() {
-  try {
-    const file = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(file);
-  } catch {
-    return [];
-  }
-}
+  const justificatifs = documents
+    .filter((doc) => doc.type === "justificatifs")
+    .map((doc) => ({
+      name: doc.nom,
+      url: doc.url,
+      uploadedAt: doc.uploadedAt.toISOString(),
+    }));
 
-async function saveDemandes(demandes: any[]) {
-  await fs.writeFile(filePath, JSON.stringify(demandes, null, 2), "utf-8");
-}
-
-function createTimelineEvent(
-  type: TimelineEvent["type"],
-  title: string,
-  description: string
-): TimelineEvent {
   return {
-    id: `T-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    type,
-    title,
-    description,
-    createdAt: new Date().toISOString(),
+    contractToSign: contractToSign
+      ? {
+          name: contractToSign.nom,
+          url: contractToSign.url,
+          uploadedAt: contractToSign.uploadedAt.toISOString(),
+        }
+      : undefined,
+
+    signedContract: signedContract
+      ? {
+          name: signedContract.nom,
+          url: signedContract.url,
+          uploadedAt: signedContract.uploadedAt.toISOString(),
+        }
+      : undefined,
+
+    justificatifs,
+  };
+}
+
+function formatDemande(d: any, commentaire = "") {
+  const docs = formatDocuments(d.documents || []);
+
+  return {
+    id: d.id,
+    createdAt: d.createdAt.toISOString(),
+    updatedAt: d.updatedAt?.toISOString?.() || d.createdAt.toISOString(),
+    type: d.typePret,
+    montant: d.montant,
+    duree: d.duree,
+    mensualite: d.mensualite,
+    coutTotal: d.coutTotal,
+    interets: d.interets,
+    statut: d.statut as Statut,
+    commentaire,
+    isIndependant: false,
+    typeClient: "",
+    message: "",
+
+    contractToSign: docs.contractToSign,
+    signedContract: docs.signedContract,
+    justificatifs: docs.justificatifs,
+
+    client: {
+      prenom: d.client.prenom,
+      nom: d.client.nom,
+      email: d.client.email,
+      telephone: d.client.telephone || "",
+    },
+
+    timeline: d.timeline.map((t: any) => ({
+      id: t.id,
+      type: "status",
+      title: t.titre,
+      description: t.description || "",
+      createdAt: t.date.toISOString(),
+    })),
   };
 }
 
 export async function GET() {
-  const demandes = await readDemandes();
-  return NextResponse.json(demandes);
+  try {
+    const demandes = await prisma.demande.findMany({
+      include: {
+        client: true,
+        timeline: true,
+        documents: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(demandes.map((d) => formatDemande(d)));
+  } catch (error) {
+    console.error("Erreur GET demandes :", error);
+    return NextResponse.json([], { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const demandes = await readDemandes();
 
-    const now = new Date().toISOString();
+    const email = body.clientEmail || body.email || "";
 
-    const nouvelleDemande = {
-      id: "D-" + Date.now().toString().slice(-8),
-      createdAt: now,
-      updatedAt: now,
+    if (!email) {
+      return NextResponse.json(
+        { success: false, error: "Email client manquant" },
+        { status: 400 }
+      );
+    }
 
-      type: body.type,
-      montant: Number(body.montant),
-      duree: Number(body.duree),
-      mensualite: Number(body.mensualite),
+    const accessCode = crypto.randomUUID().slice(0, 8).toUpperCase();
 
-      coutTotal: body.coutTotal,
-      interets: body.interets,
-
-      statut: "En cours" as Statut,
-      commentaire: "",
-
-      isIndependant: body.isIndependant || false,
-      typeClient: body.typeClient || "",
-
-      message: body.message || "",
-
-      signedContract: undefined,
-      justificatifs: [],
-
-      client: {
-        prenom: body.prenom || "",
+    const client = await prisma.client.upsert({
+      where: { email },
+      update: {
         nom: body.nom || "",
-        email: body.clientEmail || body.email || "",
+        prenom: body.prenom || "",
         telephone: body.telephone || "",
-        adresse: body.adresse || "",
-        ville: body.ville || "",
-        pays: body.pays || "",
-        typeClient: body.typeClient || "",
       },
+      create: {
+        nom: body.nom || "",
+        prenom: body.prenom || "",
+        email,
+        telephone: body.telephone || "",
+        motDePasse: accessCode,
+      },
+    });
 
-      timeline: [
-        createTimelineEvent(
-          "created",
-          "Demande créée",
-          "Votre demande de financement a été enregistrée avec succès."
-        ),
-      ],
-    };
-
-    demandes.unshift(nouvelleDemande);
-
-    await saveDemandes(demandes);
+    const demande = await prisma.demande.create({
+      data: {
+        clientId: client.id,
+        typePret: body.type || body.typePret || "Prêt Personnel",
+        montant: Number(body.montant || 0),
+        duree: Number(body.duree || 0),
+        mensualite: Number(body.mensualite || 0),
+        coutTotal: Number(body.coutTotal || 0),
+        interets: Number(body.interets || 0),
+        statut: "En cours",
+        timeline: {
+          create: {
+            titre: "Demande créée",
+            description:
+              "Votre demande de financement a été enregistrée avec succès.",
+          },
+        },
+      },
+      include: {
+        client: true,
+        timeline: true,
+        documents: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      demande: nouvelleDemande,
+      accessCode,
+      demande: formatDemande(demande),
     });
   } catch (error) {
     console.error("Erreur POST demandes :", error);
 
     return NextResponse.json(
-      {
-        success: false,
-        error: "Erreur serveur",
-      },
+      { success: false, error: "Erreur serveur" },
       { status: 500 }
     );
   }
@@ -125,98 +177,63 @@ export async function PATCH(req: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "ID manquant",
-        },
+        { success: false, error: "ID manquant" },
         { status: 400 }
       );
     }
 
-    const demandes = await readDemandes();
+    const existing = await prisma.demande.findUnique({
+      where: { id },
+    });
 
-    const index = demandes.findIndex((d: any) => d.id === id);
-
-    if (index === -1) {
+    if (!existing) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Demande introuvable",
-        },
+        { success: false, error: "Demande introuvable" },
         { status: 404 }
       );
     }
 
-    const demande = demandes[index];
-
-    if (!demande.timeline) {
-      demande.timeline = [];
-    }
-
-    const oldStatut = demande.statut;
-    const oldCommentaire = demande.commentaire || "";
-
-    if (timelineEvent) {
-      demande.timeline.unshift({
-        id: `T-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        type: timelineEvent.type || "status",
-        title: timelineEvent.title || "Mise à jour du dossier",
-        description:
-          timelineEvent.description || "Votre dossier a reçu une mise à jour.",
-        createdAt: new Date().toISOString(),
-      });
-    }
-
-    if (statut && statut !== oldStatut) {
-      demande.statut = statut;
-
-      if (!timelineEvent) {
-        demande.timeline.unshift(
-          createTimelineEvent(
-            "status",
-            statut === "Accepté"
-              ? "Décision favorable"
-              : statut === "Refusé"
-              ? "Décision défavorable"
-              : "Dossier en analyse",
-            statut === "Accepté"
-              ? "Votre demande a été acceptée par notre service."
-              : statut === "Refusé"
-              ? "Votre demande n’a pas été retenue après analyse."
-              : "Votre dossier est actuellement en cours d’analyse."
-          )
-        );
-      }
-    }
-
-    if (commentaire !== undefined && commentaire !== oldCommentaire) {
-      demande.commentaire = commentaire;
-
-      if (commentaire.trim() !== "" && !timelineEvent) {
-        demande.timeline.unshift(
-          createTimelineEvent("comment", "Message conseiller", commentaire)
-        );
-      }
-    }
-
-    demande.updatedAt = new Date().toISOString();
-
-    demandes[index] = demande;
-
-    await saveDemandes(demandes);
+    const demande = await prisma.demande.update({
+      where: { id },
+      data: {
+        statut: statut || existing.statut,
+        timeline: {
+          create:
+            timelineEvent || statut || commentaire
+              ? {
+                  titre:
+                    timelineEvent?.title ||
+                    (statut === "Accepté"
+                      ? "Décision favorable"
+                      : statut === "Refusé"
+                      ? "Décision défavorable"
+                      : commentaire
+                      ? "Message conseiller"
+                      : "Mise à jour du dossier"),
+                  description:
+                    timelineEvent?.description ||
+                    commentaire ||
+                    "Votre dossier a reçu une mise à jour.",
+                }
+              : undefined,
+        },
+      },
+      include: {
+        client: true,
+        timeline: true,
+        documents: true,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      demande,
+      demande: formatDemande(demande, commentaire || ""),
     });
   } catch (error) {
     console.error("Erreur PATCH demandes :", error);
 
     return NextResponse.json(
-      {
-        success: false,
-        error: "Erreur serveur",
-      },
+      { success: false, error: "Erreur serveur" },
       { status: 500 }
     );
   }

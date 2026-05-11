@@ -23,19 +23,21 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#050816]/80 backdrop-blur-2xl">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 sm:gap-4">
           <motion.div
             whileHover={{ rotate: 8, scale: 1.08 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
             className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-500/20"
           >
             EC
           </motion.div>
 
           <div>
-            <p className="font-bold text-xl tracking-tight text-white">
+            <p className="font-bold text-lg sm:text-xl tracking-tight text-white">
               Essor Crédit
             </p>
+
             <p className="hidden sm:flex items-center gap-1 text-[11px] text-zinc-500">
               <ShieldCheck className="w-3 h-3 text-emerald-300" />
               Espace sécurisé
@@ -50,7 +52,7 @@ export default function Header() {
               href={link.href}
               className={`px-4 py-2 rounded-full transition-all ${
                 isActive(link.href)
-                  ? "bg-white text-black"
+                  ? "bg-white text-black shadow-sm"
                   : "text-zinc-300 hover:text-white hover:bg-white/10"
               }`}
             >
@@ -59,20 +61,13 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center">
           <Button
             asChild
             variant="outline"
             className="rounded-2xl border-white/15 bg-white/5 text-white hover:bg-white/10"
           >
             <Link href="/espace-client">Connexion</Link>
-          </Button>
-
-          <Button
-            asChild
-            className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-          >
-            <Link href="/faire-demande">Faire une demande</Link>
           </Button>
         </div>
 
@@ -85,7 +80,12 @@ export default function Header() {
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-white/10 bg-[#050816]/95 backdrop-blur-2xl px-6 py-5">
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="lg:hidden border-t border-white/10 bg-[#050816]/95 backdrop-blur-2xl px-4 sm:px-6 py-5"
+        >
           <div className="space-y-2">
             {links.map((link) => (
               <Link
@@ -102,16 +102,7 @@ export default function Header() {
               </Link>
             ))}
           </div>
-
-          <Button
-            asChild
-            className="w-full mt-5 h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600"
-          >
-            <Link href="/faire-demande" onClick={() => setOpen(false)}>
-              Faire une demande
-            </Link>
-          </Button>
-        </div>
+        </motion.div>
       )}
     </header>
   );

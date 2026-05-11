@@ -229,17 +229,21 @@ export default function Page() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-3xl">
-              {assurances.map((item) => (
-                <div
-                  key={item}
-                  className="bg-white/8 border border-white/10 rounded-2xl p-4 text-sm text-zinc-300"
-                >
-                  <CheckCircle className="w-5 h-5 text-emerald-300 mb-3" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </motion.div>
+  {assurances.map((item, index) => (
+    <motion.div
+      key={item}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: 0.15 + index * 0.08 }}
+      whileHover={{ y: -5, scale: 1.02 }}
+      className="bg-white/8 border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 hover:bg-white/10 transition"
+    >
+      <CheckCircle className="w-5 h-5 text-emerald-300 mb-3" />
+      {item}
+    </motion.div>
+  ))}
+</div>
+</motion.div>
 
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
@@ -331,19 +335,26 @@ export default function Page() {
 
       <section className="relative z-10 border-y border-white/10 bg-white/[0.03] backdrop-blur-xl py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 text-sm text-zinc-300">
-          <div className="flex items-center gap-3">
-            <Lock className="w-5 h-5 text-emerald-300" /> Connexion sécurisée
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-emerald-300" /> Suivi en ligne
-          </div>
-          <div className="flex items-center gap-3">
-            <Headphones className="w-5 h-5 text-emerald-300" /> Accompagnement humain
-          </div>
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-emerald-300" /> Données protégées
-          </div>
-        </div>
+  {[
+    { icon: <Lock className="w-5 h-5 text-emerald-300" />, text: "Connexion sécurisée" },
+    { icon: <Clock className="w-5 h-5 text-emerald-300" />, text: "Suivi en ligne" },
+    { icon: <Headphones className="w-5 h-5 text-emerald-300" />, text: "Accompagnement humain" },
+    { icon: <Shield className="w-5 h-5 text-emerald-300" />, text: "Données protégées" },
+  ].map((item, index) => (
+    <motion.div
+      key={item.text}
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.35, delay: index * 0.06 }}
+      whileHover={{ y: -4 }}
+      className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 hover:bg-white/10 transition"
+    >
+      {item.icon}
+      {item.text}
+    </motion.div>
+  ))}
+</div>
       </section>
 
       <section className="py-24 bg-[#050816]">
@@ -363,29 +374,66 @@ export default function Page() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {services.map((service, index) => (
-              <motion.button
-                key={service.title}
-                whileHover={{ y: -6 }}
-                onClick={() => {
-                  setSelectedType(service.title);
-                  setActiveService(index);
-                }}
-                className={`text-left rounded-[2rem] p-7 border transition-all ${
-                  selectedType === service.title || activeService === index
-                    ? "bg-emerald-500/15 border-emerald-400/35"
-                    : "bg-white/7 border-white/10 hover:bg-white/10"
-                }`}
-              >
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-emerald-300 mb-6">
-                  {service.icon}
-                </div>
-                <h3 className="text-xl font-semibold">{service.title}</h3>
-                <p className="text-emerald-300 text-sm mt-2">{service.shortDesc}</p>
-                <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
-                  {service.description}
-                </p>
-              </motion.button>
-            ))}
+
+  <motion.button
+
+    key={service.title}
+
+    initial={{ opacity: 0, y: 22 }}
+
+    whileInView={{ opacity: 1, y: 0 }}
+
+    viewport={{ once: true, amount: 0.2 }}
+
+    transition={{ duration: 0.45, delay: index * 0.06 }}
+
+    whileHover={{ y: -8, scale: 1.015 }}
+
+    whileTap={{ scale: 0.99 }}
+
+    onClick={() => {
+
+      setSelectedType(service.title);
+
+      setActiveService(index);
+
+    }}
+
+    className={`group text-left rounded-[2rem] p-7 border transition-all ${
+
+      selectedType === service.title || activeService === index
+
+        ? "bg-emerald-500/15 border-emerald-400/35 shadow-lg shadow-emerald-500/10"
+
+        : "bg-white/7 border-white/10 hover:bg-white/10"
+
+    }`}
+
+  >
+
+    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-emerald-300 mb-6 transition-transform duration-300 group-hover:scale-110">
+
+      {service.icon}
+
+    </div>
+
+    <h3 className="text-xl font-semibold">{service.title}</h3>
+
+    <p className="text-emerald-300 text-sm mt-2">
+
+      {service.shortDesc}
+
+    </p>
+
+    <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
+
+      {service.description}
+
+    </p>
+
+  </motion.button>
+
+))}
           </div>
         </div>
       </section>
@@ -675,30 +723,56 @@ export default function Page() {
 
           <div className="grid md:grid-cols-4 gap-5">
             {processSteps.map((step, index) => (
-              <Card
-                key={step.title}
-                className="bg-white/7 border-white/10 rounded-[2rem]"
-              >
-                <CardContent className="p-7">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 mb-6">
-                    {step.icon}
-                  </div>
-                  <p className="text-sm text-zinc-500 mb-2">Étape {index + 1}</p>
-                  <h3 className="text-xl font-semibold text-white">{step.title}</h3>
-                  <p className="text-sm text-zinc-400 mt-4 leading-relaxed">
-                    {step.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+  <motion.div
+    key={step.title}
+    initial={{ opacity: 0, y: 22 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.25 }}
+    transition={{ duration: 0.45, delay: index * 0.08 }}
+    whileHover={{ y: -6 }}
+  >
+    <Card className="h-full bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition">
+      <CardContent className="p-7">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 mb-6">
+          {step.icon}
+        </div>
+
+        <p className="text-sm text-zinc-500 mb-2">
+          Étape {index + 1}
+        </p>
+
+        <h3 className="text-xl font-semibold text-white">
+          {step.title}
+        </h3>
+
+        <p className="text-sm text-zinc-400 mt-4 leading-relaxed">
+          {step.description}
+        </p>
+      </CardContent>
+    </Card>
+  </motion.div>
+))}
           </div>
         </div>
       </section>
 
       <section className="py-24 bg-[#07111f]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-6">
-            <p className="text-emerald-300 font-medium mb-3">Espace client</p>
+          <motion.div
+
+      initial={{ opacity: 0, x: -30 }}
+
+      whileInView={{ opacity: 1, x: 0 }}
+
+      viewport={{ once: true, amount: 0.25 }}
+
+      transition={{ duration: 0.55 }}
+
+      className="lg:col-span-6"
+
+    >
+
+      <p className="text-emerald-300 font-medium mb-3">Espace client</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Un tableau de bord premium pour suivre votre dossier
             </h2>
@@ -707,13 +781,13 @@ export default function Page() {
               votre espace client : statut, étapes, documents, contrat signé et
               suivi de votre dossier.
             </p>
-            <Link href="/espace-client">
+                        <Link href="/espace-client">
               <Button className="mt-8 h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200">
                 Ouvrir l’espace client
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
 
           <div className="lg:col-span-6">
             <div className="bg-white/10 border border-white/10 backdrop-blur-2xl rounded-[2.5rem] p-6 shadow-2xl">
@@ -838,187 +912,266 @@ export default function Page() {
 </section>
 
       <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <p className="text-emerald-300 font-medium mb-3">Avis clients</p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Une expérience pensée pour rassurer
-            </h2>
-            <p className="text-zinc-400 mt-5 text-lg">
-              Des clients accompagnés dans leurs démarches, avec un suivi clair et un espace en ligne professionnel.
-            </p>
-          </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center max-w-3xl mx-auto mb-14">
+      <p className="text-emerald-300 font-medium mb-3">Avis clients</p>
+      <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+        Une expérience pensée pour rassurer
+      </h2>
+      <p className="text-zinc-400 mt-5 text-lg">
+        Des clients accompagnés dans leurs démarches, avec un suivi clair et un espace en ligne professionnel.
+      </p>
+    </div>
 
-          <div className="grid md:grid-cols-3 gap-5">
-            {[
-              {
-                name: "Sophie Martin",
-                location: "Paris",
-                text: "Interface très claire, suivi sérieux et réponse rapide. J’ai pu transmettre mes documents directement depuis mon espace client.",
-              },
-              {
-                name: "Marc Dubois",
-                location: "Lyon",
-                text: "Le parcours est simple et professionnel. La simulation m’a permis de mieux comprendre ma mensualité avant de déposer ma demande.",
-              },
-              {
-                name: "Laura Benali",
-                location: "Marseille",
-                text: "Très bonne expérience. Le tableau de bord donne une vraie visibilité sur les étapes du dossier et les documents attendus.",
-              },
-            ].map((avis) => (
-              <Card
-                key={avis.name}
-                className="bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition"
+    <div className="grid md:grid-cols-3 gap-5">
+      {[
+        {
+          name: "Sophie Martin",
+          location: "Paris",
+          text: "Interface très claire, suivi sérieux et réponse rapide. J’ai pu transmettre mes documents directement depuis mon espace client.",
+        },
+        {
+          name: "Marc Dubois",
+          location: "Lyon",
+          text: "Le parcours est simple et professionnel. La simulation m’a permis de mieux comprendre ma mensualité avant de déposer ma demande.",
+        },
+        {
+          name: "Laura Benali",
+          location: "Marseille",
+          text: "Très bonne expérience. Le tableau de bord donne une vraie visibilité sur les étapes du dossier et les documents attendus.",
+        },
+      ].map((avis, index) => (
+        <motion.div
+          key={avis.name}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.45, delay: index * 0.08 }}
+          whileHover={{ y: -6 }}
+        >
+          <Card className="h-full bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition">
+            <CardContent className="p-8">
+              <div className="flex items-center gap-1 text-emerald-300 mb-6">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star}>★</span>
+                ))}
+              </div>
+
+              <p className="text-zinc-300 leading-relaxed">“{avis.text}”</p>
+
+              <div className="flex items-center gap-4 mt-8">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 font-semibold">
+                  {avis.name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("")}
+                </div>
+
+                <div>
+                  <p className="font-semibold text-white">{avis.name}</p>
+                  <p className="text-sm text-zinc-500">{avis.location}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
+
+      <section className="py-16 sm:py-24 bg-[#050816]">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <motion.div
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.55 }}
+      className="grid grid-cols-1 lg:grid-cols-3 gap-5"
+    >
+      <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
+        <CardContent className="p-6 sm:p-8 md:p-10">
+          <Banknote className="w-10 h-10 text-emerald-300 mb-8" />
+
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
+            Prêt à lancer votre demande ?
+          </h2>
+
+          <p className="text-zinc-300 mt-5 max-w-2xl leading-relaxed">
+            Commencez par une simulation, puis transmettez votre demande
+            depuis un parcours clair et sécurisé.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <a href="#simulateur" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600">
+                Simuler maintenant
+              </Button>
+            </a>
+
+            <Link href="/faire-demande" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10"
               >
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-1 text-emerald-300 mb-6">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star}>★</span>
-                    ))}
-                  </div>
-
-                  <p className="text-zinc-300 leading-relaxed">
-                    “{avis.text}”
-                  </p>
-
-                  <div className="flex items-center gap-4 mt-8">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 font-semibold">
-                      {avis.name
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">{avis.name}</p>
-                      <p className="text-sm text-zinc-500">{avis.location}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                Faire une demande
+              </Button>
+            </Link>
           </div>
+        </CardContent>
+      </Card>
 
-          
+      <Card className="bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition">
+        <CardContent className="p-6 sm:p-8">
+          <Headphones className="w-10 h-10 text-emerald-300 mb-8" />
+
+          <h3 className="text-2xl font-semibold">Besoin d’aide ?</h3>
+
+          <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
+            Un conseiller peut vous accompagner pour clarifier votre demande
+            et préparer votre dossier.
+          </p>
+
+          <div className="flex gap-3 mt-8">
+            <a
+              href="https://wa.me/33600000000"
+              target="_blank"
+              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+            >
+              <Phone className="w-5 h-5" />
+            </a>
+
+            <a
+              href="https://facebook.com/essorcredit"
+              target="_blank"
+              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+</section>
+
+      <footer className="bg-[#030712] border-t border-white/10 py-12 sm:py-14">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col lg:flex-row justify-between gap-10">
+      {/* MARQUE */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.45 }}
+        className="max-w-lg"
+      >
+        <div className="flex items-center gap-3">
+          <motion.div
+            whileHover={{ rotate: 6, scale: 1.06 }}
+            transition={{ type: "spring", stiffness: 260 }}
+            className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center font-bold text-white"
+          >
+            EC
+          </motion.div>
+
+          <p className="text-2xl font-bold text-white">Essor Crédit</p>
         </div>
-      </section>
 
-      <section className="py-24 bg-[#050816]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-5">
-            <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
-              <CardContent className="p-8 md:p-10">
-                <Banknote className="w-10 h-10 text-emerald-300 mb-8" />
-                <h2 className="text-4xl font-bold tracking-tight">
-                  Prêt à lancer votre demande ?
-                </h2>
-                <p className="text-zinc-300 mt-5 max-w-2xl">
-                  Commencez par une simulation, puis transmettez votre demande
-                  depuis un parcours clair et sécurisé.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                  <a href="#simulateur">
-                    <Button className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600">
-                      Simuler maintenant
-                    </Button>
-                  </a>
-                  <Link href="/faire-demande">
-                    <Button
-                      variant="outline"
-                      className="h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10"
-                    >
-                      Faire une demande
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+        <p className="text-zinc-500 mt-5 max-w-md text-sm leading-relaxed">
+          Plateforme de simulation, demande et suivi de financement.
+          Les informations affichées doivent être vérifiées et adaptées
+          à votre statut réel avant mise en production.
+        </p>
+      </motion.div>
 
-            <Card className="bg-white/7 border-white/10 rounded-[2rem]">
-              <CardContent className="p-8">
-                <Headphones className="w-10 h-10 text-emerald-300 mb-8" />
-                <h3 className="text-2xl font-semibold">Besoin d’aide ?</h3>
-                <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
-                  Un conseiller peut vous accompagner pour clarifier votre demande
-                  et préparer votre dossier.
-                </p>
-                <div className="flex gap-3 mt-8">
-                  <a
-                    href="https://wa.me/33600000000"
-                    target="_blank"
-                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
-                  >
-                    <Phone className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="https://facebook.com/essorcredit"
-                    target="_blank"
-                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      {/* LIENS */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.45, delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm"
+      >
+        <div className="space-y-3 text-zinc-400">
+          <p className="font-semibold text-white mb-4">Navigation</p>
+
+          <a
+            href="#simulateur"
+            className="block hover:text-white transition"
+          >
+            Simulateur
+          </a>
+
+          <Link
+            href="/faire-demande"
+            className="block hover:text-white transition"
+          >
+            Faire une demande
+          </Link>
+
+          <Link
+            href="/espace-client"
+            className="block hover:text-white transition"
+          >
+            Espace client
+          </Link>
         </div>
-      </section>
 
-      <footer className="bg-[#030712] border-t border-white/10 py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between gap-8">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center font-bold">
-                  EC
-                </div>
-                <p className="text-2xl font-bold">Essor Crédit</p>
-              </div>
-              <p className="text-zinc-500 mt-5 max-w-md text-sm leading-relaxed">
-                Plateforme de simulation, demande et suivi de financement. Les
-                informations affichées doivent être vérifiées et adaptées à votre
-                statut réel avant mise en production.
-              </p>
-            </div>
+        <div className="space-y-3 text-zinc-400">
+          <p className="font-semibold text-white mb-4">Informations</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm">
-              <div className="space-y-3 text-zinc-400">
-                <p className="font-semibold text-white mb-4">Navigation</p>
-                <a href="#simulateur" className="block hover:text-white">
-                  Simulateur
-                </a>
-                <Link href="/faire-demande" className="block hover:text-white">
-                  Faire une demande
-                </Link>
-                <Link href="/espace-client" className="block hover:text-white">
-                  Espace client
-                </Link>
-              </div>
+          <Link
+            href="/mentions-legales"
+            className="block hover:text-white transition"
+          >
+            Mentions légales
+          </Link>
 
-              <div className="space-y-3 text-zinc-400">
-                <p className="font-semibold text-white mb-4">Informations</p>
-                <Link href="/mentions-legales" className="block hover:text-white">
-                  Mentions légales
-                </Link>
-                <Link href="/cgu" className="block hover:text-white">
-                  CGU
-                </Link>
-                <Link
-                  href="/politique-de-confidentialite"
-                  className="block hover:text-white"
-                >
-                  Confidentialité
-                </Link>
-              </div>
-            </div>
-          </div>
+          <Link
+            href="/cgu"
+            className="block hover:text-white transition"
+          >
+            CGU
+          </Link>
 
-          <div className="border-t border-white/10 mt-12 pt-6 text-xs text-zinc-600 flex flex-col md:flex-row justify-between gap-4">
-            <p>© 2026 Essor Crédit. Tous droits réservés.</p>
-            <p>Simulation indicative — conditions soumises à étude du dossier.</p>
-          </div>
+          <Link
+            href="/politique-de-confidentialite"
+            className="block hover:text-white transition"
+          >
+            Confidentialité
+          </Link>
         </div>
-      </footer>
+      </motion.div>
+    </div>
+
+    {/* BAS DE PAGE */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.15 }}
+      className="border-t border-white/10 mt-12 pt-6 text-xs text-zinc-600 flex flex-col md:flex-row justify-between gap-4"
+    >
+      <p>© 2026 Essor Crédit. Tous droits réservés.</p>
+
+      <p>
+        Simulation indicative — conditions soumises à étude du dossier.
+      </p>
+    </motion.div>
+  </div>
+</footer>
+
+<motion.a
+  href="#accueil"
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  whileHover={{ scale: 1.08, y: -3 }}
+  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/20 flex items-center justify-center"
+>
+  <ArrowRight className="w-5 h-5 rotate-[-90deg]" />
+</motion.a>
+
     </main>
   );
 }
