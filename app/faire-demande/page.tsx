@@ -220,7 +220,7 @@ export default function FaireDemande() {
       setIsSubmitting(false);
     }
   };
-  
+
   const SummaryCard = () => (
     <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden sticky top-28">
       <CardContent className="p-7">
@@ -319,15 +319,14 @@ export default function FaireDemande() {
                 </div>
 
                 <Button
-                  onClick={() => {
-                    localStorage.setItem("currentClientEmail", formData.email.toLowerCase().trim());
-                    window.location.href = "/espace-client";
-                  }}
-                  className="w-full h-16 mt-8 text-lg bg-emerald-500 hover:bg-emerald-600 rounded-2xl"
-                >
-                  Accéder à mon Espace Client
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+  onClick={() => {
+    window.location.href = "/espace-client";
+  }}
+  className="w-full h-16 mt-8 text-lg bg-emerald-500 hover:bg-emerald-600 rounded-2xl"
+>
+  Accéder à mon Espace Client
+  <ArrowRight className="ml-2 w-5 h-5" />
+</Button>
               </CardContent>
             </Card>
           </motion.div>

@@ -109,48 +109,26 @@ export default function EspaceClient() {
   const signedInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const savedClient = sessionStorage.getItem("currentClient");
+  const savedClient = sessionStorage.getItem("currentClient");
 
-    if (savedClient) {
-      const parsedClient = JSON.parse(savedClient);
+  if (!savedClient) return;
 
-      const lastActivity = sessionStorage.getItem("lastActivity");
-      const now = Date.now();
+  const parsedClient = JSON.parse(savedClient);
 
-      if (lastActivity && now - parseInt(lastActivity, 10) > 300000) {
-        sessionStorage.removeItem("currentClient");
-        sessionStorage.removeItem("lastActivity");
-        return;
-      }
+  const lastActivity = sessionStorage.getItem("lastActivity");
+  const now = Date.now();
 
-      setCurrentClient(parsedClient);
-      setIsLoggedIn(true);
-      setEmail(parsedClient.email);
-      sessionStorage.setItem("lastActivity", now.toString());
-      return;
-    }
+  if (lastActivity && now - parseInt(lastActivity, 10) > 300000) {
+    sessionStorage.removeItem("currentClient");
+    sessionStorage.removeItem("lastActivity");
+    return;
+  }
 
-    const savedEmail = localStorage.getItem("currentClientEmail");
-
-    if (savedEmail) {
-      const clients = JSON.parse(localStorage.getItem("clients") || "[]");
-
-      const found = clients.find(
-        (c: ClientAccount) =>
-          c.email.toLowerCase() === savedEmail.toLowerCase()
-      );
-
-      if (found) {
-        setCurrentClient(found);
-        setIsLoggedIn(true);
-        setEmail(found.email);
-
-        sessionStorage.setItem("currentClient", JSON.stringify(found));
-        sessionStorage.setItem("lastActivity", Date.now().toString());
-        localStorage.removeItem("currentClientEmail");
-      }
-    }
-  }, []);
+  setCurrentClient(parsedClient);
+  setIsLoggedIn(true);
+  setEmail(parsedClient.email);
+  sessionStorage.setItem("lastActivity", now.toString());
+}, []);
 
   useEffect(() => {
     if (!isLoggedIn || !currentClient?.email) return;
