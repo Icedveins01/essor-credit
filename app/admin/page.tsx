@@ -32,7 +32,15 @@ import {
   Upload,
 } from "lucide-react";
 
-type Statut = "En cours" | "Accepté" | "Refusé";
+type Statut =
+  | "En cours"
+  | "Documents reçus"
+  | "Vérification finale"
+  | "Accepté"
+  | "Fonds mis à disposition"
+  | "Décaissement en préparation"
+  | "Fonds transférés"
+  | "Refusé";
 
 type UploadedFile = {
   name: string;
@@ -226,8 +234,22 @@ export default function Admin() {
             type: "status",
             title: `Statut mis à jour : ${newStatut}`,
             description: commentaire?.trim()
-              ? commentaire
-              : `Votre dossier est désormais : ${newStatut}.`,
+  ? commentaire
+  : newStatut === "Documents reçus"
+  ? "Nous confirmons la réception de vos documents. Votre dossier passe en phase de contrôle administratif."
+  : newStatut === "Vérification finale"
+  ? "Votre dossier est actuellement en vérification finale de conformité avant validation définitive."
+  : newStatut === "Accepté"
+  ? "Votre dossier est validé. Les modalités administratives de mise à disposition sont en préparation."
+  : newStatut === "Décaissement en préparation"
+  ? "Votre dossier est validé. La préparation administrative du décaissement est en cours."
+  : newStatut === "Fonds mis à disposition"
+  ? "Les fonds sont désormais mis à votre disposition dans votre espace dossier sécurisé."
+  : newStatut === "Fonds transférés"
+  ? "Le transfert de vos fonds a été effectué avec succès selon les modalités prévues."
+  : newStatut === "Refusé"
+  ? "Après analyse, votre dossier n’a pas pu être validé."
+  : `Votre dossier est désormais : ${newStatut}.`,
           },
         }),
       });
@@ -296,22 +318,56 @@ export default function Admin() {
   };
 
   const getBadgeClass = (statut: Statut) => {
-    if (statut === "Accepté") {
+  switch (statut) {
+    case "Accepté":
       return "bg-emerald-500/15 text-emerald-300 border border-emerald-400/30";
-    }
 
-    if (statut === "Refusé") {
+    case "Refusé":
       return "bg-red-500/15 text-red-300 border border-red-400/30";
-    }
 
-    return "bg-amber-500/15 text-amber-300 border border-amber-400/30";
-  };
+    case "Documents reçus":
+      return "bg-blue-500/15 text-blue-300 border border-blue-400/30";
 
-  const getStatusIcon = (statut: Statut) => {
-    if (statut === "Accepté") return <CheckCircle className="w-4 h-4" />;
-    if (statut === "Refusé") return <XCircle className="w-4 h-4" />;
-    return <Clock className="w-4 h-4" />;
-  };
+    case "Vérification finale":
+      return "bg-violet-500/15 text-violet-300 border border-violet-400/30";
+
+    case "Décaissement en préparation":
+      return "bg-cyan-500/15 text-cyan-300 border border-cyan-400/30";
+
+    case "Fonds mis à disposition":
+      return "bg-indigo-500/15 text-indigo-300 border border-indigo-400/30";
+
+    case "Fonds transférés":
+      return "bg-green-500/20 text-green-300 border border-green-400/30";
+
+    default:
+      return "bg-amber-500/15 text-amber-300 border border-amber-400/30";
+  }
+};
+
+const getStatusIcon = (statut: Statut) => {
+  switch (statut) {
+    case "Accepté":
+      return <CheckCircle className="w-4 h-4" />;
+
+    case "Fonds transférés":
+      return <Landmark className="w-4 h-4" />;
+
+    case "Fonds mis à disposition":
+    case "Décaissement en préparation":
+      return <CreditCard className="w-4 h-4" />;
+
+    case "Documents reçus":
+    case "Vérification finale":
+      return <FileText className="w-4 h-4" />;
+
+    case "Refusé":
+      return <XCircle className="w-4 h-4" />;
+
+    default:
+      return <Clock className="w-4 h-4" />;
+  }
+};
 
   const formatDate = (d?: Demande) => {
     if (!d) return "—";
@@ -493,11 +549,24 @@ export default function Admin() {
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value="Tous">Tous</SelectItem>
-                        <SelectItem value="En cours">En cours</SelectItem>
-                        <SelectItem value="Accepté">Accepté</SelectItem>
-                        <SelectItem value="Refusé">Refusé</SelectItem>
-                      </SelectContent>
+
+  <SelectItem value="En cours">⏳ En cours</SelectItem>
+
+  <SelectItem value="Documents reçus">📄 Documents reçus</SelectItem>
+
+  <SelectItem value="Vérification finale">🔎 Vérification finale</SelectItem>
+
+  <SelectItem value="Accepté">✅ Accepté</SelectItem>
+
+  <SelectItem value="Décaissement en préparation">🏦 Décaissement</SelectItem>
+
+  <SelectItem value="Fonds mis à disposition">💳 Mise à disposition</SelectItem>
+
+  <SelectItem value="Fonds transférés">💸 Fonds transférés</SelectItem>
+
+  <SelectItem value="Refusé">❌ Refusé</SelectItem>
+
+</SelectContent>
                     </Select>
                   </div>
                 </div>

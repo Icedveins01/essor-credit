@@ -980,198 +980,165 @@ export default function Page() {
   </div>
 </section>
 
-      <section className="py-16 sm:py-24 bg-[#050816]">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.55 }}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-5"
-    >
-      <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
-        <CardContent className="p-6 sm:p-8 md:p-10">
-          <Banknote className="w-10 h-10 text-emerald-300 mb-8" />
+      <section className="py-24 bg-[#050816]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-5">
+            <Card className="lg:col-span-2 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 rounded-[2rem]">
+              <CardContent className="p-8 md:p-10">
+                <Banknote className="w-10 h-10 text-emerald-300 mb-8" />
+                <h2 className="text-4xl font-bold tracking-tight">
+                  Prêt à lancer votre demande ?
+                </h2>
+                <p className="text-zinc-300 mt-5 max-w-2xl">
+                  Commencez par une simulation, puis transmettez votre demande
+                  depuis un parcours clair et sécurisé.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                  <a href="#simulateur">
+                    <Button className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600">
+                      Simuler maintenant
+                    </Button>
+                  </a>
+                  <Link href="/faire-demande">
+                    <Button
+                      variant="outline"
+                      className="h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10"
+                    >
+                      Faire une demande
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
 
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-            Prêt à lancer votre demande ?
-          </h2>
-
-          <p className="text-zinc-300 mt-5 max-w-2xl leading-relaxed">
-            Commencez par une simulation, puis transmettez votre demande
-            depuis un parcours clair et sécurisé.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <a href="#simulateur" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600">
-                Simuler maintenant
-              </Button>
-            </a>
-
-            <Link href="/faire-demande" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto h-14 px-8 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10"
-              >
-                Faire une demande
-              </Button>
-            </Link>
+            <Card className="bg-white/7 border-white/10 rounded-[2rem]">
+              <CardContent className="p-8">
+                <Headphones className="w-10 h-10 text-emerald-300 mb-8" />
+                <h3 className="text-2xl font-semibold">Besoin d’aide ?</h3>
+                <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
+                  Un conseiller peut vous accompagner pour clarifier votre demande
+                  et préparer votre dossier.
+                </p>
+                <div className="flex gap-3 mt-8">
+                  <a
+                    href="https://wa.me/33600000000"
+                    target="_blank"
+                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+                  >
+                    <Phone className="w-5 h-5" />
+                  </a>
+                  <a
+                    href="https://facebook.com/essorcredit"
+                    target="_blank"
+                    className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="bg-white/7 border-white/10 rounded-[2rem] hover:bg-white/10 transition">
-        <CardContent className="p-6 sm:p-8">
-          <Headphones className="w-10 h-10 text-emerald-300 mb-8" />
+      <footer className="bg-[#030712] border-t border-white/10 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
+            <div className="lg:col-span-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center font-bold shadow-lg shadow-emerald-500/20">
+                  EC
+                </div>
 
-          <h3 className="text-2xl font-semibold">Besoin d’aide ?</h3>
+                <div>
+                  <p className="text-2xl font-bold">Essor Crédit</p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Plateforme de financement sécurisée
+                  </p>
+                </div>
+              </div>
 
-          <p className="text-zinc-400 mt-4 text-sm leading-relaxed">
-            Un conseiller peut vous accompagner pour clarifier votre demande
-            et préparer votre dossier.
-          </p>
+              <p className="text-zinc-500 mt-6 max-w-md text-sm leading-relaxed">
+                Plateforme de simulation, demande et suivi de financement. Les
+                informations affichées sont indicatives et doivent être vérifiées selon
+                l’analyse finale du dossier.
+              </p>
 
-          <div className="flex gap-3 mt-8">
-            <a
-              href="https://wa.me/33600000000"
-              target="_blank"
-              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
-            >
-              <Phone className="w-5 h-5" />
-            </a>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-zinc-400">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  Simulation indicative
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  Suivi sécurisé en ligne
+                </div>
+              </div>
+            </div>
 
-            <a
-              href="https://facebook.com/essorcredit"
-              target="_blank"
-              className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-emerald-500 flex items-center justify-center transition"
-            >
-              <MessageCircle className="w-5 h-5" />
-            </a>
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
+              <div className="space-y-3 text-zinc-400">
+                <p className="font-semibold text-white mb-4">Navigation</p>
+
+                <a href="#accueil" className="block hover:text-emerald-300 transition">
+                  Accueil
+                </a>
+
+                <a href="#simulateur" className="block hover:text-emerald-300 transition">
+                  Simulateur
+                </a>
+
+                <Link href="/faire-demande" className="block hover:text-emerald-300 transition">
+                  Faire une demande
+                </Link>
+
+                <Link href="/espace-client" className="block hover:text-emerald-300 transition">
+                  Espace client
+                </Link>
+              </div>
+
+              <div className="space-y-3 text-zinc-400">
+                <p className="font-semibold text-white mb-4">Informations</p>
+
+                <Link href="/faq" className="block hover:text-emerald-300 transition">
+                  FAQ
+                </Link>
+
+                <Link href="/contact" className="block hover:text-emerald-300 transition">
+                  Contact
+                </Link>
+
+                <Link href="/mentions-legales" className="block hover:text-emerald-300 transition">
+                  Mentions légales
+                </Link>
+
+                <Link href="/cgu" className="block hover:text-emerald-300 transition">
+                  CGU
+                </Link>
+              </div>
+
+              <div className="space-y-3 text-zinc-400">
+                <p className="font-semibold text-white mb-4">Sécurité</p>
+
+                <Link
+                  href="/politique-de-confidentialite"
+                  className="block hover:text-emerald-300 transition"
+                >
+                  Confidentialité
+                </Link>
+
+                <p className="text-zinc-500 leading-relaxed">
+                  Accès personnel, données protégées et suivi du dossier depuis un
+                  espace client sécurisé.
+                </p>
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  </div>
-</section>
 
-      <footer className="bg-[#030712] border-t border-white/10 py-12 sm:py-14">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="flex flex-col lg:flex-row justify-between gap-10">
-      {/* MARQUE */}
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.45 }}
-        className="max-w-lg"
-      >
-        <div className="flex items-center gap-3">
-          <motion.div
-            whileHover={{ rotate: 6, scale: 1.06 }}
-            transition={{ type: "spring", stiffness: 260 }}
-            className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center font-bold text-white"
-          >
-            EC
-          </motion.div>
-
-          <p className="text-2xl font-bold text-white">Essor Crédit</p>
+          <div className="border-t border-white/10 mt-12 pt-6 text-xs text-zinc-600 flex flex-col md:flex-row justify-between gap-4">
+            <p>© 2026 Essor Crédit. Tous droits réservés.</p>
+            <p>Simulation indicative — conditions soumises à étude du dossier.</p>
+          </div>
         </div>
-
-        <p className="text-zinc-500 mt-5 max-w-md text-sm leading-relaxed">
-          Plateforme de simulation, demande et suivi de financement.
-          Les informations affichées doivent être vérifiées et adaptées
-          à votre statut réel avant mise en production.
-        </p>
-      </motion.div>
-
-      {/* LIENS */}
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.45, delay: 0.1 }}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm"
-      >
-        <div className="space-y-3 text-zinc-400">
-          <p className="font-semibold text-white mb-4">Navigation</p>
-
-          <a
-            href="#simulateur"
-            className="block hover:text-white transition"
-          >
-            Simulateur
-          </a>
-
-          <Link
-            href="/faire-demande"
-            className="block hover:text-white transition"
-          >
-            Faire une demande
-          </Link>
-
-          <Link
-            href="/espace-client"
-            className="block hover:text-white transition"
-          >
-            Espace client
-          </Link>
-        </div>
-
-        <div className="space-y-3 text-zinc-400">
-          <p className="font-semibold text-white mb-4">Informations</p>
-
-          <Link
-            href="/mentions-legales"
-            className="block hover:text-white transition"
-          >
-            Mentions légales
-          </Link>
-
-          <Link
-            href="/cgu"
-            className="block hover:text-white transition"
-          >
-            CGU
-          </Link>
-
-          <Link
-            href="/politique-de-confidentialite"
-            className="block hover:text-white transition"
-          >
-            Confidentialité
-          </Link>
-        </div>
-      </motion.div>
-    </div>
-
-    {/* BAS DE PAGE */}
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: 0.15 }}
-      className="border-t border-white/10 mt-12 pt-6 text-xs text-zinc-600 flex flex-col md:flex-row justify-between gap-4"
-    >
-      <p>© 2026 Essor Crédit. Tous droits réservés.</p>
-
-      <p>
-        Simulation indicative — conditions soumises à étude du dossier.
-      </p>
-    </motion.div>
-  </div>
-</footer>
-
-<motion.a
-  href="#accueil"
-  initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  whileHover={{ scale: 1.08, y: -3 }}
-  className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/20 flex items-center justify-center"
->
-  <ArrowRight className="w-5 h-5 rotate-[-90deg]" />
-</motion.a>
-
+      </footer>
     </main>
   );
 }
