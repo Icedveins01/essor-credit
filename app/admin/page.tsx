@@ -89,6 +89,56 @@ export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const savedAuth = sessionStorage.getItem("adminAuthenticated");
+    if (savedAuth === "true") {
+      setIsAdminLoggedIn(true);
+    }
+  }, []);
+
+  const loginAdmin = async () => {
+    if (!adminPassword.trim()) {
+      alert("Veuillez entrer le mot de passe administrateur.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: adminPassword,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        alert(result.error || "Accès refusé");
+        return;
+      }
+
+      sessionStorage.setItem("adminAuthenticated", "true");
+      setIsAdminLoggedIn(true);
+    } catch {
+      alert("Erreur serveur");
+    }
+  };
+
+  const logoutAdmin = () => {
+  sessionStorage.removeItem("adminAuthenticated");
+  setIsAdminLoggedIn(false);
+  setAdminPassword("");
+  setSelectedId("");
+};
+
+
+
   const loadDemandes = async () => {
     setIsLoading(true);
 
@@ -108,8 +158,10 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    loadDemandes();
-  }, []);
+    if (isAdminLoggedIn) {
+      loadDemandes();
+    }
+  }, [isAdminLoggedIn]);
 
   const selectedDemande = demandes.find((d) => d.id === selectedId);
 
@@ -152,7 +204,7 @@ export default function Admin() {
     montantTotal: demandes.reduce((sum, d) => sum + Number(d.montant || 0), 0),
   };
 
-    const updateStatut = async () => {
+  const updateStatut = async () => {
     if (!selectedId) {
       alert("Sélectionnez une demande");
       return;
@@ -170,7 +222,6 @@ export default function Admin() {
           id: selectedId,
           statut: newStatut,
           commentaire,
-
           timelineEvent: {
             type: "status",
             title: `Statut mis à jour : ${newStatut}`,
@@ -199,51 +250,50 @@ export default function Admin() {
   };
 
   const uploadDocument = async (
-  event: React.ChangeEvent<HTMLInputElement>,
-  type: "contract_to_sign" | "justificatifs"
-) => {
-  if (!selectedId) {
-    alert("Sélectionnez une demande");
-    return;
-  }
-
-  const files = event.target.files;
-
-  if (!files || files.length === 0) return;
-
-  setIsUploading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("demandeId", selectedId);
-    formData.append("type", type);
-
-    Array.from(files).forEach((file) => {
-      formData.append("files", file);
-    });
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await res.json();
-
-    if (!res.ok || !result.success) {
-      alert(result.error || "Erreur lors de l’upload");
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: "contract_to_sign" | "justificatifs"
+  ) => {
+    if (!selectedId) {
+      alert("Sélectionnez une demande");
       return;
     }
 
-    await loadDemandes();
-    alert("✅ Document ajouté avec succès !");
-  } catch (error) {
-    console.error(error);
-    alert("Erreur upload serveur");
-  } finally {
-    setIsUploading(false);
-    event.target.value = "";
-  }
-};
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("demandeId", selectedId);
+      formData.append("type", type);
+
+      Array.from(files).forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        alert(result.error || "Erreur lors de l’upload");
+        return;
+      }
+
+      await loadDemandes();
+      alert("✅ Document ajouté avec succès !");
+    } catch (error) {
+      console.error(error);
+      alert("Erreur upload serveur");
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
+  };
 
   const getBadgeClass = (statut: Statut) => {
     if (statut === "Accepté") {
@@ -265,13 +315,8 @@ export default function Admin() {
 
   const formatDate = (d?: Demande) => {
     if (!d) return "—";
-
-    if (d.createdAt) {
-      return new Date(d.createdAt).toLocaleDateString("fr-FR");
-    }
-
+    if (d.createdAt) return new Date(d.createdAt).toLocaleDateString("fr-FR");
     if (d.date) return d.date;
-
     return "—";
   };
 
@@ -293,6 +338,35 @@ export default function Admin() {
 
   const justificatifs =
     selectedDemande?.justificatifs?.map((file) => formatFile(file)) || [];
+
+  if (!isAdminLoggedIn) {
+    return (
+      <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center px-6">
+        <div className="w-full max-w-md bg-white/10 border border-white/10 rounded-[2rem] p-8 backdrop-blur-2xl">
+          <h1 className="text-3xl font-bold mb-3">Accès administrateur</h1>
+
+          <p className="text-zinc-400 mb-6">
+            Entrez le mot de passe admin pour accéder au back-office.
+          </p>
+
+          <Input
+            type="password"
+            placeholder="Mot de passe administrateur"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            className="h-14 bg-white/10 border-white/10 text-white placeholder:text-zinc-500 rounded-2xl"
+          />
+
+          <Button
+            onClick={loginAdmin}
+            className="w-full h-14 mt-5 bg-emerald-500 hover:bg-emerald-600 rounded-2xl"
+          >
+            Se connecter
+          </Button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#050816] text-white pt-28 pb-20 relative overflow-hidden">
@@ -316,6 +390,7 @@ export default function Admin() {
             </p>
           </div>
 
+           <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={loadDemandes}
             disabled={isLoading}
@@ -324,6 +399,23 @@ export default function Admin() {
             <RefreshCw className="mr-2 w-4 h-4" />
             Actualiser
           </Button>
+
+          <Button
+
+    onClick={logoutAdmin}
+
+    variant="outline"
+
+    className="h-12 px-6 rounded-2xl border-red-500/30 text-red-300 hover:bg-red-500/10"
+
+  >
+
+    Déconnexion
+
+  </Button>
+
+
+        </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 mb-10">
@@ -580,27 +672,29 @@ export default function Admin() {
                       </h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  <label className="h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
-    <Upload className="w-4 h-4" />
-    {isUploading ? "Upload..." : "Contrat à signer"}
-    <input
-      type="file"
-      className="hidden"
-      onChange={(e) => uploadDocument(e, "contract_to_sign")}
-    />
-  </label>
+                        <label className="h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
+                          <Upload className="w-4 h-4" />
+                          {isUploading ? "Upload..." : "Contrat à signer"}
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) =>
+                              uploadDocument(e, "contract_to_sign")
+                            }
+                          />
+                        </label>
 
-  <label className="h-12 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
-    <Upload className="w-4 h-4" />
-    Ajouter document reçu
-    <input
-      type="file"
-      multiple
-      className="hidden"
-      onChange={(e) => uploadDocument(e, "justificatifs")}
-    />
-  </label>
-</div>
+                        <label className="h-12 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
+                          <Upload className="w-4 h-4" />
+                          Ajouter document reçu
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => uploadDocument(e, "justificatifs")}
+                          />
+                        </label>
+                      </div>
 
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-4 bg-white/5 rounded-2xl p-4">
@@ -678,15 +772,9 @@ export default function Admin() {
                         </SelectTrigger>
 
                         <SelectContent>
-                          <SelectItem value="En cours">
-                            ⏳ En cours
-                          </SelectItem>
-                          <SelectItem value="Accepté">
-                            ✅ Accepté
-                          </SelectItem>
-                          <SelectItem value="Refusé">
-                            ❌ Refusé
-                          </SelectItem>
+                          <SelectItem value="En cours">⏳ En cours</SelectItem>
+                          <SelectItem value="Accepté">✅ Accepté</SelectItem>
+                          <SelectItem value="Refusé">❌ Refusé</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
