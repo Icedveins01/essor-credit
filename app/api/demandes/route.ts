@@ -92,7 +92,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(demandes.map((d) => formatDemande(d)));
+    return NextResponse.json(demandes.map((d: any) => formatDemande(d)));
   } catch (error) {
     console.error("Erreur GET demandes :", error);
     return NextResponse.json([], { status: 500 });
