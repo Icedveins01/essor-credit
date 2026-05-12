@@ -1656,9 +1656,38 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                   </CardContent>
                 </Card>
 
+                               {selectedDemande.statut === "Accepté" &&
+                  selectedDemande.signedContract &&
+                  selectedDemande.justificatifs?.length > 0 && (
+                    <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
+                      <CardContent className="p-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
+                            <CreditCard className="w-8 h-8 text-cyan-300" />
+                          </div>
+
+                          <div>
+                            <p className="text-cyan-300 font-semibold text-lg">
+                              Mise à disposition des fonds en préparation
+                            </p>
+
+                            <p className="text-zinc-300 mt-2">
+                              Votre dossier est administrativement complet. Les modalités de décaissement sont en cours de préparation par le service financier.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                 {selectedDemande.statut !== "Refusé" &&
-                 selectedDemande.statut !== "Fonds transférés" && (
-                  <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
+                  selectedDemande.statut !== "Fonds transférés" &&
+                  !(
+                    selectedDemande.statut === "Accepté" &&
+                    selectedDemande.signedContract &&
+                    selectedDemande.justificatifs?.length > 0
+                  ) && (
+                    <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
                     <CardHeader>
                       <CardTitle className="text-white">
                         Signature & documents
