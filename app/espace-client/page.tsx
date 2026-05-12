@@ -847,291 +847,178 @@ const getStatusIcon = (statut: Statut) => {
   };
 
     const buildTimeline = (demande?: Demande) => {
-    if (!demande) return [];
+  if (!demande) return [];
 
-    const getIcon = (type: TimelineEvent["type"]) => {
-      if (type === "created") return CheckCircle;
+  const getIcon = (type: TimelineEvent["type"]) => {
+    if (type === "created") return CheckCircle;
 
-      if (type === "status") {
-        if (demande.statut === "Accepté") return CircleCheck;
-        if (demande.statut === "Refusé") return CircleX;
-        return Clock;
-      }
-
-      if (type === "document") return FileText;
-      if (type === "comment") return MessageSquare;
-      if (type === "funding") return Landmark;
-
+    if (type === "status") {
+      if (demande.statut === "Accepté") return CircleCheck;
+      if (demande.statut === "Refusé") return CircleX;
       return Clock;
-    };
-
-    const getColor = (type: TimelineEvent["type"]) => {
-      if (type === "created") return "emerald";
-
-      if (type === "status") {
-        if (demande.statut === "Accepté") return "emerald";
-        if (demande.statut === "Refusé") return "red";
-        return "amber";
-      }
-
-      if (type === "document") return "emerald";
-      if (type === "comment") return "cyan";
-      if (type === "funding") return "emerald";
-
-      return "amber";
-    };
-
-    if (demande.timeline && demande.timeline.length > 0) {
-      const apiEvents = [...demande.timeline]
-        .sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime()
-        )
-        .map((event) => ({
-          title: event.title,
-          desc: event.description,
-          date: formatDateTime(event.createdAt),
-          done: true,
-          active: false,
-          icon: getIcon(event.type),
-          color: getColor(event.type),
-        }));
-
-      const extraEvents = [];
-
-      if (demande.statut === "Accepté" && !demande.contractToSign) {
-        extraEvents.push({
-          title: "Contrat à signer",
-          desc: "Votre contrat à signer n’est pas encore disponible.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: FileText,
-          color: "amber",
-        });
-      }
-
-      if (demande.contractToSign) {
-        extraEvents.push({
-          title: "Contrat à signer disponible",
-          desc: demande.contractToSign.name,
-          date: formatDateTime(demande.contractToSign.uploadedAt),
-          done: true,
-          active: false,
-          icon: FileText,
-          color: "emerald",
-        });
-      }
-
-      if (demande.statut === "Accepté" && !demande.signedContract) {
-        extraEvents.push({
-          title: "Signature du contrat",
-          desc: "Contrat en attente de signature et de dépôt.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: FileText,
-          color: "amber",
-        });
-      }
-
-      if (demande.signedContract) {
-        extraEvents.push({
-          title: "Contrat signé reçu",
-          desc: demande.signedContract.name,
-          date: formatDateTime(demande.signedContract.uploadedAt),
-          done: true,
-          active: false,
-          icon: FileText,
-          color: "emerald",
-        });
-      }
-
-      if (demande.justificatifs?.length > 0) {
-        demande.justificatifs.forEach((file, index) => {
-          extraEvents.push({
-            title: `Justificatif reçu ${index + 1}`,
-            desc: file.name,
-            date: formatDateTime(file.uploadedAt),
-            done: true,
-            active: false,
-            icon: FileText,
-            color: "emerald",
-          });
-        });
-      } else if (demande.statut === "Accepté") {
-        extraEvents.push({
-          title: "Justificatifs",
-          desc: "Aucun justificatif reçu pour le moment.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: CalendarClock,
-          color: "amber",
-        });
-      }
-
-      return [...apiEvents, ...extraEvents];
     }
 
-    const events = [
-  {
-    title: "Demande reçue",
-    desc: "Votre demande de financement a été enregistrée avec succès.",
-    date: formatDateTime(demande.createdAt),
-    done: true,
-    active: false,
-    icon: CheckCircle,
-    color: "emerald",
-  },
-  {
-    title: "Analyse du dossier",
-    desc:
-      demande.statut === "En cours"
-        ? "Votre dossier est en cours d’analyse par notre service."
-        : "L’analyse préliminaire de votre dossier est terminée.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: demande.statut !== "En cours",
-    active: demande.statut === "En cours",
-    icon: Clock,
-    color: "amber",
-  },
-];
+    if (type === "document") return FileText;
+    if (type === "comment") return MessageSquare;
+    if (type === "funding") return Landmark;
 
-if (demande.justificatifs?.length > 0 || demande.signedContract) {
-  events.push({
-    title: "Documents reçus",
-    desc: "Vos documents ont été transmis et ajoutés à votre dossier.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: true,
-    active: false,
-    icon: FileText,
-    color: "emerald",
-  });
-}
+    return Clock;
+  };
 
-if (
-  demande.statut === "Vérification finale" ||
-  demande.statut === "Accepté" ||
-  demande.statut === "Décaissement en préparation" ||
-  demande.statut === "Fonds mis à disposition" ||
-  demande.statut === "Fonds transférés"
-) {
-  events.push({
-    title: "Vérification finale",
-    desc: "Votre dossier est en phase de contrôle final avant validation définitive.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: demande.statut !== "Vérification finale",
-    active: demande.statut === "Vérification finale",
-    icon: ShieldCheck,
-    color: demande.statut === "Vérification finale" ? "amber" : "emerald",
-  });
-}
+  const getColor = (type: TimelineEvent["type"]) => {
+    if (type === "created") return "emerald";
 
-if (
-  demande.statut === "Accepté" ||
-  demande.statut === "Décaissement en préparation" ||
-  demande.statut === "Fonds mis à disposition" ||
-  demande.statut === "Fonds transférés"
-) {
-  events.push({
-    title: "Acceptation définitive",
-    desc: "Votre dossier a été validé définitivement. Les modalités de mise à disposition sont en préparation.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: true,
-    active: false,
-    icon: CircleCheck,
-    color: "emerald",
-  });
-}
+    if (type === "status") {
+      if (demande.statut === "Accepté") return "emerald";
+      if (demande.statut === "Refusé") return "red";
+      return "amber";
+    }
 
-if (
-  demande.statut === "Décaissement en préparation" ||
-  demande.statut === "Fonds mis à disposition" ||
-  demande.statut === "Fonds transférés"
-) {
-  events.push({
-    title: "Décaissement en préparation",
-    desc: "La préparation administrative du décaissement est en cours.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done:
-      demande.statut === "Fonds mis à disposition" ||
-      demande.statut === "Fonds transférés",
-    active: demande.statut === "Décaissement en préparation",
-    icon: Landmark,
-    color:
-      demande.statut === "Décaissement en préparation" ? "amber" : "emerald",
-  });
-}
+    if (type === "document") return "emerald";
+    if (type === "comment") return "cyan";
+    if (type === "funding") return "emerald";
 
-if (
-  demande.statut === "Fonds mis à disposition" ||
-  demande.statut === "Fonds transférés"
-) {
-  events.push({
-    title: "Fonds mis à disposition",
-    desc: "Le montant approuvé est disponible dans votre espace dossier sécurisé.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: demande.statut === "Fonds transférés",
-    active: demande.statut === "Fonds mis à disposition",
-    icon: CreditCard,
-    color: demande.statut === "Fonds mis à disposition" ? "cyan" : "emerald",
-  });
-}
+    return "amber";
+  };
 
-if (demande.statut === "Fonds transférés") {
-  events.push({
-    title: "Fonds transférés",
-    desc: "Le transfert des fonds a été effectué selon les modalités prévues.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: true,
-    active: false,
-    icon: Landmark,
-    color: "emerald",
-  });
-}
+  // =========================
+  // PRIORITÉ À LA TIMELINE API
+  // =========================
+  if (demande.timeline && demande.timeline.length > 0) {
+    const apiEvents = [...demande.timeline]
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
+      )
+      .map((event) => ({
+        title: event.title,
+        desc: event.description,
+        date: formatDateTime(event.createdAt),
+        done: true,
+        active: false,
+        icon: getIcon(event.type),
+        color: getColor(event.type),
+      }));
 
-if (demande.commentaire) {
-  events.push({
-    title: "Message conseiller",
-    desc: demande.commentaire,
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: true,
-    active: false,
-    icon: MessageSquare,
-    color: "cyan",
-  });
-}
+    const extraEvents: any[] = [];
 
-if (demande.statut === "Refusé") {
-  events.push({
-    title: "Décision défavorable",
-    desc: "Votre demande n’a pas été retenue après analyse.",
-    date: formatDateTime(demande.updatedAt || demande.createdAt),
-    done: true,
-    active: false,
-    icon: CircleX,
-    color: "red",
-  });
-}
+    // Contrat à signer
+    if (demande.statut === "Accepté" && !demande.contractToSign) {
+      extraEvents.push({
+        title: "Contrat à signer",
+        desc: "Votre contrat à signer n’est pas encore disponible.",
+        date: "En attente",
+        done: false,
+        active: true,
+        icon: FileText,
+        color: "amber",
+      });
+    }
 
-if (demande.justificatifs?.length > 0) {
-  demande.justificatifs.forEach((file, index) => {
-    events.push({
-      title: `Justificatif reçu ${index + 1}`,
-      desc: file.name,
-      date: formatDateTime(file.uploadedAt),
+    if (demande.contractToSign) {
+      extraEvents.push({
+        title: "Contrat à signer disponible",
+        desc: demande.contractToSign.name,
+        date: formatDateTime(demande.contractToSign.uploadedAt),
+        done: true,
+        active: false,
+        icon: FileText,
+        color: "emerald",
+      });
+    }
+
+    // Contrat signé
+    if (demande.statut === "Accepté" && !demande.signedContract) {
+      extraEvents.push({
+        title: "Signature du contrat",
+        desc: "Contrat en attente de signature et de dépôt.",
+        date: "En attente",
+        done: false,
+        active: true,
+        icon: FileText,
+        color: "amber",
+      });
+    }
+
+    if (demande.signedContract) {
+      extraEvents.push({
+        title: "Contrat signé reçu",
+        desc: demande.signedContract.name,
+        date: formatDateTime(demande.signedContract.uploadedAt),
+        done: true,
+        active: false,
+        icon: FileText,
+        color: "emerald",
+      });
+    }
+
+    // Justificatifs
+    if (demande.justificatifs?.length > 0) {
+      demande.justificatifs.forEach((file, index) => {
+        extraEvents.push({
+          title: `Justificatif ${index + 1}`,
+          desc: file.name,
+          date: formatDateTime(file.uploadedAt),
+          done: true,
+          active: false,
+          icon: FileText,
+          color: "emerald",
+        });
+      });
+    } else if (demande.statut === "Accepté") {
+      extraEvents.push({
+        title: "Justificatifs",
+        desc: "Aucun justificatif reçu pour le moment.",
+        date: "En attente",
+        done: false,
+        active: true,
+        icon: CalendarClock,
+        color: "amber",
+      });
+    }
+
+    // =========================
+    // SUPPRESSION DES DOUBLONS
+    // =========================
+    const existingTitles = new Set(
+      apiEvents.map((e) => e.title.toLowerCase())
+    );
+
+    const filteredExtraEvents = extraEvents.filter(
+      (e) => !existingTitles.has(e.title.toLowerCase())
+    );
+
+    return [...apiEvents, ...filteredExtraEvents].sort(
+      (a, b) => {
+        if (a.date === "En attente") return 1;
+        if (b.date === "En attente") return -1;
+
+        return (
+          new Date(a.date).getTime() -
+          new Date(b.date).getTime()
+        );
+      }
+    );
+  }
+
+  // =========================
+  // FALLBACK SI PAS DE TIMELINE API
+  // =========================
+  const events = [
+    {
+      title: "Demande reçue",
+      desc: "Votre demande de financement a été enregistrée avec succès.",
+      date: formatDateTime(demande.createdAt),
       done: true,
       active: false,
-      icon: FileText,
+      icon: CheckCircle,
       color: "emerald",
-    });
-  });
-}
+    },
+  ];
 
-return events;
-  };
+  return events;
+};
 
   const timeline = buildTimeline(selectedDemande);
 
