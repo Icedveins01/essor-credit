@@ -988,26 +988,6 @@ export default function EspaceClient() {
         return !existingTitles.has(title);
       });
 
-      const hasFundingStep = apiEvents.some((api) =>
-        api.title.toLowerCase().includes("fonds")
-      );
-
-      if (
-        demande.statut === "Accepté" &&
-        demande.signedContract &&
-        demande.justificatifs?.length > 0 &&
-        !hasFundingStep
-      ) {
-        filteredExtraEvents.push({
-          title: "Mise à disposition des fonds",
-          desc: "Votre dossier est complet. La préparation de la mise à disposition des fonds est en cours.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: CreditCard,
-          color: "cyan",
-        });
-      }
 
       return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
         if (a.date === "En attente") return 1;
