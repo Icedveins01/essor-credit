@@ -1565,31 +1565,63 @@ export default function EspaceClient() {
                       </div>
                     </CardContent>
                   </Card>
-                ) : isFundsAvailable ? (
-  <Card className="bg-indigo-500/10 border border-indigo-400/30 backdrop-blur-2xl rounded-[2rem]">
-    <CardContent className="p-8">
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
-          <Landmark className="w-8 h-8 text-indigo-300" />
-        </div>
 
-        <div>
-          <p className="text-indigo-300 font-semibold text-lg">
-            Fonds mis à disposition
+               ) : isFundsAvailable ? (
+  <Card className="bg-indigo-500/10 border border-indigo-400/30 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+    <CardHeader>
+      <CardTitle className="text-white flex items-center gap-3">
+        <Landmark className="w-6 h-6 text-indigo-300" />
+        Espace sécurisé des fonds
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="p-8 pt-0">
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 bg-black/20 border border-white/10 rounded-3xl p-6">
+          <p className="text-sm text-indigo-300 font-medium">
+            Montant réservé et disponible
           </p>
 
-          <p className="text-4xl font-bold text-white mt-2">
+          <p className="text-5xl font-bold text-white mt-3">
             {selectedDemande.montant.toLocaleString("fr-FR")} €
           </p>
 
-          <p className="text-zinc-300 mt-2">
-            Le montant est désormais réservé et affiché dans votre espace client sécurisé.
-La préparation du transfert bancaire peut maintenant se poursuivre selon les modalités prévues.
+          <p className="text-zinc-300 mt-4">
+            Les fonds sont affichés dans votre espace client sécurisé. La
+            préparation du transfert bancaire peut maintenant se poursuivre
+            selon les modalités prévues.
+          </p>
+        </div>
+
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+          <p className="text-sm text-zinc-400">Statut</p>
+
+          <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 rounded-full px-4 py-2 text-sm font-semibold">
+            <CheckCircle className="w-4 h-4" />
+            Fonds disponibles
+          </div>
+
+          <p className="text-sm text-zinc-400 mt-5">Référence dossier</p>
+
+          <p className="text-sm font-mono text-zinc-300 mt-2 break-all">
+            {selectedDemande.id}
           </p>
         </div>
       </div>
+
+      <div className="mt-5 bg-indigo-500/10 border border-indigo-400/20 rounded-3xl p-5">
+        <p className="text-indigo-300 font-semibold">
+          Prochaine étape : préparation du transfert
+        </p>
+
+        <p className="text-sm text-zinc-300 mt-2">
+          Le service financier prépare les modalités de décaissement. Vous serez
+          informé dès que le transfert passera à l’étape suivante.
+        </p>
+      </div>
     </CardContent>
   </Card>
+  
 ) : shouldShowDocumentsCard ? (
                   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
                     <CardHeader>
