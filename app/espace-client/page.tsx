@@ -1602,42 +1602,65 @@ export default function EspaceClient() {
                     </CardContent>
                   </Card>
                 )}
-                <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
-                  <CardHeader>
-                    <CardTitle className="text-white">
-                      Progression du dossier
-                    </CardTitle>
-                  </CardHeader>
 
-                  <CardContent className="space-y-5">
-                    {timeline.map((step, index) => {
-                      const Icon = step.icon;
+                {(isFundsAvailable ||
+                  selectedDemande?.statut === "Fonds transférés") && (
+                  <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center gap-3">
+                        <Landmark className="w-6 h-6 text-emerald-300" />
+                        Étape de transfert bancaire
+                      </CardTitle>
+                    </CardHeader>
 
-                      const colorClass =
-                        step.color === "emerald"
-                          ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
-                          : step.color === "red"
-                          ? "bg-red-500/20 border-red-400/30 text-red-300"
-                          : step.color === "cyan"
-                          ? "bg-cyan-500/20 border-cyan-400/30 text-cyan-300"
-                          : "bg-amber-500/20 border-amber-400/30 text-amber-300";
-
-                      return (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="relative flex gap-4"
-                        >
-                          {index !== timeline.length - 1 && (
+                    <CardContent className="space-y-5">
+                      {[
+                        {
+                          title: "IBAN bénéficiaire vérifié",
+                          desc: "Les coordonnées bancaires du bénéficiaire ont été vérifiées et sécurisées.",
+                          done: true,
+                        },
+                        {
+                          title: "Préparation du virement",
+                          desc: "Le service financier prépare l’ordre de transfert bancaire.",
+                          done:
+                            selectedDemande?.statut === "Fonds transférés" ||
+                            selectedDemande?.statut === "Fonds mis à disposition",
+                        },
+                        {
+                          title: "Validation finale",
+                          desc: "Contrôle final du dossier avant émission du transfert.",
+                          done: selectedDemande?.statut === "Fonds transférés",
+                        },
+                        {
+                          title:
+                            selectedDemande?.statut === "Fonds transférés"
+                              ? "Transfert effectué"
+                              : "Transfert en attente",
+                          desc:
+                            selectedDemande?.statut === "Fonds transférés"
+                              ? "Le montant a été transmis avec succès selon les modalités prévues."
+                              : "Le transfert sera visible dès validation complète.",
+                          done: selectedDemande?.statut === "Fonds transférés",
+                        },
+                      ].map((step, index) => (
+                        <div key={index} className="relative flex gap-4">
+                          {index !== 3 && (
                             <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
                           )}
 
                           <div
-                            className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center border ${colorClass}`}
+                            className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center border ${
+                              step.done
+                                ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                : "bg-amber-500/10 border-amber-400/20 text-amber-300"
+                            }`}
                           >
-                            <Icon className="w-5 h-5" />
+                            {step.done ? (
+                              <CheckCircle className="w-5 h-5" />
+                            ) : (
+                              <Clock className="w-5 h-5" />
+                            )}
                           </div>
 
                           <div className="flex-1 bg-black/20 border border-white/10 rounded-2xl p-4">
@@ -1645,33 +1668,19 @@ export default function EspaceClient() {
                               <p className="font-semibold">{step.title}</p>
 
                               <span className="text-xs text-zinc-500">
-                                {step.date}
+                                {step.done ? "Validé" : "En attente"}
                               </span>
                             </div>
 
                             <p className="text-sm text-zinc-400 mt-2">
                               {step.desc}
                             </p>
-
-                            {step.active && (
-                              <div className="mt-3 inline-flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 border border-amber-400/20 rounded-full px-3 py-1">
-                                <Clock className="w-3 h-3" />
-                                En cours
-                              </div>
-                            )}
-
-                            {step.done && (
-                              <div className="mt-3 inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 rounded-full px-3 py-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Validé
-                              </div>
-                            )}
                           </div>
-                        </motion.div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {isFundingPreparation ? (
                   <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
