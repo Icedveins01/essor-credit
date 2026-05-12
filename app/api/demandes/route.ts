@@ -1,42 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type Statut = "En cours" | "Accepté" | "Refusé";
+type Statut =
+  | "En cours"
+  | "Documents reçus"
+  | "Vérification finale"
+  | "Accepté"
+  | "Décaissement en préparation"
+  | "Fonds mis à disposition"
+  | "Fonds transférés"
+  | "Refusé";
 
-function formatDocuments(documents: any[]) {
-  const contractToSign = documents.find(
+function formatFile(doc: any) {
+  return {
+    name: doc.nom,
+    url: doc.url,
+    uploadedAt: doc.uploadedAt.toISOString(),
+  };
+}
+
+function formatDocuments(documents: any[] = []) {
+  const sortedDocuments = [...documents].sort(
+    (a, b) =>
+      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+  );
+
+  const contractToSign = sortedDocuments.find(
     (doc) => doc.type === "contract_to_sign"
   );
 
-  const signedContract = documents.find(
+  const signedContract = sortedDocuments.find(
     (doc) => doc.type === "signed_contract"
   );
 
-  const justificatifs = documents
+  const justificatifs = sortedDocuments
     .filter((doc) => doc.type === "justificatifs")
-    .map((doc) => ({
-      name: doc.nom,
-      url: doc.url,
-      uploadedAt: doc.uploadedAt.toISOString(),
-    }));
+    .map(formatFile);
 
   return {
-    contractToSign: contractToSign
-      ? {
-          name: contractToSign.nom,
-          url: contractToSign.url,
-          uploadedAt: contractToSign.uploadedAt.toISOString(),
-        }
-      : undefined,
-
-    signedContract: signedContract
-      ? {
-          name: signedContract.nom,
-          url: signedContract.url,
-          uploadedAt: signedContract.uploadedAt.toISOString(),
-        }
-      : undefined,
-
+    contractToSign: contractToSign ? formatFile(contractToSign) : undefined,
+    signedContract: signedContract ? formatFile(signedContract) : undefined,
     justificatifs,
   };
 }
@@ -65,13 +68,13 @@ function formatDemande(d: any, commentaire = "") {
     justificatifs: docs.justificatifs,
 
     client: {
-      prenom: d.client.prenom,
-      nom: d.client.nom,
-      email: d.client.email,
-      telephone: d.client.telephone || "",
+      prenom: d.client?.prenom || "",
+      nom: d.client?.nom || "",
+      email: d.client?.email || "",
+      telephone: d.client?.telephone || "",
     },
 
-    timeline: d.timeline.map((t: any) => ({
+    timeline: (d.timeline || []).map((t: any) => ({
       id: t.id,
       type: "status",
       title: t.titre,
@@ -86,8 +89,12 @@ export async function GET() {
     const demandes = await prisma.demande.findMany({
       include: {
         client: true,
-        timeline: true,
-        documents: true,
+        timeline: {
+          orderBy: { date: "asc" },
+        },
+        documents: {
+          orderBy: { uploadedAt: "desc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -103,7 +110,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const email = body.clientEmail || body.email || "";
+    const email = (body.clientEmail || body.email || "").toLowerCase().trim();
 
     if (!email) {
       return NextResponse.json(
@@ -150,8 +157,12 @@ export async function POST(req: NextRequest) {
       },
       include: {
         client: true,
-        timeline: true,
-        documents: true,
+        timeline: {
+          orderBy: { date: "asc" },
+        },
+        documents: {
+          orderBy: { uploadedAt: "desc" },
+        },
       },
     });
 
@@ -220,8 +231,12 @@ export async function PATCH(req: NextRequest) {
       },
       include: {
         client: true,
-        timeline: true,
-        documents: true,
+        timeline: {
+          orderBy: { date: "asc" },
+        },
+        documents: {
+          orderBy: { uploadedAt: "desc" },
+        },
       },
     });
 
