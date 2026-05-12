@@ -77,6 +77,7 @@ type Demande = {
     nom: string;
     email: string;
     telephone: string;
+    sexe?: string;
     adresse?: string;
     ville?: string;
     pays?: string;
@@ -365,13 +366,13 @@ export default function EspaceClient() {
       }
 
       const client = {
-  email: result.client.email,
-  password: password.trim(),
-  nom: result.client.nom,
-  prenom: result.client.prenom,
-  telephone: result.client.telephone || "",
-  sexe: result.client.sexe || "",
-};
+        email: result.client.email,
+        password: password.trim(),
+        nom: result.client.nom,
+        prenom: result.client.prenom,
+        telephone: result.client.telephone || "",
+        sexe: result.client.sexe || "",
+      };
 
       setCurrentClient(client);
       setIsLoggedIn(true);
@@ -815,6 +816,22 @@ export default function EspaceClient() {
     window.open(url, "_blank");
   };
 
+  const getCivilite = (sexe?: string) => {
+    const normalizedSexe = sexe?.toLowerCase().trim();
+
+    if (!normalizedSexe) return "";
+
+    if (["homme", "h", "masculin", "male", "m", "monsieur", "mr", "m."].includes(normalizedSexe)) {
+      return "Monsieur";
+    }
+
+    if (["femme", "f", "féminin", "feminin", "female", "madame", "mme", "mrs", "ms"].includes(normalizedSexe)) {
+      return "Madame";
+    }
+
+    return sexe || "";
+  };
+
   const buildTimeline = (demande?: Demande) => {
     if (!demande) return [];
 
@@ -1157,16 +1174,10 @@ export default function EspaceClient() {
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-  Bonjour,{" "}
-  {currentClient?.sexe
-    ? currentClient.sexe.toLowerCase() === "homme"
-      ? "Monsieur"
-      : currentClient.sexe.toLowerCase() === "femme"
-      ? "Madame"
-      : currentClient.sexe
-    : ""}{" "}
-  {currentClient?.nom}
-</h1>
+              Bonjour, {[getCivilite(currentClient?.sexe), currentClient?.nom]
+                .filter(Boolean)
+                .join(" ")}
+            </h1>
 
             <p className="text-zinc-400 mt-4 text-lg">
               Suivez vos demandes, vos étapes de validation et vos documents.
