@@ -28,7 +28,6 @@ import {
   Bell,
   X,
   Sparkles,
-  CalendarClock,
   MessageSquare,
 } from "lucide-react";
 
@@ -107,7 +106,7 @@ export default function EspaceClient() {
     null
   );
 
-    const [demandes, setDemandes] = useState<Demande[]>([]);
+  const [demandes, setDemandes] = useState<Demande[]>([]);
   const [selectedDemandeId, setSelectedDemandeId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -840,104 +839,104 @@ export default function EspaceClient() {
     return sexe || "";
   };
 
-  const buildTimeline = (demande?: Demande) => {
-    if (!demande) return [];
+ const buildTimeline = (demande?: Demande) => {
+  if (!demande) return [];
 
-    const successfulStatus: Statut[] = [
-      "Accepté",
-      "Décaissement en préparation",
-      "Fonds mis à disposition",
-      "Fonds transférés",
-    ];
+  const successfulStatus: Statut[] = [
+    "Accepté",
+    "Décaissement en préparation",
+    "Fonds mis à disposition",
+    "Fonds transférés",
+  ];
 
-    const getIcon = (event: TimelineEvent) => {
-      if (event.type === "created") return CheckCircle;
+  const getIcon = (event: TimelineEvent) => {
+    if (event.type === "created") return CheckCircle;
 
-      if (event.type === "status") {
-        if (event.title.toLowerCase().includes("refusé")) return CircleX;
+    if (event.type === "status") {
+      if (event.title.toLowerCase().includes("refusé")) return CircleX;
 
-        if (
-          successfulStatus.some((status) =>
-            event.title.toLowerCase().includes(status.toLowerCase())
-          )
-        ) {
-          return CircleCheck;
-        }
-
-        return Clock;
+      if (
+        successfulStatus.some((status) =>
+          event.title.toLowerCase().includes(status.toLowerCase())
+        )
+      ) {
+        return CircleCheck;
       }
-
-      if (event.type === "document") return FileText;
-      if (event.type === "comment") return MessageSquare;
-      if (event.type === "funding") return Landmark;
 
       return Clock;
-    };
-
-    const getColor = (event: TimelineEvent) => {
-      if (event.type === "created") return "emerald";
-
-      if (event.type === "status") {
-        if (event.title.toLowerCase().includes("refusé")) return "red";
-
-        if (
-          successfulStatus.some((status) =>
-            event.title.toLowerCase().includes(status.toLowerCase())
-          )
-        ) {
-          return "emerald";
-        }
-
-        return "amber";
-      }
-
-      if (event.type === "document") return "emerald";
-      if (event.type === "comment") return "cyan";
-      if (event.type === "funding") return "emerald";
-
-      return "amber";
-    };
-
-    if (demande.timeline && demande.timeline.length > 0) {
-      return [...demande.timeline]
-        .sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime()
-        )
-        .map((event) => ({
-          title:
-            event.title.includes("Accepté") &&
-            demande.justificatifs?.length > 0
-              ? "Justificatifs acceptés"
-              : event.title,
-
-          desc:
-            event.title.includes("Accepté") &&
-            demande.justificatifs?.length > 0
-              ? "Vos justificatifs ont été vérifiés et acceptés. Votre dossier passe à l’étape de mise à disposition des fonds."
-              : event.description,
-
-          date: formatDateTime(event.createdAt),
-          done: true,
-          active: false,
-          icon: getIcon(event),
-          color: getColor(event),
-        }));
     }
 
-    return [
-      {
-        title: "Demande reçue",
-        desc: "Votre demande de financement a été enregistrée avec succès.",
-        date: formatDateTime(demande.createdAt),
+    if (event.type === "document") return CheckCircle;
+    if (event.type === "comment") return MessageSquare;
+    if (event.type === "funding") return Landmark;
+
+    return Clock;
+  };
+
+  const getColor = (event: TimelineEvent) => {
+    if (event.type === "created") return "emerald";
+
+    if (event.type === "status") {
+      if (event.title.toLowerCase().includes("refusé")) return "red";
+
+      if (
+        successfulStatus.some((status) =>
+          event.title.toLowerCase().includes(status.toLowerCase())
+        )
+      ) {
+        return "emerald";
+      }
+
+      return "amber";
+    }
+
+    if (event.type === "document") return "emerald";
+    if (event.type === "comment") return "cyan";
+    if (event.type === "funding") return "emerald";
+
+    return "amber";
+  };
+
+  if (demande.timeline && demande.timeline.length > 0) {
+    return [...demande.timeline]
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
+      )
+      .map((event) => ({
+        title:
+          event.title.includes("Accepté") &&
+          demande.justificatifs?.length > 0
+            ? "Justificatifs acceptés"
+            : event.title,
+
+        desc:
+          event.title.includes("Accepté") &&
+          demande.justificatifs?.length > 0
+            ? "Vos justificatifs ont été vérifiés et acceptés. Votre dossier passe à l’étape de mise à disposition des fonds."
+            : event.description,
+
+        date: formatDateTime(event.createdAt),
         done: true,
         active: false,
-        icon: CheckCircle,
-        color: "emerald",
-      },
-    ];
-  };
+        icon: getIcon(event),
+        color: getColor(event),
+      }));
+  }
+
+  return [
+    {
+      title: "Demande reçue",
+      desc: "Votre demande de financement a été enregistrée avec succès.",
+      date: formatDateTime(demande.createdAt),
+      done: true,
+      active: false,
+      icon: CheckCircle,
+      color: "emerald",
+    },
+  ];
+};
 
   const timeline = buildTimeline(selectedDemande);
 
