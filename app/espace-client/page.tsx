@@ -1567,8 +1567,8 @@ export default function EspaceClient() {
           </p>
 
           <p className="text-zinc-300 mt-2">
-            Le montant est disponible dans votre espace sécurisé. Le transfert
-            bancaire peut maintenant être préparé selon les modalités prévues.
+            Le montant est désormais réservé et affiché dans votre espace client sécurisé.
+La préparation du transfert bancaire peut maintenant se poursuivre selon les modalités prévues.
           </p>
         </div>
       </div>
