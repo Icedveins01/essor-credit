@@ -1700,7 +1700,8 @@ return events;
                   </CardContent>
                 </Card>
 
-                {selectedDemande.statut === "Accepté" && (
+                {selectedDemande.statut !== "Refusé" &&
+  selectedDemande.statut !== "Fonds transférés" && (
                   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
                     <CardHeader>
                       <CardTitle className="text-white">
