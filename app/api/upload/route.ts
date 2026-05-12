@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
-
-const uploadDir = path.join(process.cwd(), "public", "uploads");
 
 function cleanFileName(name: string) {
   return name
@@ -16,17 +13,14 @@ function cleanFileName(name: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
     const formData = await req.formData();
 
     const demandeId = formData.get("demandeId") as string;
     const type = formData.get("type") as
-  | "contract_to_sign"
-  | "signed_contract"
-  | "justificatifs";
+      | "contract_to_sign"
+      | "signed_contract"
+      | "justificatifs";
+
     const files = formData.getAll("files") as File[];
 
     if (!demandeId || !type || files.length === 0) {
@@ -48,44 +42,58 @@ export async function POST(req: NextRequest) {
     }
 
     const uploadedFiles = [];
+    const bucket = process.env.SUPABASE_BUCKET || "documents";
 
     for (const file of files) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
       const fileName = `${Date.now()}-${cleanFileName(file.name)}`;
-      const filePath = path.join(uploadDir, fileName);
+      const storagePath = `${demandeId}/${type}/${fileName}`;
 
-      fs.writeFileSync(filePath, buffer);
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(storagePath, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
 
-      const url = `/uploads/${fileName}`;
+      if (uploadError) {
+        console.error("Erreur Supabase upload :", uploadError);
+        return NextResponse.json(
+          { success: false, error: uploadError.message },
+          { status: 500 }
+        );
+      }
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(storagePath);
 
       const document = await prisma.document.create({
         data: {
           demandeId,
           nom: file.name,
-          url,
+          url: data.publicUrl,
           type,
         },
       });
 
       await prisma.timelineEvent.create({
-  data: {
-    demandeId,
-    titre:
-      type === "contract_to_sign"
-        ? "Contrat à signer déposé"
-        : type === "signed_contract"
-        ? "Contrat signé reçu"
-        : "Justificatif ajouté",
-    description:
-      type === "contract_to_sign"
-        ? `Le contrat à signer a été ajouté au dossier : ${file.name}`
-        : type === "signed_contract"
-        ? `Le contrat signé a été reçu : ${file.name}`
-        : `Nouveau justificatif ajouté au dossier : ${file.name}`,
-  },
-});
+        data: {
+          demandeId,
+          titre:
+            type === "contract_to_sign"
+              ? "Contrat à signer déposé"
+              : type === "signed_contract"
+              ? "Contrat signé reçu"
+              : "Justificatif ajouté",
+          description:
+            type === "contract_to_sign"
+              ? `Le contrat à signer a été ajouté au dossier : ${file.name}`
+              : type === "signed_contract"
+              ? `Le contrat signé a été reçu : ${file.name}`
+              : `Nouveau justificatif ajouté au dossier : ${file.name}`,
+        },
+      });
 
       uploadedFiles.push({
         id: document.id,
@@ -93,6 +101,24 @@ export async function POST(req: NextRequest) {
         url: document.url,
         type: document.type,
         uploadedAt: document.uploadedAt.toISOString(),
+      });
+    }
+
+    if (type === "signed_contract") {
+      await prisma.demande.update({
+        where: { id: demandeId },
+        data: {
+          statut: "Documents reçus",
+        },
+      });
+    }
+
+    if (type === "contract_to_sign") {
+      await prisma.demande.update({
+        where: { id: demandeId },
+        data: {
+          statut: "Accepté",
+        },
       });
     }
 
