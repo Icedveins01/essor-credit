@@ -755,56 +755,66 @@ const getStatusIcon = (statut: Statut) => {
     setUploading(true);
 
     try {
-      const formData = new FormData();
+  const formData = new FormData();
 
-      formData.append("demandeId", demandeId);
-      formData.append("type", type);
+  formData.append("demandeId", demandeId);
+  formData.append("type", type);
 
-      Array.from(files).forEach((file) => {
-        formData.append("files", file);
-      });
+  Array.from(files).forEach((file) => {
+    formData.append("files", file);
+  });
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
 
-      const result = await res.json();
+  const result = await res.json();
 
-      if (!res.ok || !result.success) {
-        alert(result.error || "Erreur lors de l’upload");
-        return;
-      }
+  if (!res.ok || !result.success) {
+    console.error("Erreur API upload :", result);
 
-      const refreshed = await fetch("/api/demandes", { cache: "no-store" });
-      const allDemandes = await refreshed.json();
+    alert(result.error || "Erreur lors de l’upload");
+    return;
+  }
 
-      const userDemandes = allDemandes.filter(
-        (d: Demande) =>
-          d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
-      );
+  const refreshed = await fetch("/api/demandes", {
+    cache: "no-store",
+  });
 
-      setDemandes(userDemandes);
+  const allDemandes = await refreshed.json();
 
-      setNotifications((n) => [
-        type === "signed_contract"
-          ? "Contrat signé envoyé avec succès"
-          : `${files.length} document(s) envoyé(s) avec succès`,
-        ...n,
-      ]);
+  const userDemandes = allDemandes.filter(
+    (d: Demande) =>
+      d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
+  );
 
-      setHasNewUpdate(true);
+  setDemandes(userDemandes);
 
-      setNewUpdateIds((ids) =>
-        ids.includes(demandeId) ? ids : [demandeId, ...ids]
-      );
-    } catch (error) {
-      console.error(error);
-      alert("Erreur de connexion pendant l’upload");
-    } finally {
-      setUploading(false);
-    }
-  };
+  setNotifications((n) => [
+    type === "signed_contract"
+      ? "Contrat signé envoyé avec succès"
+      : `${files.length} document(s) envoyé(s) avec succès`,
+    ...n,
+  ]);
+
+  setHasNewUpdate(true);
+
+  setNewUpdateIds((ids) =>
+    ids.includes(demandeId) ? ids : [demandeId, ...ids]
+  );
+} catch (error) {
+  console.error("Erreur upload client :", error);
+
+  alert(
+    error instanceof Error
+      ? error.message
+      : "Erreur de connexion pendant l’upload"
+  );
+} finally {
+  setUploading(false);
+  }
+};
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1701,7 +1711,7 @@ return events;
                 </Card>
 
                 {selectedDemande.statut !== "Refusé" &&
-  selectedDemande.statut !== "Fonds transférés" && (
+                 selectedDemande.statut !== "Fonds transférés" && (
                   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
                     <CardHeader>
                       <CardTitle className="text-white">
