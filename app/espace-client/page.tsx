@@ -985,22 +985,46 @@ const getStatusIcon = (statut: Statut) => {
       apiEvents.map((e) => e.title.toLowerCase())
     );
 
-    const filteredExtraEvents = extraEvents.filter(
-      (e) => !existingTitles.has(e.title.toLowerCase())
-    );
+  const filteredExtraEvents = extraEvents.filter((e) => {
+  const title = e.title.toLowerCase();
 
-    return [...apiEvents, ...filteredExtraEvents].sort(
-      (a, b) => {
-        if (a.date === "En attente") return 1;
-        if (b.date === "En attente") return -1;
-
-        return (
-          new Date(a.date).getTime() -
-          new Date(b.date).getTime()
-        );
-      }
-    );
+  if (
+    title.includes("justificatif") &&
+    apiEvents.some((api) =>
+      api.title.toLowerCase().includes("justificatif")
+    )
+  ) {
+    return false;
   }
+
+  if (
+    title.includes("contrat signé") &&
+    apiEvents.some((api) =>
+      api.title.toLowerCase().includes("contrat signé")
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    title.includes("contrat à signer") &&
+    apiEvents.some((api) =>
+      api.title.toLowerCase().includes("contrat à signer")
+    )
+  ) {
+    return false;
+  }
+
+  return !existingTitles.has(title);
+});
+
+return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
+  if (a.date === "En attente") return 1;
+  if (b.date === "En attente") return -1;
+
+  return new Date(a.date).getTime() - new Date(b.date).getTime();
+});
+}
 
   // =========================
   // FALLBACK SI PAS DE TIMELINE API
