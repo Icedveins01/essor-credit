@@ -27,16 +27,16 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      client: {
-        id: client.id,
-        email: client.email,
-        nom: client.nom,
-        prenom: client.prenom,
-        telephone: client.telephone || "",
-        sexe: client.sexe || "",
-      },
-    });
+  success: true,
+  client: {
+    id: client.id,
+    email: client.email,
+    nom: client.nom,
+    prenom: client.prenom,
+    telephone: client.telephone || "",
+    sexe: client.sexe || "",
+  },
+});
   } catch (error) {
     console.error("Erreur login client :", error);
 

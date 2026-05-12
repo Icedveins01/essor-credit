@@ -869,10 +869,19 @@ const justificatifs =
                         </SelectTrigger>
 
                         <SelectContent>
-                          <SelectItem value="En cours">⏳ En cours</SelectItem>
-                          <SelectItem value="Accepté">✅ Accepté</SelectItem>
-                          <SelectItem value="Refusé">❌ Refusé</SelectItem>
-                        </SelectContent>
+  <SelectItem value="En cours">⏳ En cours</SelectItem>
+  <SelectItem value="Documents reçus">📄 Documents reçus</SelectItem>
+  <SelectItem value="Vérification finale">🔎 Vérification finale</SelectItem>
+  <SelectItem value="Accepté">✅ Accepté</SelectItem>
+  <SelectItem value="Décaissement en préparation">
+    🏦 Décaissement en préparation
+  </SelectItem>
+  <SelectItem value="Fonds mis à disposition">
+    💳 Fonds mis à disposition
+  </SelectItem>
+  <SelectItem value="Fonds transférés">💸 Fonds transférés</SelectItem>
+  <SelectItem value="Refusé">❌ Refusé</SelectItem>
+</SelectContent>  
                       </Select>
                     </div>
 
