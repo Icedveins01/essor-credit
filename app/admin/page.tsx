@@ -69,8 +69,10 @@ type Demande = {
   commentaire?: string;
   message?: string;
   isIndependant?: boolean;
+  contractToSign?: UploadedFile | string;
   signedContract?: UploadedFile | string;
   justificatifs?: UploadedFile[] | string[];
+  
   timeline?: TimelineEvent[];
   client?: {
     prenom: string;
@@ -388,12 +390,16 @@ const getStatusIcon = (statut: Statut) => {
     return file;
   };
 
-  const signedContract: UploadedFile | null = selectedDemande?.signedContract
-    ? formatFile(selectedDemande.signedContract)
-    : null;
+  const contractToSign: UploadedFile | null = selectedDemande?.contractToSign
+  ? formatFile(selectedDemande.contractToSign)
+  : null;
 
-  const justificatifs =
-    selectedDemande?.justificatifs?.map((file) => formatFile(file)) || [];
+const signedContract: UploadedFile | null = selectedDemande?.signedContract
+  ? formatFile(selectedDemande.signedContract)
+  : null;
+
+const justificatifs =
+  selectedDemande?.justificatifs?.map((file) => formatFile(file)) || [];
 
   if (!isAdminLoggedIn) {
     return (
@@ -772,13 +778,13 @@ const getStatusIcon = (statut: Statut) => {
                               Contrat à signer
                             </p>
                             <p className="text-xs text-zinc-500">
-                              {signedContract?.name || "Non reçu"}
+                              {contractToSign?.name || "Non reçu"}
                             </p>
                           </div>
 
-                          {signedContract?.url ? (
-                            <a
-                              href={signedContract.url}
+                          {contractToSign?.url ? (
+  <a
+    href={contractToSign.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center hover:bg-emerald-500/25"
@@ -791,6 +797,28 @@ const getStatusIcon = (statut: Statut) => {
                             </Badge>
                           )}
                         </div>
+
+                        <div className="flex items-center justify-between gap-4 bg-white/5 rounded-2xl p-4">
+  <div>
+    <p className="text-sm font-medium">Contrat signé reçu</p>
+    <p className="text-xs text-zinc-500">
+      {signedContract?.name || "Non reçu"}
+    </p>
+  </div>
+
+  {signedContract?.url ? (
+    <a
+      href={signedContract.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center hover:bg-emerald-500/25"
+    >
+      <Download className="w-4 h-4" />
+    </a>
+  ) : (
+    <Badge className="bg-zinc-700 text-zinc-300">En attente</Badge>
+  )}
+</div>
 
                         {justificatifs.length > 0 ? (
                           justificatifs.map((file, index) => (
