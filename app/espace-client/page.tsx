@@ -1615,35 +1615,55 @@ export default function EspaceClient() {
 
                     <CardContent className="space-y-5">
                       {[
-                        {
-                          title: "IBAN bénéficiaire vérifié",
-                          desc: "Les coordonnées bancaires du bénéficiaire ont été vérifiées et sécurisées.",
-                          done: true,
-                        },
-                        {
-                          title: "Préparation du virement",
-                          desc: "Le service financier prépare l’ordre de transfert bancaire.",
-                          done:
-                            selectedDemande?.statut === "Fonds transférés" ||
-                            selectedDemande?.statut === "Fonds mis à disposition",
-                        },
-                        {
-                          title: "Validation finale",
-                          desc: "Contrôle final du dossier avant émission du transfert.",
-                          done: selectedDemande?.statut === "Fonds transférés",
-                        },
-                        {
-                          title:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? "Transfert effectué"
-                              : "Transfert en attente",
-                          desc:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? "Le montant a été transmis avec succès selon les modalités prévues."
-                              : "Le transfert sera visible dès validation complète.",
-                          done: selectedDemande?.statut === "Fonds transférés",
-                        },
-                      ].map((step, index) => (
+  {
+    title: "IBAN bénéficiaire vérifié",
+    desc: "Les coordonnées bancaires du bénéficiaire ont été vérifiées et sécurisées.",
+    done: true,
+    date: formatDateTime(selectedDemande.createdAt),
+  },
+  {
+    title: "Préparation du virement",
+    desc: "Le service financier prépare l’ordre de transfert bancaire.",
+    done:
+      selectedDemande?.statut === "Fonds transférés" ||
+      selectedDemande?.statut === "Fonds mis à disposition",
+    date:
+      selectedDemande?.statut === "Fonds transférés" ||
+      selectedDemande?.statut === "Fonds mis à disposition"
+        ? formatDateTime(
+            selectedDemande.updatedAt || selectedDemande.createdAt
+          )
+        : "",
+  },
+  {
+    title: "Validation finale",
+    desc: "Contrôle final du dossier avant émission du transfert.",
+    done: selectedDemande?.statut === "Fonds transférés",
+    date:
+      selectedDemande?.statut === "Fonds transférés"
+        ? formatDateTime(
+            selectedDemande.updatedAt || selectedDemande.createdAt
+          )
+        : "",
+  },
+  {
+    title:
+      selectedDemande?.statut === "Fonds transférés"
+        ? "Transfert bancaire exécuté"
+        : "Transfert en attente",
+    desc:
+      selectedDemande?.statut === "Fonds transférés"
+        ? "Le montant a été transmis avec succès vers le compte bénéficiaire selon les modalités validées."
+        : "Le transfert sera visible dès validation complète.",
+    done: selectedDemande?.statut === "Fonds transférés",
+    date:
+      selectedDemande?.statut === "Fonds transférés"
+        ? formatDateTime(
+            selectedDemande.updatedAt || selectedDemande.createdAt
+          )
+        : "",
+  },
+].map((step, index) => (
                         <div key={index} className="relative flex gap-4">
                           {index !== 3 && (
                             <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
@@ -1675,6 +1695,11 @@ export default function EspaceClient() {
                             <p className="text-sm text-zinc-400 mt-2">
                               {step.desc}
                             </p>
+                           {step.done && step.date && (
+  <p className="text-xs text-zinc-500 mt-2">
+    {step.date}
+  </p>
+)}
                           </div>
                         </div>
                       ))}
