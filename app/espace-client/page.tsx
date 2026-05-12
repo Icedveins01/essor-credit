@@ -90,6 +90,7 @@ type ClientAccount = {
   nom: string;
   prenom: string;
   telephone: string;
+  sexe?: string;
 };
 
 export default function EspaceClient() {
@@ -101,7 +102,9 @@ export default function EspaceClient() {
   const [showReset, setShowReset] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const [currentClient, setCurrentClient] = useState<ClientAccount | null>(null);
+  const [currentClient, setCurrentClient] = useState<ClientAccount | null>(
+    null
+  );
 
   const [demandes, setDemandes] = useState<Demande[]>([]);
   const [selectedDemandeId, setSelectedDemandeId] = useState("");
@@ -117,26 +120,26 @@ export default function EspaceClient() {
   const signedInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-  const savedClient = sessionStorage.getItem("currentClient");
+    const savedClient = sessionStorage.getItem("currentClient");
 
-  if (!savedClient) return;
+    if (!savedClient) return;
 
-  const parsedClient = JSON.parse(savedClient);
+    const parsedClient = JSON.parse(savedClient);
 
-  const lastActivity = sessionStorage.getItem("lastActivity");
-  const now = Date.now();
+    const lastActivity = sessionStorage.getItem("lastActivity");
+    const now = Date.now();
 
-  if (lastActivity && now - parseInt(lastActivity, 10) > 300000) {
-    sessionStorage.removeItem("currentClient");
-    sessionStorage.removeItem("lastActivity");
-    return;
-  }
+    if (lastActivity && now - parseInt(lastActivity, 10) > 300000) {
+      sessionStorage.removeItem("currentClient");
+      sessionStorage.removeItem("lastActivity");
+      return;
+    }
 
-  setCurrentClient(parsedClient);
-  setIsLoggedIn(true);
-  setEmail(parsedClient.email);
-  sessionStorage.setItem("lastActivity", now.toString());
-}, []);
+    setCurrentClient(parsedClient);
+    setIsLoggedIn(true);
+    setEmail(parsedClient.email);
+    sessionStorage.setItem("lastActivity", now.toString());
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn || !currentClient?.email) return;
@@ -196,10 +199,7 @@ export default function EspaceClient() {
                 markAsNew();
               }
 
-              if (
-                !oldDemande.contractToSign &&
-                newDemande.contractToSign
-              ) {
+              if (!oldDemande.contractToSign && newDemande.contractToSign) {
                 setNotifications((n) => [
                   "Un contrat à signer est disponible",
                   ...n,
@@ -287,131 +287,102 @@ export default function EspaceClient() {
   }, [isLoggedIn]);
 
   const resetAccessCode = async () => {
-  const emailToReset = resetEmail || email;
+    const emailToReset = resetEmail || email;
 
-  if (!emailToReset.trim()) {
-    alert("Veuillez entrer votre adresse email.");
-    return;
-  }
-
-  setIsResetting(true);
-
-  try {
-    const res = await fetch("/api/client/reset-access", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: emailToReset.toLowerCase().trim(),
-      }),
-    });
-
-    const result = await res.json();
-
-    if (!res.ok || !result.success) {
-      alert(result.error || "Impossible de générer un nouveau code.");
+    if (!emailToReset.trim()) {
+      alert("Veuillez entrer votre adresse email.");
       return;
     }
 
-    const clients = JSON.parse(localStorage.getItem("clients") || "[]");
+    setIsResetting(true);
 
-    const updatedClients = clients.map((c: ClientAccount) =>
-      c.email.toLowerCase() === emailToReset.toLowerCase()
-        ? { ...c, password: result.accessCode }
-        : c
-    );
+    try {
+      const res = await fetch("/api/client/reset-access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailToReset.toLowerCase().trim(),
+        }),
+      });
 
-    localStorage.setItem("clients", JSON.stringify(updatedClients));
+      const result = await res.json();
 
-    alert(
-      `Nouveau code d’accès généré.\n\nEmail : ${emailToReset}\nNouveau code : ${result.accessCode}\n\nConservez ce code pour vous connecter.`
-    );
+      if (!res.ok || !result.success) {
+        alert(result.error || "Impossible de générer un nouveau code.");
+        return;
+      }
 
-    setEmail(emailToReset.toLowerCase().trim());
-    setPassword(result.accessCode);
-    setShowReset(false);
-  } catch (error) {
-    console.error(error);
-    alert("Erreur de connexion au serveur.");
-  } finally {
-    setIsResetting(false);
-  }
-};
+      const clients = JSON.parse(localStorage.getItem("clients") || "[]");
 
- const login = async () => {
+      const updatedClients = clients.map((c: ClientAccount) =>
+        c.email.toLowerCase() === emailToReset.toLowerCase()
+          ? { ...c, password: result.accessCode }
+          : c
+      );
 
-  if (!email.trim() || !password.trim()) {
+      localStorage.setItem("clients", JSON.stringify(updatedClients));
 
-    alert("Veuillez entrer votre email et votre code d’accès.");
+      alert(
+        `Nouveau code d’accès généré.\n\nEmail : ${emailToReset}\nNouveau code : ${result.accessCode}\n\nConservez ce code pour vous connecter.`
+      );
 
-    return;
+      setEmail(emailToReset.toLowerCase().trim());
+      setPassword(result.accessCode);
+      setShowReset(false);
+    } catch (error) {
+      console.error(error);
+      alert("Erreur de connexion au serveur.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
-  }
-
-  try {
-
-    const res = await fetch("/api/client/login", {
-
-      method: "POST",
-
-      headers: {
-
-        "Content-Type": "application/json",
-
-      },
-
-      body: JSON.stringify({
-
-        email: email.toLowerCase().trim(),
-
-        password: password.trim(),
-
-      }),
-
-    });
-
-    const result = await res.json();
-
-    if (!res.ok || !result.success) {
-
-      alert(result.error || "Email ou code d’accès incorrect");
-
+  const login = async () => {
+    if (!email.trim() || !password.trim()) {
+      alert("Veuillez entrer votre email et votre code d’accès.");
       return;
-
     }
 
-    const client = {
+    try {
+      const res = await fetch("/api/client/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password: password.trim(),
+        }),
+      });
 
-      email: result.client.email,
+      const result = await res.json();
 
-      password: password.trim(),
+      if (!res.ok || !result.success) {
+        alert(result.error || "Email ou code d’accès incorrect");
+        return;
+      }
 
-      nom: result.client.nom,
-
-      prenom: result.client.prenom,
-
-      telephone: result.client.telephone || "",
-
-    };
-
-    setCurrentClient(client);
-
-    setIsLoggedIn(true);
-
-    sessionStorage.setItem("currentClient", JSON.stringify(client));
-
-    sessionStorage.setItem("lastActivity", Date.now().toString());
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert("Erreur de connexion au serveur.");
-
-  }
-
+      const client = {
+  email: result.client.email,
+  password: password.trim(),
+  nom: result.client.nom,
+  prenom: result.client.prenom,
+  telephone: result.client.telephone || "",
+  sexe: result.client.sexe || "",
 };
+
+      setCurrentClient(client);
+      setIsLoggedIn(true);
+
+      sessionStorage.setItem("currentClient", JSON.stringify(client));
+      sessionStorage.setItem("lastActivity", Date.now().toString());
+    } catch (error) {
+      console.error(error);
+      alert("Erreur de connexion au serveur.");
+    }
+  };
 
   const logout = () => {
     sessionStorage.removeItem("currentClient");
@@ -427,8 +398,6 @@ export default function EspaceClient() {
     setNewUpdateIds([]);
   };
 
-
-
   const selectedDemande =
     demandes.find((d) => d.id === selectedDemandeId) || demandes[0];
 
@@ -437,84 +406,84 @@ export default function EspaceClient() {
   const acceptes = demandes.filter((d) => d.statut === "Accepté").length;
 
   const getBadgeClass = (statut: Statut) => {
-  switch (statut) {
-    case "Accepté":
-      return "bg-emerald-500/15 text-emerald-300 border border-emerald-400/30";
+    switch (statut) {
+      case "Accepté":
+        return "bg-emerald-500/15 text-emerald-300 border border-emerald-400/30";
 
-    case "Refusé":
-      return "bg-red-500/15 text-red-300 border border-red-400/30";
+      case "Refusé":
+        return "bg-red-500/15 text-red-300 border border-red-400/30";
 
-    case "Documents reçus":
-      return "bg-blue-500/15 text-blue-300 border border-blue-400/30";
+      case "Documents reçus":
+        return "bg-blue-500/15 text-blue-300 border border-blue-400/30";
 
-    case "Vérification finale":
-      return "bg-violet-500/15 text-violet-300 border border-violet-400/30";
+      case "Vérification finale":
+        return "bg-violet-500/15 text-violet-300 border border-violet-400/30";
 
-    case "Décaissement en préparation":
-      return "bg-cyan-500/15 text-cyan-300 border border-cyan-400/30";
+      case "Décaissement en préparation":
+        return "bg-cyan-500/15 text-cyan-300 border border-cyan-400/30";
 
-    case "Fonds mis à disposition":
-      return "bg-indigo-500/15 text-indigo-300 border border-indigo-400/30";
+      case "Fonds mis à disposition":
+        return "bg-indigo-500/15 text-indigo-300 border border-indigo-400/30";
 
-    case "Fonds transférés":
-      return "bg-green-500/20 text-green-300 border border-green-400/30";
+      case "Fonds transférés":
+        return "bg-green-500/20 text-green-300 border border-green-400/30";
 
-    default:
-      return "bg-amber-500/15 text-amber-300 border border-amber-400/30";
-  }
-};
+      default:
+        return "bg-amber-500/15 text-amber-300 border border-amber-400/30";
+    }
+  };
 
-const getStatusText = (statut: Statut) => {
-  switch (statut) {
-    case "Documents reçus":
-      return "Documents reçus";
+  const getStatusText = (statut: Statut) => {
+    switch (statut) {
+      case "Documents reçus":
+        return "Documents reçus";
 
-    case "Vérification finale":
-      return "Vérification finale";
+      case "Vérification finale":
+        return "Vérification finale";
 
-    case "Accepté":
-      return "Dossier validé";
+      case "Accepté":
+        return "Dossier validé";
 
-    case "Décaissement en préparation":
-      return "Décaissement en préparation";
+      case "Décaissement en préparation":
+        return "Décaissement en préparation";
 
-    case "Fonds mis à disposition":
-      return "Fonds disponibles";
+      case "Fonds mis à disposition":
+        return "Fonds disponibles";
 
-    case "Fonds transférés":
-      return "Fonds transférés";
+      case "Fonds transférés":
+        return "Fonds transférés";
 
-    case "Refusé":
-      return "Dossier refusé";
+      case "Refusé":
+        return "Dossier refusé";
 
-    default:
-      return "Analyse en cours";
-  }
-};
+      default:
+        return "Analyse en cours";
+    }
+  };
 
-const getStatusIcon = (statut: Statut) => {
-  switch (statut) {
-    case "Accepté":
-      return <CircleCheck className="w-5 h-5" />;
+  const getStatusIcon = (statut: Statut) => {
+    switch (statut) {
+      case "Accepté":
+        return <CircleCheck className="w-5 h-5" />;
 
-    case "Fonds transférés":
-      return <Landmark className="w-5 h-5" />;
+      case "Fonds transférés":
+        return <Landmark className="w-5 h-5" />;
 
-    case "Fonds mis à disposition":
-    case "Décaissement en préparation":
-      return <CreditCard className="w-5 h-5" />;
+      case "Fonds mis à disposition":
+      case "Décaissement en préparation":
+        return <CreditCard className="w-5 h-5" />;
 
-    case "Documents reçus":
-    case "Vérification finale":
-      return <FileText className="w-5 h-5" />;
+      case "Documents reçus":
+      case "Vérification finale":
+        return <FileText className="w-5 h-5" />;
 
-    case "Refusé":
-      return <CircleX className="w-5 h-5" />;
+      case "Refusé":
+        return <CircleX className="w-5 h-5" />;
 
-    default:
-      return <CircleDashed className="w-5 h-5" />;
-  }
-};
+      default:
+        return <CircleDashed className="w-5 h-5" />;
+    }
+  };
 
   const formatDate = (date?: string) => {
     if (!date) return "—";
@@ -575,9 +544,7 @@ const getStatusIcon = (statut: Statut) => {
       names.includes("cni");
 
     const hasBank =
-      names.includes("rib") ||
-      names.includes("iban") ||
-      names.includes("bank");
+      names.includes("rib") || names.includes("iban") || names.includes("bank");
 
     const hasIncome =
       names.includes("paie") ||
@@ -594,140 +561,138 @@ const getStatusIcon = (statut: Statut) => {
   };
 
   const getMissingEssentialDocs = (demande?: Demande) => {
-  if (!demande) return [];
-
-  if (
-    demande.statut === "Fonds mis à disposition" ||
-    demande.statut === "Fonds transférés"
-  ) {
-    return [];
-  }
-
-  const missing: string[] = [];
-
-  if (
-    demande.statut === "Décaissement en préparation" &&
-    !demande.signedContract
-  ) {
-    missing.push("Contrat signé");
-  }
-
-  const uploadedNames =
-    demande.justificatifs?.map((file) => file.name.toLowerCase()) || [];
-
-  const essentiels = getRequiredDocuments(demande.isIndependant).essentiels;
-
-  const missingDocs = essentiels.filter((doc) => {
-    const lowerDoc = doc.toLowerCase();
-
-    if (lowerDoc.includes("pièce") || lowerDoc.includes("identité")) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("ident") ||
-          name.includes("passport") ||
-          name.includes("cni")
-      );
-    }
-
-    if (lowerDoc.includes("rib") || lowerDoc.includes("iban")) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("rib") ||
-          name.includes("iban") ||
-          name.includes("bank")
-      );
-    }
+    if (!demande) return [];
 
     if (
-      lowerDoc.includes("paie") ||
-      lowerDoc.includes("retraite") ||
-      lowerDoc.includes("revenu") ||
-      lowerDoc.includes("urssaf")
+      demande.statut === "Fonds mis à disposition" ||
+      demande.statut === "Fonds transférés"
     ) {
-      return !uploadedNames.some(
-        (name) =>
-          name.includes("paie") ||
-          name.includes("salaire") ||
-          name.includes("retraite") ||
-          name.includes("revenu") ||
-          name.includes("urssaf")
-      );
+      return [];
     }
 
-    if (lowerDoc.includes("relevé")) {
-      return !uploadedNames.some(
-        (name) => name.includes("relev") || name.includes("compte")
-      );
+    const missing: string[] = [];
+
+    if (
+      demande.statut === "Décaissement en préparation" &&
+      !demande.signedContract
+    ) {
+      missing.push("Contrat signé");
     }
 
-    return true;
-  });
+    const uploadedNames =
+      demande.justificatifs?.map((file) => file.name.toLowerCase()) || [];
 
-  return [...missing, ...missingDocs];
-};
+    const essentiels = getRequiredDocuments(demande.isIndependant).essentiels;
 
+    const missingDocs = essentiels.filter((doc) => {
+      const lowerDoc = doc.toLowerCase();
 
+      if (lowerDoc.includes("pièce") || lowerDoc.includes("identité")) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("ident") ||
+            name.includes("passport") ||
+            name.includes("cni")
+        );
+      }
+
+      if (lowerDoc.includes("rib") || lowerDoc.includes("iban")) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("rib") ||
+            name.includes("iban") ||
+            name.includes("bank")
+        );
+      }
+
+      if (
+        lowerDoc.includes("paie") ||
+        lowerDoc.includes("retraite") ||
+        lowerDoc.includes("revenu") ||
+        lowerDoc.includes("urssaf")
+      ) {
+        return !uploadedNames.some(
+          (name) =>
+            name.includes("paie") ||
+            name.includes("salaire") ||
+            name.includes("retraite") ||
+            name.includes("revenu") ||
+            name.includes("urssaf")
+        );
+      }
+
+      if (lowerDoc.includes("relevé")) {
+        return !uploadedNames.some(
+          (name) => name.includes("relev") || name.includes("compte")
+        );
+      }
+
+      return true;
+    });
+
+    return [...missing, ...missingDocs];
+  };
 
   const getProgressPercent = (demande?: Demande) => {
-  if (!demande) return 0;
+    if (!demande) return 0;
 
-  let progress = 10;
+    let progress = 10;
 
-  switch (demande.statut) {
-    case "En cours":
-      progress = 15;
-      break;
+    switch (demande.statut) {
+      case "En cours":
+        progress = 15;
+        break;
 
-    case "Documents reçus":
-      progress = 30;
-      break;
+      case "Documents reçus":
+        progress = 30;
+        break;
 
-    case "Vérification finale":
-      progress = 50;
-      break;
+      case "Vérification finale":
+        progress = 50;
+        break;
 
-    case "Accepté":
-      progress = 65;
-      break;
+      case "Accepté":
+        progress = 65;
+        break;
 
-    case "Décaissement en préparation":
-      progress = 80;
-      break;
+      case "Décaissement en préparation":
+        progress = 80;
+        break;
 
-    case "Fonds mis à disposition":
-      progress = 95;
-      break;
+      case "Fonds mis à disposition":
+        progress = 95;
+        break;
 
-    case "Fonds transférés":
-      progress = 100;
-      break;
+      case "Fonds transférés":
+        progress = 100;
+        break;
 
-    case "Refusé":
-      progress = 100;
-      break;
+      case "Refusé":
+        progress = 100;
+        break;
 
-    default:
-      progress = 10;
-  }
+      default:
+        progress = 10;
+    }
 
-  if (demande.commentaire?.trim()) {
-    progress += 3;
-  }
+    if (demande.commentaire?.trim()) {
+      progress += 3;
+    }
 
-  if (demande.contractToSign) {
-    progress += 3;
-  }
+    if (demande.contractToSign) {
+      progress += 3;
+    }
 
-  if (demande.signedContract) {
-    progress += 4;
-  }
+    if (demande.signedContract) {
+      progress += 4;
+    }
 
-  if (demande.justificatifs?.length > 0) {
-    progress += Math.min(demande.justificatifs.length * 2, 8);
-  }
+    if (demande.justificatifs?.length > 0) {
+      progress += Math.min(demande.justificatifs.length * 2, 8);
+    }
 
-  return Math.min(progress, 100);
-};
+    return Math.min(progress, 100);
+  };
 
   const missingEssentialDocs = getMissingEssentialDocs(selectedDemande);
   const missingDocsCount = missingEssentialDocs.length;
@@ -743,6 +708,11 @@ const getStatusIcon = (statut: Statut) => {
     !!selectedDemande?.signedContract &&
     hasEssentialDocs(selectedDemande);
 
+  const isFundingPreparation =
+    selectedDemande?.statut === "Accepté" &&
+    !!selectedDemande?.signedContract &&
+    (selectedDemande?.justificatifs?.length || 0) > 0;
+
   const progressPercent = getProgressPercent(selectedDemande);
 
   const handleFileUpload = async (
@@ -755,66 +725,65 @@ const getStatusIcon = (statut: Statut) => {
     setUploading(true);
 
     try {
-  const formData = new FormData();
+      const formData = new FormData();
 
-  formData.append("demandeId", demandeId);
-  formData.append("type", type);
+      formData.append("demandeId", demandeId);
+      formData.append("type", type);
 
-  Array.from(files).forEach((file) => {
-    formData.append("files", file);
-  });
+      Array.from(files).forEach((file) => {
+        formData.append("files", file);
+      });
 
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-  const result = await res.json();
+      const result = await res.json();
 
-  if (!res.ok || !result.success) {
-    console.error("Erreur API upload :", result);
+      if (!res.ok || !result.success) {
+        console.error("Erreur API upload :", result);
+        alert(result.error || "Erreur lors de l’upload");
+        return;
+      }
 
-    alert(result.error || "Erreur lors de l’upload");
-    return;
-  }
+      const refreshed = await fetch("/api/demandes", {
+        cache: "no-store",
+      });
 
-  const refreshed = await fetch("/api/demandes", {
-    cache: "no-store",
-  });
+      const allDemandes = await refreshed.json();
 
-  const allDemandes = await refreshed.json();
+      const userDemandes = allDemandes.filter(
+        (d: Demande) =>
+          d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
+      );
 
-  const userDemandes = allDemandes.filter(
-    (d: Demande) =>
-      d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
-  );
+      setDemandes(userDemandes);
 
-  setDemandes(userDemandes);
+      setNotifications((n) => [
+        type === "signed_contract"
+          ? "Contrat signé envoyé avec succès"
+          : `${files.length} document(s) envoyé(s) avec succès`,
+        ...n,
+      ]);
 
-  setNotifications((n) => [
-    type === "signed_contract"
-      ? "Contrat signé envoyé avec succès"
-      : `${files.length} document(s) envoyé(s) avec succès`,
-    ...n,
-  ]);
+      setHasNewUpdate(true);
 
-  setHasNewUpdate(true);
+      setNewUpdateIds((ids) =>
+        ids.includes(demandeId) ? ids : [demandeId, ...ids]
+      );
+    } catch (error) {
+      console.error("Erreur upload client :", error);
 
-  setNewUpdateIds((ids) =>
-    ids.includes(demandeId) ? ids : [demandeId, ...ids]
-  );
-} catch (error) {
-  console.error("Erreur upload client :", error);
-
-  alert(
-    error instanceof Error
-      ? error.message
-      : "Erreur de connexion pendant l’upload"
-  );
-} finally {
-  setUploading(false);
-  }
-};
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Erreur de connexion pendant l’upload"
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -846,238 +815,220 @@ const getStatusIcon = (statut: Statut) => {
     window.open(url, "_blank");
   };
 
-    const buildTimeline = (demande?: Demande) => {
-  if (!demande) return [];
+  const buildTimeline = (demande?: Demande) => {
+    if (!demande) return [];
 
-  const getIcon = (type: TimelineEvent["type"]) => {
-    if (type === "created") return CheckCircle;
+    const getIcon = (type: TimelineEvent["type"]) => {
+      if (type === "created") return CheckCircle;
 
-    if (type === "status") {
-      if (demande.statut === "Accepté") return CircleCheck;
-      if (demande.statut === "Refusé") return CircleX;
+      if (type === "status") {
+        if (demande.statut === "Accepté") return CircleCheck;
+        if (demande.statut === "Refusé") return CircleX;
+        return Clock;
+      }
+
+      if (type === "document") return FileText;
+      if (type === "comment") return MessageSquare;
+      if (type === "funding") return Landmark;
+
       return Clock;
-    }
+    };
 
-    if (type === "document") return FileText;
-    if (type === "comment") return MessageSquare;
-    if (type === "funding") return Landmark;
+    const getColor = (type: TimelineEvent["type"]) => {
+      if (type === "created") return "emerald";
 
-    return Clock;
-  };
+      if (type === "status") {
+        if (demande.statut === "Accepté") return "emerald";
+        if (demande.statut === "Refusé") return "red";
+        return "amber";
+      }
 
-  const getColor = (type: TimelineEvent["type"]) => {
-    if (type === "created") return "emerald";
+      if (type === "document") return "emerald";
+      if (type === "comment") return "cyan";
+      if (type === "funding") return "emerald";
 
-    if (type === "status") {
-      if (demande.statut === "Accepté") return "emerald";
-      if (demande.statut === "Refusé") return "red";
       return "amber";
-    }
+    };
 
-    if (type === "document") return "emerald";
-    if (type === "comment") return "cyan";
-    if (type === "funding") return "emerald";
+    if (demande.timeline && demande.timeline.length > 0) {
+      const apiEvents = [...demande.timeline]
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime()
+        )
+        .map((event) => ({
+          title:
+            event.title.includes("Accepté") &&
+            demande.justificatifs?.length > 0
+              ? "Justificatifs acceptés"
+              : event.title,
 
-    return "amber";
-  };
+          desc:
+            event.title.includes("Accepté") &&
+            demande.justificatifs?.length > 0
+              ? "Vos justificatifs ont été vérifiés et acceptés. Votre dossier passe à l’étape de mise à disposition des fonds."
+              : event.description,
 
-  // =========================
-  // PRIORITÉ À LA TIMELINE API
-  // =========================
-  if (demande.timeline && demande.timeline.length > 0) {
-    const apiEvents = [...demande.timeline]
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime()
-      )
-      .map((event) => ({
+          date: formatDateTime(event.createdAt),
+          done: true,
+          active: false,
+          icon: getIcon(event.type),
+          color: getColor(event.type),
+        }));
 
-  title:
+      const extraEvents: any[] = [];
 
-    event.title.includes("Accepté") && demande.justificatifs?.length > 0
-
-      ? "Justificatifs acceptés"
-
-      : event.title,
-
-  desc:
-
-    event.title.includes("Accepté") && demande.justificatifs?.length > 0
-
-      ? "Vos justificatifs ont été vérifiés et acceptés. Votre dossier passe à l’étape de mise à disposition des fonds."
-
-      : event.description,
-        date: formatDateTime(event.createdAt),
-        done: true,
-        active: false,
-        icon: getIcon(event.type),
-        color: getColor(event.type),
-      }));
-
-    const extraEvents: any[] = [];
-
-    // Contrat à signer
-    if (demande.statut === "Accepté" && !demande.contractToSign) {
-      extraEvents.push({
-        title: "Contrat à signer",
-        desc: "Votre contrat à signer n’est pas encore disponible.",
-        date: "En attente",
-        done: false,
-        active: true,
-        icon: FileText,
-        color: "amber",
-      });
-    }
-
-    if (demande.contractToSign) {
-      extraEvents.push({
-        title: "Contrat à signer disponible",
-        desc: demande.contractToSign.name,
-        date: formatDateTime(demande.contractToSign.uploadedAt),
-        done: true,
-        active: false,
-        icon: FileText,
-        color: "emerald",
-      });
-    }
-
-    // Contrat signé
-    if (demande.statut === "Accepté" && !demande.signedContract) {
-      extraEvents.push({
-        title: "Signature du contrat",
-        desc: "Contrat en attente de signature et de dépôt.",
-        date: "En attente",
-        done: false,
-        active: true,
-        icon: FileText,
-        color: "amber",
-      });
-    }
-
-    if (demande.signedContract) {
-      extraEvents.push({
-        title: "Contrat signé reçu",
-        desc: demande.signedContract.name,
-        date: formatDateTime(demande.signedContract.uploadedAt),
-        done: true,
-        active: false,
-        icon: FileText,
-        color: "emerald",
-      });
-    }
-
-    // Justificatifs
-    if (demande.justificatifs?.length > 0) {
-      demande.justificatifs.forEach((file, index) => {
+      if (demande.statut === "Accepté" && !demande.contractToSign) {
         extraEvents.push({
-          title: `Justificatif ${index + 1}`,
-          desc: file.name,
-          date: formatDateTime(file.uploadedAt),
+          title: "Contrat à signer",
+          desc: "Votre contrat à signer n’est pas encore disponible.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: FileText,
+          color: "amber",
+        });
+      }
+
+      if (demande.contractToSign) {
+        extraEvents.push({
+          title: "Contrat à signer disponible",
+          desc: demande.contractToSign.name,
+          date: formatDateTime(demande.contractToSign.uploadedAt),
           done: true,
           active: false,
           icon: FileText,
           color: "emerald",
         });
+      }
+
+      if (demande.statut === "Accepté" && !demande.signedContract) {
+        extraEvents.push({
+          title: "Signature du contrat",
+          desc: "Contrat en attente de signature et de dépôt.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: FileText,
+          color: "amber",
+        });
+      }
+
+      if (demande.signedContract) {
+        extraEvents.push({
+          title: "Contrat signé reçu",
+          desc: demande.signedContract.name,
+          date: formatDateTime(demande.signedContract.uploadedAt),
+          done: true,
+          active: false,
+          icon: FileText,
+          color: "emerald",
+        });
+      }
+
+      if (demande.justificatifs?.length > 0) {
+        demande.justificatifs.forEach((file, index) => {
+          extraEvents.push({
+            title: `Justificatif ${index + 1}`,
+            desc: file.name,
+            date: formatDateTime(file.uploadedAt),
+            done: true,
+            active: false,
+            icon: FileText,
+            color: "emerald",
+          });
+        });
+      } else if (demande.statut === "Accepté") {
+        extraEvents.push({
+          title: "Justificatifs",
+          desc: "Aucun justificatif reçu pour le moment.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: CalendarClock,
+          color: "amber",
+        });
+      }
+
+      const existingTitles = new Set(
+        apiEvents.map((e) => e.title.toLowerCase())
+      );
+
+      const filteredExtraEvents = extraEvents.filter((e) => {
+        const title = e.title.toLowerCase();
+
+        if (
+          title.includes("justificatif") &&
+          apiEvents.some((api) =>
+            api.title.toLowerCase().includes("justificatif")
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          title.includes("contrat signé") &&
+          apiEvents.some((api) =>
+            api.title.toLowerCase().includes("contrat signé")
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          title.includes("contrat à signer") &&
+          apiEvents.some((api) =>
+            api.title.toLowerCase().includes("contrat à signer")
+          )
+        ) {
+          return false;
+        }
+
+        return !existingTitles.has(title);
       });
-    } else if (demande.statut === "Accepté") {
-      extraEvents.push({
-        title: "Justificatifs",
-        desc: "Aucun justificatif reçu pour le moment.",
-        date: "En attente",
-        done: false,
-        active: true,
-        icon: CalendarClock,
-        color: "amber",
+
+      const hasFundingStep = apiEvents.some((api) =>
+        api.title.toLowerCase().includes("fonds")
+      );
+
+      if (
+        demande.statut === "Accepté" &&
+        demande.signedContract &&
+        demande.justificatifs?.length > 0 &&
+        !hasFundingStep
+      ) {
+        filteredExtraEvents.push({
+          title: "Mise à disposition des fonds",
+          desc: "Votre dossier est complet. La préparation de la mise à disposition des fonds est en cours.",
+          date: "En attente",
+          done: false,
+          active: true,
+          icon: CreditCard,
+          color: "cyan",
+        });
+      }
+
+      return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
+        if (a.date === "En attente") return 1;
+        if (b.date === "En attente") return -1;
+
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
     }
 
-    // =========================
-    // SUPPRESSION DES DOUBLONS
-    // =========================
-    const existingTitles = new Set(
-      apiEvents.map((e) => e.title.toLowerCase())
-    );
-
-  const filteredExtraEvents = extraEvents.filter((e) => {
-  const title = e.title.toLowerCase();
-
-  if (
-    title.includes("justificatif") &&
-    apiEvents.some((api) =>
-      api.title.toLowerCase().includes("justificatif")
-    )
-  ) {
-    return false;
-  }
-
-  if (
-    title.includes("contrat signé") &&
-    apiEvents.some((api) =>
-      api.title.toLowerCase().includes("contrat signé")
-    )
-  ) {
-    return false;
-  }
-
-  if (
-    title.includes("contrat à signer") &&
-    apiEvents.some((api) =>
-      api.title.toLowerCase().includes("contrat à signer")
-    )
-  ) {
-    return false;
-  }
-
-  return !existingTitles.has(title);
-});
-
-const hasFundingStep = apiEvents.some((api) =>
-  api.title.toLowerCase().includes("fonds")
-);
-
-if (
-  demande.statut === "Accepté" &&
-  demande.signedContract &&
-  demande.justificatifs?.length > 0 &&
-  !hasFundingStep
-) {
-  filteredExtraEvents.push({
-    title: "Mise à disposition des fonds",
-    desc: "Votre dossier est complet. La préparation de la mise à disposition des fonds est en cours.",
-    date: "En attente",
-    done: false,
-    active: true,
-    icon: CreditCard,
-    color: "cyan",
-  });
-}
-
-return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
-  if (a.date === "En attente") return 1;
-  if (b.date === "En attente") return -1;
-
-  return new Date(a.date).getTime() - new Date(b.date).getTime();
-});
-}
-
-  // =========================
-  // FALLBACK SI PAS DE TIMELINE API
-  // =========================
-  const events = [
-    {
-      title: "Demande reçue",
-      desc: "Votre demande de financement a été enregistrée avec succès.",
-      date: formatDateTime(demande.createdAt),
-      done: true,
-      active: false,
-      icon: CheckCircle,
-      color: "emerald",
-    },
-  ];
-
-  return events;
-};
+    return [
+      {
+        title: "Demande reçue",
+        desc: "Votre demande de financement a été enregistrée avec succès.",
+        date: formatDateTime(demande.createdAt),
+        done: true,
+        active: false,
+        icon: CheckCircle,
+        color: "emerald",
+      },
+    ];
+  };
 
   const timeline = buildTimeline(selectedDemande);
 
@@ -1176,7 +1127,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
     );
   }
 
-    return (
+  return (
     <main className="min-h-screen bg-[#050816] text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#10b98122,transparent_35%),radial-gradient(circle_at_bottom_right,#2563eb22,transparent_40%)]" />
 
@@ -1226,8 +1177,16 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Bonjour, {currentClient?.prenom}
-            </h1>
+  Bonjour,{" "}
+  {currentClient?.sexe
+    ? currentClient.sexe.toLowerCase() === "homme"
+      ? "Monsieur"
+      : currentClient.sexe.toLowerCase() === "femme"
+      ? "Madame"
+      : currentClient.sexe
+    : ""}{" "}
+  {currentClient?.nom}
+</h1>
 
             <p className="text-zinc-400 mt-4 text-lg">
               Suivez vos demandes, vos étapes de validation et vos documents.
@@ -1398,6 +1357,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                       <p className="font-mono text-xs text-zinc-500">
                         {d.id}
                       </p>
+
                       <p className="text-lg font-semibold mt-1">{d.type}</p>
                     </div>
 
@@ -1432,7 +1392,9 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
-                          <Badge className={getBadgeClass(selectedDemande.statut)}>
+                          <Badge
+                            className={getBadgeClass(selectedDemande.statut)}
+                          >
                             <span className="flex items-center gap-2">
                               {getStatusIcon(selectedDemande.statut)}
                               {getStatusText(selectedDemande.statut)}
@@ -1452,26 +1414,29 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                           {selectedDemande.type} — créé le{" "}
                           {formatDate(selectedDemande.createdAt)}
                         </p>
-                        {(selectedDemande.statut === "Fonds mis à disposition" ||
-  selectedDemande.statut === "Fonds transférés") && (
-  <div className="mt-6 bg-indigo-500/10 border border-indigo-400/30 rounded-3xl p-5">
-    <p className="text-sm text-indigo-300 font-medium">
-      {selectedDemande.statut === "Fonds transférés"
-        ? "Montant transféré selon les modalités prévues"
-        : "Montant disponible dans votre espace sécurisé"}
-    </p>
 
-    <p className="text-4xl font-bold text-white mt-2">
-      {selectedDemande.montant.toLocaleString("fr-FR")} €
-    </p>
+                        {(selectedDemande.statut ===
+                          "Fonds mis à disposition" ||
+                          selectedDemande.statut === "Fonds transférés") && (
+                          <div className="mt-6 bg-indigo-500/10 border border-indigo-400/30 rounded-3xl p-5">
+                            <p className="text-sm text-indigo-300 font-medium">
+                              {selectedDemande.statut === "Fonds transférés"
+                                ? "Montant transféré selon les modalités prévues"
+                                : "Montant disponible dans votre espace sécurisé"}
+                            </p>
 
-    <p className="text-sm text-zinc-400 mt-3">
-      {selectedDemande.statut === "Fonds transférés"
-        ? "Le transfert a été effectué avec succès."
-        : "Les modalités de décaissement sont en cours de préparation."}
-    </p>
-  </div>
-)}
+                            <p className="text-4xl font-bold text-white mt-2">
+                              {selectedDemande.montant.toLocaleString("fr-FR")}{" "}
+                              €
+                            </p>
+
+                            <p className="text-sm text-zinc-400 mt-3">
+                              {selectedDemande.statut === "Fonds transférés"
+                                ? "Le transfert a été effectué avec succès."
+                                : "Les modalités de décaissement sont en cours de préparation."}
+                            </p>
+                          </div>
+                        )}
 
                         <div className="mt-6">
                           <div className="flex items-center justify-between text-sm mb-2">
@@ -1548,6 +1513,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                         <p className="text-sm text-zinc-500 mb-2">
                           Message du service
                         </p>
+
                         <p className="text-zinc-200">
                           {selectedDemande.commentaire}
                         </p>
@@ -1557,6 +1523,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                       <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
                         <p className="text-zinc-500 text-sm">Durée</p>
+
                         <p className="text-2xl font-semibold mt-2">
                           {selectedDemande.duree || "—"} mois
                         </p>
@@ -1564,6 +1531,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
 
                       <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
                         <p className="text-zinc-500 text-sm">Mensualité</p>
+
                         <p className="text-2xl font-semibold mt-2">
                           {selectedDemande.mensualite
                             ? `${selectedDemande.mensualite.toLocaleString(
@@ -1575,6 +1543,7 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
 
                       <div className="bg-black/20 rounded-3xl p-5 border border-white/10">
                         <p className="text-zinc-500 text-sm">Profil</p>
+
                         <p className="text-2xl font-semibold mt-2">
                           {selectedDemande.isIndependant
                             ? "Indépendant"
@@ -1656,62 +1625,38 @@ return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
                   </CardContent>
                 </Card>
 
-                               {selectedDemande.statut === "Accepté" &&
-                  selectedDemande.signedContract &&
-                  selectedDemande.justificatifs?.length > 0 && (
-                    <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
-                      <CardContent className="p-8">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-                            <CreditCard className="w-8 h-8 text-cyan-300" />
-                          </div>
-
-                          <div>
-                            <p className="text-cyan-300 font-semibold text-lg">
-                              Mise à disposition des fonds en préparation
-                            </p>
-
-                            <p className="text-zinc-300 mt-2">
-                              Votre dossier est administrativement complet. Les modalités de décaissement sont en cours de préparation par le service financier.
-                            </p>
-                          </div>
+                {isFundingPreparation ? (
+                  <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
+                          <CreditCard className="w-8 h-8 text-cyan-300" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
 
-                {selectedDemande.statut === "Accepté" &&
-selectedDemande.signedContract &&
-selectedDemande.justificatifs?.length > 0 ? (
-  <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
-    <CardContent className="p-8">
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-3xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
-          <CreditCard className="w-8 h-8 text-cyan-300" />
-        </div>
+                        <div>
+                          <p className="text-cyan-300 font-semibold text-lg">
+                            Mise à disposition des fonds en préparation
+                          </p>
 
-        <div>
-          <p className="text-cyan-300 font-semibold text-lg">
-            Mise à disposition des fonds en préparation
-          </p>
+                          <p className="text-zinc-300 mt-2">
+                            Votre dossier est administrativement complet. Les
+                            modalités de décaissement sont en cours de
+                            préparation par le service financier.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : selectedDemande.statut !== "Refusé" &&
+                  selectedDemande.statut !== "Fonds transférés" ? (
+                  <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Signature & documents
+                      </CardTitle>
+                    </CardHeader>
 
-          <p className="text-zinc-300 mt-2">
-            Votre dossier est administrativement complet. Les modalités de décaissement sont en cours de préparation par le service financier.
-          </p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-) : selectedDemande.statut !== "Refusé" &&
-  selectedDemande.statut !== "Fonds transférés" ? (
-  <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
-    <CardHeader>
-      <CardTitle className="text-white">
-        Signature & documents
-      </CardTitle>
-    </CardHeader>
-
-                                        <CardContent className="space-y-6">
+                    <CardContent className="space-y-6">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
                           <FileText className="w-8 h-8 text-emerald-300 mb-4" />
@@ -1719,12 +1664,15 @@ selectedDemande.justificatifs?.length > 0 ? (
                           <p className="font-semibold">Contrat de prêt</p>
 
                           <p className="text-sm text-zinc-400 mt-2">
-                            Téléchargez le contrat à signer, signez-le puis déposez-le.
+                            Téléchargez le contrat à signer, signez-le puis
+                            déposez-le.
                           </p>
 
                           <Button
                             onClick={() =>
-                              downloadContract(selectedDemande.contractToSign?.url)
+                              downloadContract(
+                                selectedDemande.contractToSign?.url
+                              )
                             }
                             className="mt-5 w-full bg-white text-black hover:bg-zinc-200 rounded-2xl"
                           >
@@ -1739,7 +1687,8 @@ selectedDemande.justificatifs?.length > 0 ? (
                           <p className="font-semibold">Dépôt sécurisé</p>
 
                           <p className="text-sm text-zinc-400 mt-2">
-                            Déposez ici votre contrat signé et vos documents justificatifs.
+                            Déposez ici votre contrat signé et vos documents
+                            justificatifs.
                           </p>
 
                           <Button
@@ -1767,7 +1716,8 @@ selectedDemande.justificatifs?.length > 0 ? (
                       {selectedDemande.signedContract && (
                         <div className="text-emerald-300 text-sm flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4">
                           <CheckCircle className="w-4 h-4" />
-                          Contrat signé reçu : {selectedDemande.signedContract.name}
+                          Contrat signé reçu :{" "}
+                          {selectedDemande.signedContract.name}
                         </div>
                       )}
 

@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         nom: client.nom,
         prenom: client.prenom,
         telephone: client.telephone || "",
+        sexe: client.sexe || "",
       },
     });
   } catch (error) {
