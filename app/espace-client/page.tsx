@@ -107,7 +107,7 @@ export default function EspaceClient() {
     null
   );
 
-  const [demandes, setDemandes] = useState<Demande[]>([]);
+    const [demandes, setDemandes] = useState<Demande[]>([]);
   const [selectedDemandeId, setSelectedDemandeId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -119,6 +119,8 @@ export default function EspaceClient() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
+
+  
 
   useEffect(() => {
     const savedClient = sessionStorage.getItem("currentClient");
@@ -400,11 +402,36 @@ export default function EspaceClient() {
   };
 
   const selectedDemande =
-    demandes.find((d) => d.id === selectedDemandeId) || demandes[0];
+  demandes.find((d) => d.id === selectedDemandeId) || demandes[0];
+
+  const isFundingPreparation =
+    selectedDemande?.statut === "Décaissement en préparation";
+
+  const isFundsAvailable =
+    selectedDemande?.statut === "Fonds mis à disposition";
+
+  const shouldShowDocumentsCard =
+    selectedDemande?.statut !== "Refusé" &&
+    selectedDemande?.statut !== "Fonds transférés" &&
+    selectedDemande?.statut !== "Décaissement en préparation" &&
+    selectedDemande?.statut !== "Fonds mis à disposition";
 
   const totalMontant = demandes.reduce((sum, d) => sum + d.montant, 0);
-  const enCours = demandes.filter((d) => d.statut === "En cours").length;
-  const acceptes = demandes.filter((d) => d.statut === "Accepté").length;
+
+  const enCours = demandes.filter((d) =>
+    [
+      "En cours",
+      "Documents reçus",
+      "Vérification finale",
+      "Décaissement en préparation",
+    ].includes(d.statut)
+  ).length;
+
+  const acceptes = demandes.filter((d) =>
+    ["Accepté", "Fonds mis à disposition", "Fonds transférés"].includes(
+      d.statut
+    )
+  ).length;
 
   const getBadgeClass = (statut: Statut) => {
     switch (statut) {
@@ -565,19 +592,11 @@ export default function EspaceClient() {
     if (!demande) return [];
 
     if (
+      demande.statut === "Décaissement en préparation" ||
       demande.statut === "Fonds mis à disposition" ||
       demande.statut === "Fonds transférés"
     ) {
       return [];
-    }
-
-    const missing: string[] = [];
-
-    if (
-      demande.statut === "Décaissement en préparation" &&
-      !demande.signedContract
-    ) {
-      missing.push("Contrat signé");
     }
 
     const uploadedNames =
@@ -585,7 +604,7 @@ export default function EspaceClient() {
 
     const essentiels = getRequiredDocuments(demande.isIndependant).essentiels;
 
-    const missingDocs = essentiels.filter((doc) => {
+    return essentiels.filter((doc) => {
       const lowerDoc = doc.toLowerCase();
 
       if (lowerDoc.includes("pièce") || lowerDoc.includes("identité")) {
@@ -630,69 +649,39 @@ export default function EspaceClient() {
 
       return true;
     });
-
-    return [...missing, ...missingDocs];
   };
 
   const getProgressPercent = (demande?: Demande) => {
     if (!demande) return 0;
 
-    let progress = 10;
-
     switch (demande.statut) {
       case "En cours":
-        progress = 15;
-        break;
+        return 15;
 
       case "Documents reçus":
-        progress = 30;
-        break;
+        return 30;
 
       case "Vérification finale":
-        progress = 50;
-        break;
+        return 50;
 
       case "Accepté":
-        progress = 65;
-        break;
+        return 65;
 
       case "Décaissement en préparation":
-        progress = 80;
-        break;
+        return 80;
 
       case "Fonds mis à disposition":
-        progress = 95;
-        break;
+        return 95;
 
       case "Fonds transférés":
-        progress = 100;
-        break;
+        return 100;
 
       case "Refusé":
-        progress = 100;
-        break;
+        return 100;
 
       default:
-        progress = 10;
+        return 10;
     }
-
-    if (demande.commentaire?.trim()) {
-      progress += 3;
-    }
-
-    if (demande.contractToSign) {
-      progress += 3;
-    }
-
-    if (demande.signedContract) {
-      progress += 4;
-    }
-
-    if (demande.justificatifs?.length > 0) {
-      progress += Math.min(demande.justificatifs.length * 2, 8);
-    }
-
-    return Math.min(progress, 100);
   };
 
   const missingEssentialDocs = getMissingEssentialDocs(selectedDemande);
@@ -705,14 +694,10 @@ export default function EspaceClient() {
   const uploadedDocsCount = selectedDemande?.justificatifs?.length || 0;
 
   const isAdministrativelyComplete =
-    selectedDemande?.statut === "Accepté" &&
     !!selectedDemande?.signedContract &&
-    hasEssentialDocs(selectedDemande);
+    hasEssentialDocs(selectedDemande) &&
+    selectedDemande?.statut !== "Refusé";
 
-  const isFundingPreparation =
-    selectedDemande?.statut === "Accepté" &&
-    !!selectedDemande?.signedContract &&
-    (selectedDemande?.justificatifs?.length || 0) > 0;
 
   const progressPercent = getProgressPercent(selectedDemande);
 
@@ -821,11 +806,34 @@ export default function EspaceClient() {
 
     if (!normalizedSexe) return "";
 
-    if (["homme", "h", "masculin", "male", "m", "monsieur", "mr", "m."].includes(normalizedSexe)) {
+    if (
+      [
+        "homme",
+        "h",
+        "masculin",
+        "male",
+        "m",
+        "monsieur",
+        "mr",
+        "m.",
+      ].includes(normalizedSexe)
+    ) {
       return "Monsieur";
     }
 
-    if (["femme", "f", "féminin", "feminin", "female", "madame", "mme", "mrs", "ms"].includes(normalizedSexe)) {
+    if (
+      [
+        "femme",
+        "f",
+        "féminin",
+        "feminin",
+        "female",
+        "madame",
+        "mme",
+        "mrs",
+        "ms",
+      ].includes(normalizedSexe)
+    ) {
       return "Madame";
     }
 
@@ -835,40 +843,63 @@ export default function EspaceClient() {
   const buildTimeline = (demande?: Demande) => {
     if (!demande) return [];
 
-    const getIcon = (type: TimelineEvent["type"]) => {
-      if (type === "created") return CheckCircle;
+    const successfulStatus: Statut[] = [
+      "Accepté",
+      "Décaissement en préparation",
+      "Fonds mis à disposition",
+      "Fonds transférés",
+    ];
 
-      if (type === "status") {
-        if (demande.statut === "Accepté") return CircleCheck;
-        if (demande.statut === "Refusé") return CircleX;
+    const getIcon = (event: TimelineEvent) => {
+      if (event.type === "created") return CheckCircle;
+
+      if (event.type === "status") {
+        if (event.title.toLowerCase().includes("refusé")) return CircleX;
+
+        if (
+          successfulStatus.some((status) =>
+            event.title.toLowerCase().includes(status.toLowerCase())
+          )
+        ) {
+          return CircleCheck;
+        }
+
         return Clock;
       }
 
-      if (type === "document") return FileText;
-      if (type === "comment") return MessageSquare;
-      if (type === "funding") return Landmark;
+      if (event.type === "document") return FileText;
+      if (event.type === "comment") return MessageSquare;
+      if (event.type === "funding") return Landmark;
 
       return Clock;
     };
 
-    const getColor = (type: TimelineEvent["type"]) => {
-      if (type === "created") return "emerald";
+    const getColor = (event: TimelineEvent) => {
+      if (event.type === "created") return "emerald";
 
-      if (type === "status") {
-        if (demande.statut === "Accepté") return "emerald";
-        if (demande.statut === "Refusé") return "red";
+      if (event.type === "status") {
+        if (event.title.toLowerCase().includes("refusé")) return "red";
+
+        if (
+          successfulStatus.some((status) =>
+            event.title.toLowerCase().includes(status.toLowerCase())
+          )
+        ) {
+          return "emerald";
+        }
+
         return "amber";
       }
 
-      if (type === "document") return "emerald";
-      if (type === "comment") return "cyan";
-      if (type === "funding") return "emerald";
+      if (event.type === "document") return "emerald";
+      if (event.type === "comment") return "cyan";
+      if (event.type === "funding") return "emerald";
 
       return "amber";
     };
 
     if (demande.timeline && demande.timeline.length > 0) {
-      const apiEvents = [...demande.timeline]
+      return [...demande.timeline]
         .sort(
           (a, b) =>
             new Date(a.createdAt).getTime() -
@@ -890,128 +921,9 @@ export default function EspaceClient() {
           date: formatDateTime(event.createdAt),
           done: true,
           active: false,
-          icon: getIcon(event.type),
-          color: getColor(event.type),
+          icon: getIcon(event),
+          color: getColor(event),
         }));
-
-      const extraEvents: any[] = [];
-
-      if (demande.statut === "Accepté" && !demande.contractToSign) {
-        extraEvents.push({
-          title: "Contrat à signer",
-          desc: "Votre contrat à signer n’est pas encore disponible.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: FileText,
-          color: "amber",
-        });
-      }
-
-      if (demande.contractToSign) {
-        extraEvents.push({
-          title: "Contrat à signer disponible",
-          desc: demande.contractToSign.name,
-          date: formatDateTime(demande.contractToSign.uploadedAt),
-          done: true,
-          active: false,
-          icon: FileText,
-          color: "emerald",
-        });
-      }
-
-      if (demande.statut === "Accepté" && !demande.signedContract) {
-        extraEvents.push({
-          title: "Signature du contrat",
-          desc: "Contrat en attente de signature et de dépôt.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: FileText,
-          color: "amber",
-        });
-      }
-
-      if (demande.signedContract) {
-        extraEvents.push({
-          title: "Contrat signé reçu",
-          desc: demande.signedContract.name,
-          date: formatDateTime(demande.signedContract.uploadedAt),
-          done: true,
-          active: false,
-          icon: FileText,
-          color: "emerald",
-        });
-      }
-
-      if (demande.justificatifs?.length > 0) {
-        demande.justificatifs.forEach((file, index) => {
-          extraEvents.push({
-            title: `Justificatif ${index + 1}`,
-            desc: file.name,
-            date: formatDateTime(file.uploadedAt),
-            done: true,
-            active: false,
-            icon: FileText,
-            color: "emerald",
-          });
-        });
-      } else if (demande.statut === "Accepté") {
-        extraEvents.push({
-          title: "Justificatifs",
-          desc: "Aucun justificatif reçu pour le moment.",
-          date: "En attente",
-          done: false,
-          active: true,
-          icon: CalendarClock,
-          color: "amber",
-        });
-      }
-
-      const existingTitles = new Set(
-        apiEvents.map((e) => e.title.toLowerCase())
-      );
-
-      const filteredExtraEvents = extraEvents.filter((e) => {
-        const title = e.title.toLowerCase();
-
-        if (
-          title.includes("justificatif") &&
-          apiEvents.some((api) =>
-            api.title.toLowerCase().includes("justificatif")
-          )
-        ) {
-          return false;
-        }
-
-        if (
-          title.includes("contrat signé") &&
-          apiEvents.some((api) =>
-            api.title.toLowerCase().includes("contrat signé")
-          )
-        ) {
-          return false;
-        }
-
-        if (
-          title.includes("contrat à signer") &&
-          apiEvents.some((api) =>
-            api.title.toLowerCase().includes("contrat à signer")
-          )
-        ) {
-          return false;
-        }
-
-        return !existingTitles.has(title);
-      });
-
-
-      return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
-        if (a.date === "En attente") return 1;
-        if (b.date === "En attente") return -1;
-
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      });
     }
 
     return [
@@ -1638,8 +1550,32 @@ export default function EspaceClient() {
                       </div>
                     </CardContent>
                   </Card>
-                ) : selectedDemande.statut !== "Refusé" &&
-                  selectedDemande.statut !== "Fonds transférés" ? (
+                ) : isFundsAvailable ? (
+  <Card className="bg-indigo-500/10 border border-indigo-400/30 backdrop-blur-2xl rounded-[2rem]">
+    <CardContent className="p-8">
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+          <Landmark className="w-8 h-8 text-indigo-300" />
+        </div>
+
+        <div>
+          <p className="text-indigo-300 font-semibold text-lg">
+            Fonds mis à disposition
+          </p>
+
+          <p className="text-4xl font-bold text-white mt-2">
+            {selectedDemande.montant.toLocaleString("fr-FR")} €
+          </p>
+
+          <p className="text-zinc-300 mt-2">
+            Le montant est disponible dans votre espace sécurisé. Le transfert
+            bancaire peut maintenant être préparé selon les modalités prévues.
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+) : shouldShowDocumentsCard ? (
                   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
                     <CardHeader>
                       <CardTitle className="text-white">
