@@ -850,52 +850,68 @@ export default function EspaceClient() {
   ];
 
   const getIcon = (event: TimelineEvent) => {
-    if (event.type === "created") return CheckCircle;
+  const lowerTitle = event.title.toLowerCase();
 
-    if (event.type === "status") {
-      if (event.title.toLowerCase().includes("refusé")) return CircleX;
+  if (event.type === "created") return CheckCircle;
 
-      if (
-        successfulStatus.some((status) =>
-          event.title.toLowerCase().includes(status.toLowerCase())
-        )
-      ) {
-        return CircleCheck;
-      }
+  if (
+    lowerTitle.includes("contrat") ||
+    lowerTitle.includes("justificatif")
+  ) {
+    return CheckCircle;
+  }
 
-      return Clock;
+  if (event.type === "status") {
+    if (lowerTitle.includes("refusé")) return CircleX;
+
+    if (
+      successfulStatus.some((status) =>
+        lowerTitle.includes(status.toLowerCase())
+      )
+    ) {
+      return CircleCheck;
     }
-
-    if (event.type === "document") return CheckCircle;
-    if (event.type === "comment") return MessageSquare;
-    if (event.type === "funding") return Landmark;
 
     return Clock;
-  };
+  }
+
+  if (event.type === "document") return CheckCircle;
+  if (event.type === "comment") return MessageSquare;
+  if (event.type === "funding") return Landmark;
+
+  return Clock;
+};
 
   const getColor = (event: TimelineEvent) => {
-    if (event.type === "created") return "emerald";
+  if (event.type === "created") return "emerald";
 
-    if (event.type === "status") {
-      if (event.title.toLowerCase().includes("refusé")) return "red";
+  if (
+    event.title.toLowerCase().includes("contrat") ||
+    event.title.toLowerCase().includes("justificatif")
+  ) {
+    return "emerald";
+  }
 
-      if (
-        successfulStatus.some((status) =>
-          event.title.toLowerCase().includes(status.toLowerCase())
-        )
-      ) {
-        return "emerald";
-      }
+  if (event.type === "status") {
+    if (event.title.toLowerCase().includes("refusé")) return "red";
 
-      return "amber";
+    if (
+      successfulStatus.some((status) =>
+        event.title.toLowerCase().includes(status.toLowerCase())
+      )
+    ) {
+      return "emerald";
     }
 
-    if (event.type === "document") return "emerald";
-    if (event.type === "comment") return "cyan";
-    if (event.type === "funding") return "emerald";
-
     return "amber";
-  };
+  }
+
+  if (event.type === "document") return "emerald";
+  if (event.type === "comment") return "cyan";
+  if (event.type === "funding") return "emerald";
+
+  return "amber";
+};
 
   if (demande.timeline && demande.timeline.length > 0) {
     return [...demande.timeline]
