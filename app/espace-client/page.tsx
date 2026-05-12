@@ -27,7 +27,6 @@ import {
   CreditCard,
   Bell,
   X,
-  Sparkles,
   MessageSquare,
 } from "lucide-react";
 
@@ -115,6 +114,7 @@ export default function EspaceClient() {
   const [notifications, setNotifications] = useState<string[]>([]);
   const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [newUpdateIds, setNewUpdateIds] = useState<string[]>([]);
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
@@ -398,6 +398,7 @@ export default function EspaceClient() {
     setNotifications([]);
     setHasNewUpdate(false);
     setNewUpdateIds([]);
+    setShowNotificationPanel(false);
   };
 
   const selectedDemande =
@@ -956,6 +957,33 @@ export default function EspaceClient() {
 
   const timeline = buildTimeline(selectedDemande);
 
+  const notificationEvents = timeline
+    .map((step) => ({
+      title: step.title,
+      desc: step.desc,
+      date: step.date,
+      icon: step.icon,
+      color: step.color,
+      source: "timeline" as const,
+    }))
+    .reverse();
+
+  const liveNotificationEvents = notifications.map((notification, index) => ({
+    title: notification,
+    desc: "Notification automatique liée à votre dossier.",
+    date: index === 0 ? "Maintenant" : "Récent",
+    icon: Bell,
+    color: "emerald",
+    source: "notification" as const,
+  }));
+
+  const allNotificationEvents = [
+    ...liveNotificationEvents,
+    ...notificationEvents,
+  ].slice(0, 12);
+
+  const unreadCount = newUpdateIds.length + notifications.length;
+
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center px-6 pt-24">
@@ -1058,41 +1086,120 @@ export default function EspaceClient() {
       <Header />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20">
-        {hasNewUpdate && (
-          <motion.div
-            initial={{ opacity: 0, y: -18 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+        <div className="relative flex justify-end mb-8">
+          <button
+            type="button"
+            onClick={() => {
+              setShowNotificationPanel(!showNotificationPanel);
+              setHasNewUpdate(false);
+            }}
+            className="relative h-12 px-4 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition flex items-center gap-3 text-sm text-zinc-200"
           >
-            <Card className="bg-emerald-500/10 border border-emerald-400/30 backdrop-blur-2xl rounded-[2rem]">
-              <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center">
-                    <Bell className="w-6 h-6 text-emerald-300" />
+            <Bell className="w-5 h-5 text-emerald-300" />
+            Notifications
+
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 min-w-6 h-6 px-2 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {showNotificationPanel && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="absolute right-0 top-16 z-50 w-full max-w-md"
+            >
+              <Card className="bg-[#101421]/95 border-white/10 backdrop-blur-2xl rounded-[2rem] shadow-2xl overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <CardTitle className="text-white flex items-center gap-3">
+                      <Bell className="w-5 h-5 text-emerald-300" />
+                      Centre de notifications
+                    </CardTitle>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowNotificationPanel(false)}
+                      className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-zinc-300"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
 
-                  <div>
-                    <p className="font-semibold text-emerald-300">
-                      Nouvelle activité détectée
-                    </p>
+                  <p className="text-sm text-zinc-400 mt-2">
+                    Tous les événements du dossier sont regroupés ici.
+                  </p>
+                </CardHeader>
 
-                    <p className="text-sm text-zinc-300 mt-1">
-                      {notifications[0] ||
-                        "Votre dossier a reçu une mise à jour."}
-                    </p>
-                  </div>
-                </div>
+                <CardContent className="space-y-3 max-h-[420px] overflow-y-auto pr-4">
+                  {allNotificationEvents.length === 0 ? (
+                    <div className="bg-black/20 border border-white/10 rounded-2xl p-5 text-sm text-zinc-400 text-center">
+                      Aucune notification pour le moment.
+                    </div>
+                  ) : (
+                    allNotificationEvents.map((event, index) => {
+                      const Icon = event.icon;
 
-                <Button
-                  onClick={() => setHasNewUpdate(false)}
-                  className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl"
-                >
-                  Voir
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                      const colorClass =
+                        event.color === "emerald"
+                          ? "bg-emerald-500/15 border-emerald-400/25 text-emerald-300"
+                          : event.color === "red"
+                          ? "bg-red-500/15 border-red-400/25 text-red-300"
+                          : event.color === "cyan"
+                          ? "bg-cyan-500/15 border-cyan-400/25 text-cyan-300"
+                          : "bg-amber-500/15 border-amber-400/25 text-amber-300";
+
+                      return (
+                        <div
+                          key={`${event.title}-${event.date}-${index}`}
+                          className="bg-black/20 border border-white/10 rounded-2xl p-4 flex gap-3"
+                        >
+                          <div
+                            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${colorClass}`}
+                          >
+                            <Icon className="w-5 h-5" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="font-semibold text-sm text-white">
+                                {event.title}
+                              </p>
+
+                              <span className="text-[11px] text-zinc-500 whitespace-nowrap">
+                                {event.date}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                              {event.desc}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+
+                  {allNotificationEvents.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotifications([]);
+                        setHasNewUpdate(false);
+                        setNewUpdateIds([]);
+                      }}
+                      className="w-full mt-2 text-sm text-zinc-400 hover:text-white bg-white/5 border border-white/10 rounded-2xl py-3"
+                    >
+                      Marquer comme lu
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-10">
           <div>
@@ -1121,41 +1228,6 @@ export default function EspaceClient() {
           </Button>
         </div>
 
-        {notifications.length > 0 && (
-          <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between gap-5 mb-5">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-emerald-300" />
-                  <p className="font-semibold">Centre de notifications</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setNotifications([]);
-                    setHasNewUpdate(false);
-                    setNewUpdateIds([]);
-                  }}
-                  className="text-sm text-zinc-400 hover:text-white flex items-center gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Effacer
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {notifications.slice(0, 4).map((notification, index) => (
-                  <div
-                    key={`${notification}-${index}`}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-4 text-sm text-zinc-300"
-                  >
-                    {notification}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
           <Card className="lg:col-span-7 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
