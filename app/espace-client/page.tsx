@@ -892,8 +892,22 @@ const getStatusIcon = (statut: Statut) => {
           new Date(b.createdAt).getTime()
       )
       .map((event) => ({
-        title: event.title,
-        desc: event.description,
+
+  title:
+
+    event.title.includes("Accepté") && demande.justificatifs?.length > 0
+
+      ? "Justificatifs acceptés"
+
+      : event.title,
+
+  desc:
+
+    event.title.includes("Accepté") && demande.justificatifs?.length > 0
+
+      ? "Vos justificatifs ont été vérifiés et acceptés. Votre dossier passe à l’étape de mise à disposition des fonds."
+
+      : event.description,
         date: formatDateTime(event.createdAt),
         done: true,
         active: false,
@@ -1017,6 +1031,27 @@ const getStatusIcon = (statut: Statut) => {
 
   return !existingTitles.has(title);
 });
+
+const hasFundingStep = apiEvents.some((api) =>
+  api.title.toLowerCase().includes("fonds")
+);
+
+if (
+  demande.statut === "Accepté" &&
+  demande.signedContract &&
+  demande.justificatifs?.length > 0 &&
+  !hasFundingStep
+) {
+  filteredExtraEvents.push({
+    title: "Mise à disposition des fonds",
+    desc: "Votre dossier est complet. La préparation de la mise à disposition des fonds est en cours.",
+    date: "En attente",
+    done: false,
+    active: true,
+    icon: CreditCard,
+    color: "cyan",
+  });
+}
 
 return [...apiEvents, ...filteredExtraEvents].sort((a, b) => {
   if (a.date === "En attente") return 1;
