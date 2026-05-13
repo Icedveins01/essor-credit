@@ -233,40 +233,63 @@ const applyAdminAction = () => {
     return;
   }
 
-  const key = `adminAction_${selectedDemande.id}`;
+  const value = actionValue.trim();
 
-  const payload = {
-    action: selectedAction,
-    value: actionValue.trim(),
-    demandeId: selectedDemande.id,
-    createdAt: new Date().toISOString(),
-  };
+  switch (selectedAction) {
+    case "activation_code": {
+      localStorage.setItem(
+        `adminActivationCode_${selectedDemande.id}`,
+        value.toUpperCase()
+      );
 
-  sessionStorage.setItem(key, JSON.stringify(payload));
+      alert("Code d’activation virement mis à jour.");
+      break;
+    }
 
-  if (selectedAction === "activation_code") {
-    sessionStorage.setItem(
-      `adminActivationCode_${selectedDemande.id}`,
-      actionValue.trim().toUpperCase()
-    );
+    case "transfer_stop": {
+      const percent = Number(value);
+
+      if (isNaN(percent) || percent < 0 || percent > 100) {
+        alert("Veuillez entrer un pourcentage valide entre 0 et 100.");
+        return;
+      }
+
+      localStorage.setItem(
+        `adminTransferStopPercent_${selectedDemande.id}`,
+        percent.toString()
+      );
+
+      alert(`Arrêt automatique configuré à ${percent}% pour ce dossier.`);
+      break;
+    }
+
+    case "reset_transfers": {
+      localStorage.removeItem(`adminTransferStopPercent_${selectedDemande.id}`);
+      localStorage.removeItem(`adminActivationCode_${selectedDemande.id}`);
+
+      sessionStorage.removeItem("walletTransferredDemandeId");
+      sessionStorage.removeItem("walletTransferCompleted");
+      sessionStorage.removeItem("lastTransferReceipt");
+
+      alert("Historique des virements réinitialisé.");
+      break;
+    }
+
+    default: {
+      localStorage.setItem(
+        `adminAction_${selectedDemande.id}`,
+        JSON.stringify({
+          action: selectedAction,
+          value,
+          demandeId: selectedDemande.id,
+          createdAt: new Date().toISOString(),
+        })
+      );
+
+      alert("✅ Action administrateur appliquée.");
+      break;
+    }
   }
-
-  if (selectedAction === "transfer_stop") {
-    sessionStorage.setItem(
-      `adminTransferStopPercent_${selectedDemande.id}`,
-      actionValue.trim()
-    );
-  }
-
-  if (selectedAction === "reset_transfers") {
-    sessionStorage.removeItem(`adminAction_${selectedDemande.id}`);
-    sessionStorage.removeItem(`adminTransferStopPercent_${selectedDemande.id}`);
-    sessionStorage.removeItem(`walletTransferredDemandeId`);
-    sessionStorage.removeItem(`walletTransferCompleted`);
-    sessionStorage.removeItem(`lastTransferReceipt`);
-  }
-
-  alert("✅ Action administrateur appliquée.");
 
   setSelectedAction("");
   setActionValue("");

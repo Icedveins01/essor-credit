@@ -25,87 +25,28 @@ export default function WalletPage() {
   const [transferProgress, setTransferProgress] = useState(0);
   const [transferError, setTransferError] = useState("");
 
+  const [ibanLoading, setIbanLoading] = useState(false);
+  const [ibanLookupMessage, setIbanLookupMessage] = useState("");
+
   
 
-  const detectBankName = (iban: string, bic: string) => {
-    const clean = iban.replace(/\s/g, "").toUpperCase();
-    const cleanBic = bic.toUpperCase();
-    const country = clean.slice(0, 2);
-
-    if (cleanBic.includes("SALADE")) return "Sparkasse";
-    if (cleanBic.includes("COBADE")) return "Commerzbank";
-    if (cleanBic.includes("DEUTDE")) return "Deutsche Bank";
-    if (cleanBic.includes("GENODE")) return "Volksbank / Raiffeisenbank";
-    if (cleanBic.includes("NTSBDE")) return "N26 Bank";
-    if (cleanBic.includes("BYLADEM")) return "BayernLB";
-
-    if (cleanBic.includes("BNPAFR")) return "BNP Paribas";
-    if (cleanBic.includes("SOGEFR")) return "Société Générale";
-    if (cleanBic.includes("AGRIFR")) return "Crédit Agricole";
-    if (cleanBic.includes("CCBPFR")) return "Banque Populaire";
-    if (cleanBic.includes("CMCIFR")) return "Crédit Mutuel";
-
-    if (cleanBic.includes("BBVAES")) return "BBVA";
-    if (cleanBic.includes("CAIXES")) return "CaixaBank";
-    if (cleanBic.includes("BSCHES")) return "Santander";
-
-    if (cleanBic.includes("BCITIT")) return "Intesa Sanpaolo";
-    if (cleanBic.includes("UNCRIT")) return "UniCredit";
-
-    if (cleanBic.includes("GKCCBE")) return "Belfius";
-    if (cleanBic.includes("BBRUBE")) return "ING Belgique";
-
-    if (cleanBic.includes("CELLLULL")) return "Spuerkeess";
-    if (cleanBic.includes("BILLLULL"))
-      return "Banque Internationale à Luxembourg";
-
-    if (cleanBic.includes("UBSWCH")) return "UBS";
-    if (cleanBic.includes("POFICH")) return "PostFinance";
-
-    if (cleanBic.includes("BARCGB")) return "Barclays";
-    if (cleanBic.includes("LOYDGB")) return "Lloyds Bank";
-
-    if (cleanBic.includes("REVOLT")) return "Revolut";
-    if (cleanBic.includes("TRWIBEB")) return "Wise";
-    if (cleanBic.includes("PAYPAL")) return "PayPal";
-
-    switch (country) {
-      case "DE":
-        return "Banque allemande";
-      case "FR":
-        return "Banque française";
-      case "ES":
-        return "Banque espagnole";
-      case "IT":
-        return "Banque italienne";
-      case "BE":
-        return "Banque belge";
-      case "LU":
-        return "Banque luxembourgeoise";
-      case "CH":
-        return "Banque suisse";
-      case "GB":
-        return "Banque britannique";
-      default:
-        return "";
-    }
-  };
+  
 
   const montantDisponible = useMemo(() => {
-    if (typeof window === "undefined") return 0;
+  if (typeof window === "undefined") return 0;
 
-    try {
-      const savedDemande = sessionStorage.getItem("selectedDemande");
-      if (!savedDemande) return 0;
+  try {
+    const savedDemande = sessionStorage.getItem("selectedDemande");
+    if (!savedDemande) return 0;
 
-      const demande = JSON.parse(savedDemande);
-      return Number(demande?.montant || 0);
-    } catch {
-      return 0;
-    }
-  }, []);
+    const demande = JSON.parse(savedDemande);
+    return Number(demande?.montant || 0);
+  } catch {
+    return 0;
+  }
+}, []);
 
-  const demandeReference = useMemo(() => {
+const demandeReference = useMemo(() => {
   if (typeof window === "undefined") return "—";
 
   try {
@@ -119,11 +60,15 @@ export default function WalletPage() {
   }
 }, []);
 
+// IMPORTANT : localStorage (et non sessionStorage)
 const stopPercent = useMemo(() => {
+
   if (typeof window === "undefined") return 100;
 
-  const saved = sessionStorage.getItem(
+  const saved = localStorage.getItem(
+
     `adminTransferStopPercent_${demandeReference}`
+
   );
 
   const value = Number(saved || 100);
@@ -131,56 +76,96 @@ const stopPercent = useMemo(() => {
   if (Number.isNaN(value)) return 100;
 
   return Math.min(Math.max(value, 0), 100);
+
 }, [demandeReference]);
 
 const expectedCode = useMemo(() => {
+
   if (typeof window === "undefined") return "95AEE4B7";
 
   return (
-    sessionStorage.getItem(`adminActivationCode_${demandeReference}`) ||
+
+    localStorage.getItem(`adminActivationCode_${demandeReference}`) ||
+
     "95AEE4B7"
+
   );
+
 }, [demandeReference]);
 
-  const transferReference = useMemo(() => {
-    return `TRF-${Date.now().toString().slice(-6)}-${Math.floor(
-      1000 + Math.random() * 9000
-    )}`;
-  }, []);
+const transferReference = useMemo(() => {
+  return `TRF-${Date.now().toString().slice(-6)}-${Math.floor(
+    1000 + Math.random() * 9000
+  )}`;
+}, []);
 
-  const [transferData, setTransferData] = useState({
-    beneficiaryName: "",
-    iban: "",
-    bic: "",
-    bankName: "",
-    reason: "",
-  });
+const [transferData, setTransferData] = useState({
+  beneficiaryName: "",
+  iban: "",
+  bic: "",
+  bankName: "",
+  reason: "",
+});
 
-  const cleanIban = transferData.iban.replace(/\s/g, "").toUpperCase();
+const cleanIban = transferData.iban.replace(/\s/g, "").toUpperCase();
 
-  const isIbanValid =
-    cleanIban.length >= 15 &&
-    cleanIban.length <= 34 &&
-    /^[A-Z]{2}[0-9A-Z]+$/.test(cleanIban);
+const isIbanValid =
+  cleanIban.length >= 15 &&
+  cleanIban.length <= 34 &&
+  /^[A-Z]{2}[0-9A-Z]+$/.test(cleanIban);
 
-  const progress = transferConfirmed
-    ? 100
-    : step === 1
-    ? 33
-    : step === 2
-    ? 66
-    : 90;
+const progress = transferConfirmed
+  ? 100
+  : step === 1
+  ? 33
+  : step === 2
+  ? 66
+  : 90;
 
-  const updateBankAuto = (ibanValue: string, bicValue: string) => {
-    const detectedBank = detectBankName(ibanValue, bicValue);
+
+
+const lookupIban = async (ibanValue: string) => {
+  const clean = ibanValue.replace(/\s/g, "").toUpperCase();
+
+  if (clean.length < 15) return;
+
+  setIbanLoading(true);
+  setIbanLookupMessage("");
+
+  try {
+    const res = await fetch("/api/iban-lookup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ iban: clean }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setIbanLookupMessage(data.error || "IBAN non reconnu.");
+      return;
+    }
 
     setTransferData((prev) => ({
       ...prev,
-      iban: ibanValue,
-      bic: bicValue,
-      bankName: detectedBank || prev.bankName,
+      iban: clean,
+      bic: data.bic || prev.bic,
+      bankName: data.bankName || prev.bankName,
     }));
-  };
+
+    setIbanLookupMessage(
+      data.bankName
+        ? `Banque détectée : ${data.bankName}`
+        : "IBAN valide, banque non identifiée automatiquement."
+    );
+  } catch {
+    setIbanLookupMessage("Impossible de vérifier l’IBAN pour le moment.");
+  } finally {
+    setIbanLoading(false);
+  }
+};      
 
   const handleContinue = () => {
     if (
@@ -396,11 +381,30 @@ Statut : ${receipt.statut}
               <Input
                 placeholder="IBAN"
                 value={transferData.iban}
-                onChange={(e) =>
-                  updateBankAuto(e.target.value.toUpperCase(), transferData.bic)
-                }
-                className="h-14 bg-black/20 border-white/10 text-white rounded-2xl"
-              />
+                onChange={(e) => {
+
+             const value = e.target.value.toUpperCase();
+             setTransferData((prev) => ({
+             ...prev,
+             iban: value,
+       }));
+              lookupIban(value);
+  }}
+              className="h-14 bg-black/20 border-white/10 text-white rounded-2xl"
+/>
+
+{ibanLoading && (
+  <div className="text-sm text-cyan-300 bg-cyan-500/10 border border-cyan-400/20 rounded-2xl p-4">
+    Vérification automatique de l’IBAN...
+  </div>
+)}
+
+{ibanLookupMessage && (
+  <div className="text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4">
+    {ibanLookupMessage}
+  </div>
+)}
+
 
               {transferData.iban && (
                 <div
@@ -422,13 +426,16 @@ Statut : ${receipt.statut}
               )}
 
               <Input
-                placeholder="BIC / SWIFT"
-                value={transferData.bic}
-                onChange={(e) =>
-                  updateBankAuto(transferData.iban, e.target.value.toUpperCase())
-                }
-                className="h-14 bg-black/20 border-white/10 text-white rounded-2xl"
-              />
+  placeholder="BIC / SWIFT"
+  value={transferData.bic}
+  onChange={(e) =>
+    setTransferData((prev) => ({
+      ...prev,
+      bic: e.target.value.toUpperCase(),
+    }))
+  }
+  className="h-14 bg-black/20 border-white/10 text-white rounded-2xl"
+/>
 
               <Input
                 placeholder="Nom de la banque"
@@ -542,32 +549,39 @@ Statut : ${receipt.statut}
           </Card>
         )}
 
-        {step === 3 && isProcessing && (
-          <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
-            <CardContent className="p-10 text-center space-y-6">
-              <p className="text-2xl font-semibold">
-                Exécution du virement bancaire sécurisé…
-              </p>
+       {step === 3 && isProcessing && (
+  <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
+    <CardContent className="p-10 text-center space-y-6">
+      <div className="mx-auto w-20 h-20 rounded-full border border-emerald-400/30 bg-emerald-500/10 flex items-center justify-center">
+        <div className="flex gap-1">
+          <span className="w-2 h-2 bg-emerald-300 rounded-full animate-bounce" />
+          <span className="w-2 h-2 bg-emerald-300 rounded-full animate-bounce [animation-delay:150ms]" />
+          <span className="w-2 h-2 bg-emerald-300 rounded-full animate-bounce [animation-delay:300ms]" />
+        </div>
+      </div>
 
-              <div className="w-full h-5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-                  style={{ width: `${transferProgress}%` }}
-                />
-              </div>
+      <div>
+        <p className="text-xl font-semibold">
+          Traitement sécurisé Essor Crédit
+        </p>
 
-              <p className="text-4xl font-bold text-emerald-300">
-                {transferProgress}%
-              </p>
+        <p className="text-sm text-zinc-400 mt-2">
+          Exécution du virement bancaire en cours…
+        </p>
+      </div>
 
-              <p className="text-zinc-400">
-                Le délai de réception dépend de la banque bénéficiaire. Si elle
-                accepte les virements instantanés, la réception peut être rapide.
-                Sinon, le délai peut dépendre du traitement bancaire standard.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      <p className="text-2xl font-bold text-emerald-300">
+        {transferProgress}%
+      </p>
+
+      <p className="text-sm text-zinc-400 max-w-2xl mx-auto">
+        Le délai de réception dépend de la banque bénéficiaire. Si la banque
+        accepte les virements instantanés, la réception peut être rapide.
+        Sinon, le délai dépend du traitement bancaire standard.
+      </p>
+    </CardContent>
+  </Card>
+)}
 
         {transferError && (
           <Card className="bg-red-500/10 border border-red-400/30 backdrop-blur-2xl rounded-[2rem] mt-6">
