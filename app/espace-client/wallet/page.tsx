@@ -186,28 +186,51 @@ const lookupIban = async (ibanValue: string) => {
     setStep(2);
   };
 
-  const saveTransferSuccess = () => {
-    const receiptData = {
-      dossierReference: demandeReference,
-      transferReference,
-      amount: montantDisponible,
-      beneficiaryName: transferData.beneficiaryName,
-      iban: cleanIban,
-      bic: transferData.bic,
-      bankName: transferData.bankName,
-      reason: transferData.reason,
-      date: new Date().toISOString(),
-      status: "confirmed",
-    };
-
-    sessionStorage.setItem("lastTransferReceipt", JSON.stringify(receiptData));
-    sessionStorage.setItem("walletTransferCompleted", "true");
-    sessionStorage.setItem("walletTransferredDemandeId", demandeReference);
-
-    setIsProcessing(false);
-    setTransferConfirmed(true);
-    setTransferProgress(100);
+  const saveTransferSuccess = async () => {
+  const receiptData = {
+    dossierReference: demandeReference,
+    transferReference,
+    amount: montantDisponible,
+    beneficiaryName: transferData.beneficiaryName,
+    iban: cleanIban,
+    bic: transferData.bic,
+    bankName: transferData.bankName,
+    reason: transferData.reason,
+    date: new Date().toISOString(),
+    status: "confirmed",
   };
+
+  try {
+    await fetch("/api/demandes", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: demandeReference,
+        statut: "Fonds transférés",
+        commentaire:
+          "Le transfert bancaire a été confirmé depuis l’espace sécurisé.",
+        timelineEvent: {
+          type: "funding",
+          title: "Fonds transférés",
+          description:
+            "Le transfert bancaire a été exécuté avec succès selon les modalités validées.",
+        },
+      }),
+    });
+  } catch (error) {
+    console.error("Erreur mise à jour statut transfert :", error);
+  }
+
+  sessionStorage.setItem("lastTransferReceipt", JSON.stringify(receiptData));
+  sessionStorage.setItem("walletTransferCompleted", "true");
+  sessionStorage.setItem("walletTransferredDemandeId", demandeReference);
+
+  setIsProcessing(false);
+  setTransferConfirmed(true);
+  setTransferProgress(100);
+};
 
   const confirmTransfer = () => {
     if (activationCode.trim().toUpperCase() !== expectedCode) {
@@ -225,7 +248,7 @@ const lookupIban = async (ibanValue: string) => {
     let currentProgress = 0;
 
     const interval = setInterval(() => {
-      currentProgress += Math.floor(Math.random() * 7) + 3;
+      currentProgress += Math.floor(Math.random() * 3) + 1;
 
       if (currentProgress >= stopPercent && stopPercent < 100) {
         currentProgress = stopPercent;
@@ -242,12 +265,12 @@ const lookupIban = async (ibanValue: string) => {
         currentProgress = 100;
         setTransferProgress(100);
         clearInterval(interval);
-        saveTransferSuccess();
+        void saveTransferSuccess();
         return;
       }
 
       setTransferProgress(currentProgress);
-    }, 300);
+    }, 700);
   };
 
   const downloadReceipt = () => {

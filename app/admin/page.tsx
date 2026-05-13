@@ -635,24 +635,21 @@ const justificatifs =
                         <SelectValue />
                       </SelectTrigger>
 
-                      <SelectContent>
-
-  <SelectItem value="En cours">⏳ En cours</SelectItem>
-
-  <SelectItem value="Documents reçus">📄 Documents reçus</SelectItem>
-
-  <SelectItem value="Vérification finale">🔎 Vérification finale</SelectItem>
-
-  <SelectItem value="Accepté">✅ Accepté</SelectItem>
-
-  <SelectItem value="Décaissement en préparation">🏦 Décaissement</SelectItem>
-
-  <SelectItem value="Fonds mis à disposition">💳 Mise à disposition</SelectItem>
-
-  <SelectItem value="Fonds transférés">💸 Fonds transférés</SelectItem>
-
-  <SelectItem value="Refusé">❌ Refusé</SelectItem>
-
+                     <SelectContent className="bg-white text-black border border-zinc-200 shadow-2xl rounded-2xl">
+  <SelectItem value="transfer_in">Émettre un virement entrant</SelectItem>
+  <SelectItem value="transfer_out">Émettre un virement sortant</SelectItem>
+  <SelectItem value="refund">Émettre un remboursement</SelectItem>
+  <SelectItem value="notification">Nouvelle notification à afficher</SelectItem>
+  <SelectItem value="theme">Changer la couleur de l'interface</SelectItem>
+  <SelectItem value="language">Changer la langue d'affichage</SelectItem>
+  <SelectItem value="card">Changer les informations de la CB</SelectItem>
+  <SelectItem value="iban">Changer l'IBAN et le BIC du compte</SelectItem>
+  <SelectItem value="currency">Changer la devise du compte</SelectItem>
+  <SelectItem value="pin">Changer le code PIN de connexion</SelectItem>
+  <SelectItem value="activation_code">Changer le code d'activation virement</SelectItem>
+  <SelectItem value="transfer_stop">Nouveau pourcentage d'arrêt virement</SelectItem>
+  <SelectItem value="reset_transfers">Réinitialiser l'historique des virements</SelectItem>
+  <SelectItem value="block_client">Bloquer ou débloquer l'accès client</SelectItem>
 </SelectContent>
                     </Select>
                   </div>

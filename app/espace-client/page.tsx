@@ -271,12 +271,12 @@ export default function EspaceClient() {
   }, [isLoggedIn]);
 
   useEffect(() => {
+
   if (!isLoggedIn) return;
 
   const transferCompleted = sessionStorage.getItem("walletTransferCompleted");
-  const transferredDemandeId = sessionStorage.getItem(
-    "walletTransferredDemandeId"
-  );
+
+  const transferredDemandeId = sessionStorage.getItem("walletTransferredDemandeId");
 
   if (transferCompleted === "true" && transferredDemandeId) {
     setDemandes((prev) =>
@@ -290,6 +290,8 @@ export default function EspaceClient() {
           : demande
       )
     );
+
+    setSelectedDemandeId(transferredDemandeId);
 
     setNotifications((n) => [
       "Le transfert a été confirmé depuis l’espace sécurisé.",
