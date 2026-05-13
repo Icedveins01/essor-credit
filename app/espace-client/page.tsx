@@ -513,7 +513,7 @@ export default function EspaceClient() {
     }
   };
 
-  const formatDate = (date?: string) => {
+    const formatDate = (date?: string) => {
     if (!date) return "—";
     return new Date(date).toLocaleDateString("fr-FR");
   };
@@ -534,15 +534,14 @@ export default function EspaceClient() {
     if (!id) return "—";
 
     const cleanId = id.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const lastPart = cleanId.slice(-5) || "DOSSIER";
     const middlePart = cleanId.slice(3, 6) || "000";
+    const lastPart = cleanId.slice(-5) || "DOSSIER";
 
     return `CMP-${middlePart}-${lastPart}`;
   };
 
   const getTransferDate = (demande?: Demande, fallback?: string) => {
-    if (!demande) return "";
-
+    if (!demande) return "—";
     return formatDateTime(demande.updatedAt || fallback || demande.createdAt);
   };
 
@@ -1012,6 +1011,42 @@ export default function EspaceClient() {
   const secureSyncDate = formatDateTime(
     selectedDemande?.updatedAt || selectedDemande?.createdAt
   );
+
+  const isFundsTransferred = selectedDemande?.statut === "Fonds transférés";
+  const shouldShowFundingArea = isFundsAvailable || isFundsTransferred;
+
+  const transferSteps = [
+  {
+    title: "IBAN bénéficiaire vérifié",
+    desc: "Les coordonnées bancaires du bénéficiaire ont été vérifiées et sécurisées.",
+    done: shouldShowFundingArea,
+    date: shouldShowFundingArea ? formatDateTime(selectedDemande?.createdAt) : "",
+  },
+  {
+    title: "Préparation du virement",
+    desc: "Le service financier prépare l’ordre de transfert bancaire sécurisé.",
+    done: shouldShowFundingArea,
+    date: shouldShowFundingArea ? getTransferDate(selectedDemande) : "",
+  },
+  {
+    title: "Validation finale",
+    desc: isFundsTransferred
+      ? "La validation finale du dossier a été confirmée avant émission du transfert."
+      : "Contrôle réglementaire final avant émission du transfert bancaire.",
+    done: isFundsTransferred,
+    date: isFundsTransferred ? getTransferDate(selectedDemande) : "",
+  },
+  {
+    title: isFundsTransferred
+      ? "Transfert bancaire exécuté"
+      : "Transfert bancaire en attente",
+    desc: isFundsTransferred
+      ? "Le montant a été transmis avec succès vers le compte bénéficiaire selon les modalités validées."
+      : "Le transfert sera visible dès la validation complète par le service financier.",
+    done: isFundsTransferred,
+    date: isFundsTransferred ? getTransferDate(selectedDemande) : "",
+  },
+];
 
   if (!isLoggedIn) {
     return (
@@ -1573,7 +1608,7 @@ export default function EspaceClient() {
                   </CardContent>
                 </Card>
 
-                {isFundsAvailable && (
+                                {shouldShowFundingArea && (
                   <Card className="bg-indigo-500/10 border border-indigo-400/30 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
                     <CardHeader>
                       <CardTitle className="text-white flex items-center gap-3">
@@ -1605,7 +1640,7 @@ export default function EspaceClient() {
 
                           <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 rounded-full px-4 py-2 text-sm font-semibold">
                             <CheckCircle className="w-4 h-4" />
-                            Fonds disponibles
+                             {isFundsTransferred ? "Fonds transférés" : "Fonds disponibles"}
                           </div>
 
                           <p className="text-sm text-zinc-400 mt-5">
@@ -1620,12 +1655,15 @@ export default function EspaceClient() {
 
                       <div className="mt-5 bg-indigo-500/10 border border-indigo-400/20 rounded-3xl p-5">
                         <p className="text-indigo-300 font-semibold">
-                          Prochaine étape : préparation du transfert
-                        </p>
+                         {isFundsTransferred
+                          ? "Transfert bancaire finalisé"
+                          : "Prochaine étape : préparation du transfert"}
+                       </p>
 
-                        <p className="text-sm text-zinc-300 mt-2">
-                          Le service financier prépare les modalités de décaissement. Vous serez
-                          informé dès que le transfert passera à l’étape suivante.
+                         <p className="text-sm text-zinc-300 mt-2">
+                            {isFundsTransferred
+                             ? "Le transfert bancaire a été exécuté selon les modalités validées. Le dossier est désormais finalisé."
+                              : "Le service financier prépare les modalités de décaissement. Vous serez informé dès que le transfert passera à l’étape suivante."}
                         </p>
                       </div>
 
@@ -1665,54 +1703,12 @@ export default function EspaceClient() {
                     </CardHeader>
 
                     <CardContent className="space-y-5">
-                      {[
-                        {
-                          title: "IBAN bénéficiaire vérifié",
-                          desc: "Les coordonnées bancaires du bénéficiaire ont été vérifiées et sécurisées.",
-                          done: true,
-                          date: formatDateTime(selectedDemande.createdAt),
-                        },
-                        {
-                          title: "Préparation du virement",
-                          desc: "Le service financier prépare l’ordre de transfert bancaire.",
-                          done:
-                            selectedDemande?.statut === "Fonds transférés" ||
-                            selectedDemande?.statut === "Fonds mis à disposition",
-                          date:
-                            selectedDemande?.statut === "Fonds transférés" ||
-                            selectedDemande?.statut === "Fonds mis à disposition"
-                              ? getTransferDate(selectedDemande)
-                              : "",
-                        },
-                        {
-                          title: "Validation finale",
-                          desc: "Contrôle final du dossier avant émission du transfert.",
-                          done: selectedDemande?.statut === "Fonds transférés",
-                          date:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? getTransferDate(selectedDemande)
-                              : "",
-                        },
-                        {
-                          title:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? "Transfert bancaire exécuté"
-                              : "Transfert en attente",
-                          desc:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? "Le montant a été transmis avec succès vers le compte bénéficiaire selon les modalités validées."
-                              : "Le transfert sera visible dès validation complète.",
-                          done: selectedDemande?.statut === "Fonds transférés",
-                          date:
-                            selectedDemande?.statut === "Fonds transférés"
-                              ? getTransferDate(selectedDemande)
-                              : "",
-                        },
-                      ].map((step, index) => (
+                      
+                        {transferSteps.map((step, index) => (
                         <div key={index} className="relative flex gap-4">
-                          {index !== 3 && (
-                            <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
-                          )}
+                        {index !== transferSteps.length - 1 && (
+                        <div className="absolute left-5 top-11 bottom-[-22px] w-px bg-white/10" />
+                       )}
 
                           <div
                             className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center border ${
@@ -1752,49 +1748,126 @@ export default function EspaceClient() {
                   </Card>
                 )}
 
-                {(isFundsAvailable ||
-                  selectedDemande?.statut === "Fonds transférés") && (
-                  <Card className="bg-emerald-500/10 border border-emerald-400/25 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center gap-3">
-                        <ShieldCheck className="w-6 h-6 text-emerald-300" />
-                        Centre de décaissement
-                      </CardTitle>
-                    </CardHeader>
+                {/* Centre de décaissement */}
+{shouldShowFundingArea && (
+  <Card className="bg-emerald-500/10 border border-emerald-400/25 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+    <CardHeader>
+      <CardTitle className="text-white flex items-center gap-3">
+        <ShieldCheck className="w-6 h-6 text-emerald-300" />
+        Centre de décaissement
+      </CardTitle>
+    </CardHeader>
 
-                    <CardContent className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                        <p className="text-sm text-zinc-400">Référence opération</p>
-                        <p className="font-mono text-lg text-white mt-2">
-                          {secureReference}
-                        </p>
-                      </div>
+    <CardContent className="grid md:grid-cols-2 gap-4">
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+        <p className="text-sm text-zinc-400">Référence opération</p>
+        <p className="font-mono text-lg text-white mt-2">{secureReference}</p>
+      </div>
 
-                      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                        <p className="text-sm text-zinc-400">Niveau de sécurité</p>
-                        <p className="text-lg font-semibold text-emerald-300 mt-2">
-                          Contrôle renforcé
-                        </p>
-                      </div>
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+        <p className="text-sm text-zinc-400">Niveau de sécurité</p>
+        <p className="text-lg font-semibold text-emerald-300 mt-2">
+          Contrôle renforcé
+        </p>
+      </div>
 
-                      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                        <p className="text-sm text-zinc-400">Canal bancaire</p>
-                        <p className="text-lg font-semibold text-white mt-2">
-                          Virement sécurisé
-                        </p>
-                      </div>
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+        <p className="text-sm text-zinc-400">Canal bancaire</p>
+        <p className="text-lg font-semibold text-white mt-2">
+          Virement sécurisé
+        </p>
+      </div>
 
-                      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                        <p className="text-sm text-zinc-400">État actuel</p>
-                        <p className="text-lg font-semibold text-white mt-2">
-                          {selectedDemande?.statut === "Fonds transférés"
-                            ? "Transfert exécuté"
-                            : "Validation en cours"}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+        <p className="text-sm text-zinc-400">État actuel</p>
+        <p className="text-lg font-semibold text-white mt-2">
+          {isFundsTransferred ? "Transfert exécuté" : "Validation en cours"}
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{isFundsTransferred && (
+  <Card className="bg-green-500/10 border border-green-400/30 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+    <CardHeader>
+      <CardTitle className="text-white flex items-center gap-3">
+        <CheckCircle className="w-6 h-6 text-green-300" />
+        Confirmation finale
+      </CardTitle>
+    </CardHeader>
+
+    {isFundsTransferred && (
+  <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
+    <CardHeader>
+      <CardTitle className="text-white flex items-center gap-3">
+        <FileText className="w-6 h-6 text-emerald-300" />
+        Justificatif de transfert
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-5">
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+        <p className="text-sm text-zinc-400">Statut du justificatif</p>
+
+        <p className="text-xl font-semibold text-emerald-300 mt-2">
+          Disponible dans l’espace sécurisé
+        </p>
+
+        <p className="text-sm text-zinc-300 mt-3">
+          Le justificatif lié à l’opération de transfert est rattaché à la
+          référence sécurisée du dossier.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+          <p className="text-sm text-zinc-400">Référence dossier</p>
+          <p className="font-mono text-white mt-2">{secureReference}</p>
+        </div>
+
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+          <p className="text-sm text-zinc-400">Date d’émission</p>
+          <p className="text-white mt-2">{getTransferDate(selectedDemande)}</p>
+        </div>
+
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+          <p className="text-sm text-zinc-400">Type</p>
+          <p className="text-white font-semibold mt-2">Reçu de transfert</p>
+        </div>
+      </div>
+
+      <Button
+        disabled
+        className="w-full h-12 rounded-2xl bg-white/10 text-zinc-400 cursor-not-allowed"
+      >
+        <Download className="mr-2 w-4 h-4" />
+        Téléchargement bientôt disponible
+      </Button>
+    </CardContent>
+  </Card>
+)}
+
+    <CardContent className="space-y-5">
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+        <p className="text-sm text-green-300 font-semibold">
+          Transfert bancaire confirmé
+        </p>
+
+        <p className="text-4xl font-bold text-white mt-3">
+          {selectedDemande.montant.toLocaleString("fr-FR")} €
+        </p>
+
+        <p className="text-sm text-zinc-300 mt-3">
+          Le montant a été transféré selon les modalités validées. La référence
+          de confirmation est associée à votre dossier sécurisé.
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+                   
 
                 {isFundingPreparation ? (
                   <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
