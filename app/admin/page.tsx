@@ -241,66 +241,170 @@ const applyAdminAction = () => {
 
   switch (selectedAction) {
     case "activation_code": {
-  const generatedCode =
-    value || Math.random().toString(36).substring(2, 10).toUpperCase();
+ const generatedCode =
 
-  localStorage.setItem(
-    `adminActivationCode_${selectedDemande.id}`,
-    generatedCode
-  );
+    value ||
+
+    Array.from(crypto.getRandomValues(new Uint8Array(4)))
+
+      .map((b) => b.toString(16).padStart(2, "0"))
+
+      .join("")
+
+      .toUpperCase();
+
+  fetch("/api/demandes", {
+
+    method: "PATCH",
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: JSON.stringify({
+
+      id: selectedDemande.id,
+
+      activationCode: generatedCode,
+
+      timelineEvent: {
+
+        type: "funding",
+
+        title: "Code d’activation généré",
+
+        description: `Nouveau code d’activation généré : ${generatedCode}`,
+
+      },
+
+    }),
+
+  }).then(() => loadDemandes());
 
   alert(`Code d’activation généré : ${generatedCode}`);
+
   break;
+
 }
 
-    case "transfer_stop": {
-      const percent = Number(value);
+case "transfer_stop": {
 
-      if (isNaN(percent) || percent < 0 || percent > 100) {
-        alert("Veuillez entrer un pourcentage valide entre 0 et 100.");
-        return;
-      }
+  const percent = Number(value);
 
-      localStorage.setItem(
-        `adminTransferStopPercent_${selectedDemande.id}`,
-        percent.toString()
-      );
+  if (isNaN(percent) || percent < 0 || percent > 100) {
 
-      alert(`Arrêt automatique configuré à ${percent}% pour ce dossier.`);
-      break;
-    }
+    alert("Veuillez entrer un pourcentage valide entre 0 et 100.");
 
-    case "reset_transfers": {
-      localStorage.removeItem(`adminTransferStopPercent_${selectedDemande.id}`);
-      localStorage.removeItem(`adminActivationCode_${selectedDemande.id}`);
+    return;
 
-      sessionStorage.removeItem("walletTransferredDemandeId");
-      sessionStorage.removeItem("walletTransferCompleted");
-      sessionStorage.removeItem("lastTransferReceipt");
-
-      alert("Historique des virements réinitialisé.");
-      break;
-    }
-
-    default: {
-      localStorage.setItem(
-        `adminAction_${selectedDemande.id}`,
-        JSON.stringify({
-          action: selectedAction,
-          value,
-          demandeId: selectedDemande.id,
-          createdAt: new Date().toISOString(),
-        })
-      );
-
-      alert("✅ Action administrateur appliquée.");
-      break;
-    }
   }
 
-  setSelectedAction("");
-  setActionValue("");
-};
+  fetch("/api/demandes", {
+
+    method: "PATCH",
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: JSON.stringify({
+
+      id: selectedDemande.id,
+
+      transferStopPercent: percent,
+
+      timelineEvent: {
+
+        type: "funding",
+
+        title: "Pourcentage d’arrêt modifié",
+
+        description: `Arrêt automatique défini à ${percent}%`,
+
+      },
+
+    }),
+
+  }).then(() => loadDemandes());
+
+  alert(`Arrêt automatique configuré à ${percent}% pour ce dossier.`);
+
+  break;
+
+}
+
+case "reset_transfers": {
+
+  fetch("/api/demandes", {
+
+    method: "PATCH",
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: JSON.stringify({
+
+      id: selectedDemande.id,
+
+      activationCode: "",
+
+      transferStopPercent: 100,
+
+      statut: "Fonds mis à disposition",
+
+      timelineEvent: {
+
+        type: "funding",
+
+        title: "Historique des virements réinitialisé",
+
+        description:
+
+          "Les paramètres de transfert, code d’activation et progression ont été réinitialisés.",
+
+      },
+
+    }),
+
+  }).then(() => loadDemandes());
+
+  alert("Historique des virements réinitialisé.");
+
+  break;
+
+}
+
+default: {
+  fetch("/api/demandes", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: selectedDemande.id,
+      timelineEvent: {
+        type: "comment",
+        title: `Action administrateur : ${selectedAction}`,
+        description: value || "Action exécutée",
+      },
+    }),
+  }).then(() => loadDemandes());
+
+  alert("✅ Action administrateur appliquée.");
+  break;
+}
+} 
+
+setSelectedAction("");
+setActionValue("");
+}; 
 
   const updateStatut = async () => {
     if (!selectedId) {

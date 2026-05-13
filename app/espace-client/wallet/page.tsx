@@ -60,37 +60,29 @@ const demandeReference = useMemo(() => {
   }
 }, []);
 
-// IMPORTANT : localStorage (et non sessionStorage)
-const stopPercent = useMemo(() => {
+const [expectedCode, setExpectedCode] = useState("");
+const [stopPercent, setStopPercent] = useState(100);
 
-  if (typeof window === "undefined") return 100;
+const loadTransferSettings = async () => {
+  try {
+    const res = await fetch("/api/demandes", { cache: "no-store" });
+    const demandes = await res.json();
 
-  const saved = localStorage.getItem(
+    const demande = demandes.find((d: any) => d.id === demandeReference);
 
-    `adminTransferStopPercent_${demandeReference}`
+    if (!demande) return;
 
-  );
+    setExpectedCode(demande.activationCode || "");
+    setStopPercent(Number(demande.transferStopPercent || 100));
+  } catch (error) {
+    console.error("Erreur chargement paramètres transfert :", error);
+  }
+};
 
-  const value = Number(saved || 100);
-
-  if (Number.isNaN(value)) return 100;
-
-  return Math.min(Math.max(value, 0), 100);
-
-}, [demandeReference]);
-
-const expectedCode = useMemo(() => {
-
-  if (typeof window === "undefined") return "95AEE4B7";
-
-  return (
-
-    localStorage.getItem(`adminActivationCode_${demandeReference}`) ||
-
-    "95AEE4B7"
-
-  );
-
+useMemo(() => {
+  if (demandeReference && demandeReference !== "—") {
+    void loadTransferSettings();
+  }
 }, [demandeReference]);
 
 const transferReference = useMemo(() => {
@@ -233,10 +225,15 @@ const lookupIban = async (ibanValue: string) => {
 };
 
   const confirmTransfer = () => {
-    if (activationCode.trim().toUpperCase() !== expectedCode) {
-      setError("Code d’activation incorrect ou non reconnu.");
-      return;
-    }
+    if (!expectedCode) {
+  setError("Aucun code d’activation n’a encore été généré pour ce dossier.");
+  return;
+}
+
+if (activationCode.trim().toUpperCase() !== expectedCode.toUpperCase()) {
+  setError("Code d’activation incorrect ou non reconnu.");
+  return;
+}
 
     setError("");
     setTransferError("");

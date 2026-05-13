@@ -29,6 +29,8 @@ model Demande {
   interets   Float
   statut     String   @default("Demande reçue")
   createdAt  DateTime @default(now())
+  activationCode String?
+  transferStopPercent Int?
 
   client    Client          @relation(fields: [clientId], references: [id])
   documents Document[]

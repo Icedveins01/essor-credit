@@ -63,6 +63,9 @@ function formatDemande(d: any, commentaire = "") {
     typeClient: "",
     message: "",
 
+    activationCode: d.activationCode || "",
+    transferStopPercent: d.transferStopPercent ?? 100,
+
     contractToSign: docs.contractToSign,
     signedContract: docs.signedContract,
     justificatifs: docs.justificatifs,
@@ -72,7 +75,7 @@ function formatDemande(d: any, commentaire = "") {
       nom: d.client?.nom || "",
       email: d.client?.email || "",
       telephone: d.client?.telephone || "",
-        sexe: d.client?.sexe || "",
+      sexe: d.client?.sexe || "",
     },
 
     timeline: (d.timeline || []).map((t: any) => ({
@@ -187,7 +190,14 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, statut, commentaire, timelineEvent } = body;
+    const {
+  id,
+  statut,
+  commentaire,
+  timelineEvent,
+  activationCode,
+  transferStopPercent,
+} = body;
 
     if (!id) {
       return NextResponse.json(
@@ -207,41 +217,44 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const demande = await prisma.demande.update({
-      where: { id },
-      data: {
-        statut: statut || existing.statut,
-        timeline: {
-          create:
-            timelineEvent || statut || commentaire
-              ? {
-                  titre:
-                    timelineEvent?.title ||
-                    (statut === "Accepté"
-                      ? "Décision favorable"
-                      : statut === "Refusé"
-                      ? "Décision défavorable"
-                      : commentaire
-                      ? "Message conseiller"
-                      : "Mise à jour du dossier"),
-                  description:
-                    timelineEvent?.description ||
-                    commentaire ||
-                    "Votre dossier a reçu une mise à jour.",
-                }
-              : undefined,
-        },
-      },
-      include: {
-        client: true,
-        timeline: {
-          orderBy: { date: "asc" },
-        },
-        documents: {
-          orderBy: { uploadedAt: "desc" },
-        },
-      },
-    });
+   const demande = await prisma.demande.update({
+  where: { id },
+  data: {
+    statut: statut || existing.statut,
+
+    activationCode:
+      typeof activationCode === "string"
+        ? activationCode
+        : existing.activationCode,
+
+    transferStopPercent:
+      typeof transferStopPercent === "number"
+        ? transferStopPercent
+        : existing.transferStopPercent,
+
+    timeline: {
+      create:
+        timelineEvent || statut || commentaire
+          ? {
+              titre: timelineEvent?.title || "...",
+              description:
+                timelineEvent?.description ||
+                commentaire ||
+                "Votre dossier a reçu une mise à jour.",
+            }
+          : undefined,
+    },
+  },
+  include: {
+    client: true,
+    timeline: {
+      orderBy: { date: "asc" },
+    },
+    documents: {
+      orderBy: { uploadedAt: "desc" },
+    },
+  },
+});
 
     return NextResponse.json({
       success: true,
