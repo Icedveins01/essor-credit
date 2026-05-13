@@ -95,6 +95,9 @@ export default function Admin() {
   const [newStatut, setNewStatut] = useState<Statut>("En cours");
   const [commentaire, setCommentaire] = useState("");
 
+  const [selectedAction, setSelectedAction] = useState("");
+  const [actionValue, setActionValue] = useState("");
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -213,6 +216,61 @@ export default function Admin() {
     refuses: demandes.filter((d) => d.statut === "Refusé").length,
     montantTotal: demandes.reduce((sum, d) => sum + Number(d.montant || 0), 0),
   };
+
+const applyAdminAction = () => {
+  if (!selectedDemande) {
+    alert("Sélectionnez une demande.");
+    return;
+  }
+
+  if (!selectedAction) {
+    alert("Choisissez une action administrateur.");
+    return;
+  }
+
+  if (selectedAction !== "reset_transfers" && !actionValue.trim()) {
+    alert("Entrez une valeur pour cette action.");
+    return;
+  }
+
+  const key = `adminAction_${selectedDemande.id}`;
+
+  const payload = {
+    action: selectedAction,
+    value: actionValue.trim(),
+    demandeId: selectedDemande.id,
+    createdAt: new Date().toISOString(),
+  };
+
+  sessionStorage.setItem(key, JSON.stringify(payload));
+
+  if (selectedAction === "activation_code") {
+    sessionStorage.setItem(
+      `adminActivationCode_${selectedDemande.id}`,
+      actionValue.trim().toUpperCase()
+    );
+  }
+
+  if (selectedAction === "transfer_stop") {
+    sessionStorage.setItem(
+      `adminTransferStopPercent_${selectedDemande.id}`,
+      actionValue.trim()
+    );
+  }
+
+  if (selectedAction === "reset_transfers") {
+    sessionStorage.removeItem(`adminAction_${selectedDemande.id}`);
+    sessionStorage.removeItem(`adminTransferStopPercent_${selectedDemande.id}`);
+    sessionStorage.removeItem(`walletTransferredDemandeId`);
+    sessionStorage.removeItem(`walletTransferCompleted`);
+    sessionStorage.removeItem(`lastTransferReceipt`);
+  }
+
+  alert("✅ Action administrateur appliquée.");
+
+  setSelectedAction("");
+  setActionValue("");
+};
 
   const updateStatut = async () => {
     if (!selectedId) {
@@ -900,6 +958,66 @@ const justificatifs =
                         />
                       </div>
                     </div>
+
+                    <div className="space-y-3">
+  <label className="block text-sm text-zinc-400">
+    Action administrateur
+  </label>
+
+  <Select
+    value={selectedAction}
+    onValueChange={(value) => {
+      setSelectedAction(value);
+      setActionValue("");
+    }}
+  >
+    <SelectTrigger className="h-14 bg-black/20 border-white/10 text-white rounded-2xl">
+      <SelectValue placeholder="Choisir une action" />
+    </SelectTrigger>
+
+    <SelectContent>
+      <SelectItem value="transfer_in">Émettre un virement entrant</SelectItem>
+      <SelectItem value="transfer_out">Émettre un virement sortant</SelectItem>
+      <SelectItem value="refund">Émettre un remboursement</SelectItem>
+      <SelectItem value="notification">Nouvelle notification à afficher</SelectItem>
+      <SelectItem value="theme">Changer la couleur de l'interface</SelectItem>
+      <SelectItem value="language">Changer la langue d'affichage</SelectItem>
+      <SelectItem value="card">Changer les informations de la CB</SelectItem>
+      <SelectItem value="iban">Changer l'IBAN et le BIC du compte</SelectItem>
+      <SelectItem value="currency">Changer la devise du compte</SelectItem>
+      <SelectItem value="pin">Changer le code PIN de connexion</SelectItem>
+      <SelectItem value="activation_code">Changer le code d'activation virement</SelectItem>
+      <SelectItem value="transfer_stop">Nouveau pourcentage d'arrêt virement</SelectItem>
+      <SelectItem value="reset_transfers">Réinitialiser l'historique des virements</SelectItem>
+      <SelectItem value="block_client">Bloquer ou débloquer l'accès client</SelectItem>
+    </SelectContent>
+  </Select>
+
+  {selectedAction && selectedAction !== "reset_transfers" && (
+    <Input
+      value={actionValue}
+      onChange={(e) => setActionValue(e.target.value)}
+      placeholder={
+        selectedAction === "activation_code"
+          ? "Exemple : 95AEE4B7"
+          : selectedAction === "transfer_stop"
+          ? "Pourcentage entre 0 et 100"
+          : selectedAction === "block_client"
+          ? "oui ou non"
+          : "Valeur ou message à appliquer"
+      }
+      className="h-14 bg-black/20 border-white/10 text-white placeholder:text-zinc-500 rounded-2xl"
+    />
+  )}
+
+  <Button
+    type="button"
+    onClick={applyAdminAction}
+    className="w-full h-12 rounded-2xl bg-white text-black hover:bg-zinc-200"
+  >
+    Appliquer l’action administrateur
+  </Button>
+</div>
 
                     <Button
                       onClick={updateStatut}

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "../components/Header";
 import { motion } from "framer-motion";
+import Link from "next/link"; 
 import {
   Upload,
   CheckCircle,
@@ -115,6 +116,8 @@ export default function EspaceClient() {
   const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [newUpdateIds, setNewUpdateIds] = useState<string[]>([]);
   const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+
+  
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
@@ -268,25 +271,65 @@ export default function EspaceClient() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+  if (!isLoggedIn) return;
 
-    const checkInactivity = () => {
-      const lastActivity = sessionStorage.getItem("lastActivity");
+  const transferCompleted = sessionStorage.getItem("walletTransferCompleted");
+  const transferredDemandeId = sessionStorage.getItem(
+    "walletTransferredDemandeId"
+  );
 
-      if (!lastActivity) return;
+  if (transferCompleted === "true" && transferredDemandeId) {
+    setDemandes((prev) =>
+      prev.map((demande) =>
+        demande.id === transferredDemandeId
+          ? {
+              ...demande,
+              statut: "Fonds transférés",
+              updatedAt: new Date().toISOString(),
+            }
+          : demande
+      )
+    );
 
-      const now = Date.now();
-      const inactiveTime = now - parseInt(lastActivity, 10);
+    setNotifications((n) => [
+      "Le transfert a été confirmé depuis l’espace sécurisé.",
+      ...n,
+    ]);
 
-      if (inactiveTime > 300000) {
-        logout();
-      }
-    };
+    setHasNewUpdate(true);
 
-    const interval = setInterval(checkInactivity, 60000);
+    setNewUpdateIds((ids) =>
+      ids.includes(transferredDemandeId)
+        ? ids
+        : [transferredDemandeId, ...ids]
+    );
 
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
+    sessionStorage.removeItem("walletTransferCompleted");
+  }
+}, [isLoggedIn]);
+
+
+
+    useEffect(() => {
+  if (!isLoggedIn) return;
+
+  const checkInactivity = () => {
+    const lastActivity = sessionStorage.getItem("lastActivity");
+
+    if (!lastActivity) return;
+
+    const now = Date.now();
+    const inactiveTime = now - parseInt(lastActivity, 10);
+
+    if (inactiveTime > 300000) {
+      logout();
+    }
+  };
+
+  const interval = setInterval(checkInactivity, 60000);
+
+  return () => clearInterval(interval);
+}, [isLoggedIn]);
 
   const resetAccessCode = async () => {
     const emailToReset = resetEmail || email;
@@ -754,10 +797,41 @@ export default function EspaceClient() {
 
       const allDemandes = await refreshed.json();
 
-      const userDemandes = allDemandes.filter(
-        (d: Demande) =>
-          d.client?.email?.toLowerCase() === currentClient?.email.toLowerCase()
-      );
+      const transferredDemandeId = sessionStorage.getItem(
+
+  "walletTransferredDemandeId"
+
+);
+
+const userDemandes = allDemandes
+
+  .filter(
+
+    (d: Demande) =>
+
+      d.client?.email?.toLowerCase() ===
+
+      currentClient?.email.toLowerCase()
+
+  )
+
+  .map((d: Demande) =>
+
+    transferredDemandeId && d.id === transferredDemandeId
+
+      ? {
+
+          ...d,
+
+          statut: "Fonds transférés" as Statut,
+
+          updatedAt: new Date().toISOString(),
+
+        }
+
+      : d
+
+  );
 
       setDemandes(userDemandes);
 
@@ -1608,7 +1682,7 @@ export default function EspaceClient() {
                   </CardContent>
                 </Card>
 
-                                {shouldShowFundingArea && (
+                     {shouldShowFundingArea && (
                   <Card className="bg-indigo-500/10 border border-indigo-400/30 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
                     <CardHeader>
                       <CardTitle className="text-white flex items-center gap-3">
@@ -1618,77 +1692,98 @@ export default function EspaceClient() {
                     </CardHeader>
 
                     <CardContent className="p-8 pt-0">
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div className="md:col-span-2 bg-black/20 border border-white/10 rounded-3xl p-6">
-                          <p className="text-sm text-indigo-300 font-medium">
-                            Montant réservé et disponible
-                          </p>
+  <div className="grid md:grid-cols-3 gap-4">
+    <div className="md:col-span-2 bg-black/20 border border-white/10 rounded-3xl p-6">
+      <p className="text-sm text-indigo-300 font-medium">
+        Montant réservé et disponible
+      </p>
 
-                          <p className="text-5xl font-bold text-white mt-3">
-                            {selectedDemande.montant.toLocaleString("fr-FR")} €
-                          </p>
+      <p className="text-5xl font-bold text-white mt-3">
+        {selectedDemande.montant.toLocaleString("fr-FR")} €
+      </p>
 
-                          <p className="text-zinc-300 mt-4">
-                            Les fonds sont affichés dans votre espace client sécurisé. La
-                            préparation du transfert bancaire peut maintenant se poursuivre
-                            selon les modalités prévues.
-                          </p>
-                        </div>
+      <p className="text-zinc-300 mt-4">
+        Les fonds sont affichés dans votre espace client sécurisé. La
+        préparation du transfert bancaire peut maintenant se poursuivre
+        selon les modalités prévues.
+      </p>
+    </div>
 
-                        <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
-                          <p className="text-sm text-zinc-400">Statut</p>
+    <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+      <p className="text-sm text-zinc-400">Statut</p>
 
-                          <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 rounded-full px-4 py-2 text-sm font-semibold">
-                            <CheckCircle className="w-4 h-4" />
-                             {isFundsTransferred ? "Fonds transférés" : "Fonds disponibles"}
-                          </div>
+      <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 rounded-full px-4 py-2 text-sm font-semibold">
+        <CheckCircle className="w-4 h-4" />
+        {isFundsTransferred ? "Fonds transférés" : "Fonds disponibles"}
+      </div>
 
-                          <p className="text-sm text-zinc-400 mt-5">
-                            Référence dossier
-                          </p>
+      <p className="text-sm text-zinc-400 mt-5">
+        Référence dossier
+      </p>
 
-                          <p className="text-sm font-mono text-zinc-300 mt-2 break-all">
-                            {secureReference}
-                          </p>
-                        </div>
-                      </div>
+      <p className="text-sm font-mono text-zinc-300 mt-2 break-all">
+        {secureReference}
+      </p>
+    </div>
+  </div>
 
-                      <div className="mt-5 bg-indigo-500/10 border border-indigo-400/20 rounded-3xl p-5">
-                        <p className="text-indigo-300 font-semibold">
-                         {isFundsTransferred
-                          ? "Transfert bancaire finalisé"
-                          : "Prochaine étape : préparation du transfert"}
-                       </p>
+  <div className="mt-5 bg-indigo-500/10 border border-indigo-400/20 rounded-3xl p-5">
+    <p className="text-indigo-300 font-semibold">
+      {isFundsTransferred
+        ? "Transfert bancaire finalisé"
+        : "Prochaine étape : préparation du transfert"}
+    </p>
 
-                         <p className="text-sm text-zinc-300 mt-2">
-                            {isFundsTransferred
-                             ? "Le transfert bancaire a été exécuté selon les modalités validées. Le dossier est désormais finalisé."
-                              : "Le service financier prépare les modalités de décaissement. Vous serez informé dès que le transfert passera à l’étape suivante."}
-                        </p>
-                      </div>
+    <p className="text-sm text-zinc-300 mt-2">
+      {isFundsTransferred
+        ? "Le transfert bancaire a été exécuté selon les modalités validées. Le dossier est désormais finalisé."
+        : "Le service financier prépare les modalités de décaissement. Vous serez informé dès que le transfert passera à l’étape suivante."}
+    </p>
+  </div>
 
-                      <div className="mt-5 grid md:grid-cols-2 gap-4">
-                        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                          <p className="text-sm text-zinc-400">Canal de transfert</p>
-                          <p className="text-lg font-semibold text-white mt-2">
-                            Virement bancaire sécurisé
-                          </p>
-                          <p className="text-xs text-zinc-500 mt-2">
-                            Traitement selon les coordonnées bancaires validées.
-                          </p>
-                        </div>
+  <div className="mt-5 grid md:grid-cols-2 gap-4">
+    <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+      <p className="text-sm text-zinc-400">Canal de transfert</p>
+      <p className="text-lg font-semibold text-white mt-2">
+        Virement bancaire sécurisé
+      </p>
+      <p className="text-xs text-zinc-500 mt-2">
+        Traitement selon les coordonnées bancaires validées.
+      </p>
+    </div>
 
-                        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
-                          <p className="text-sm text-zinc-400">Synchronisation</p>
-                          <p className="text-lg font-semibold text-emerald-300 mt-2">
-                            Données à jour
-                          </p>
-                          <p className="text-xs text-zinc-500 mt-2">
-                            Dernière synchronisation : {secureSyncDate}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
+    <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+      <p className="text-sm text-zinc-400">Synchronisation</p>
+      <p className="text-lg font-semibold text-emerald-300 mt-2">
+        Données à jour
+      </p>
+      <p className="text-xs text-zinc-500 mt-2">
+        Dernière synchronisation : {secureSyncDate}
+      </p>
+    </div>
+  </div>
+
+  {/* BOUTON D’ACCÈS WALLET */}
+{!isFundsTransferred && (
+  <div className="mt-6">
+    <Link
+      href="/espace-client/wallet"
+      onClick={() => {
+        sessionStorage.setItem(
+          "selectedDemande",
+          JSON.stringify(selectedDemande)
+        );
+      }}
+    >
+      <Button className="w-full h-14 rounded-3xl bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-semibold">
+        <CreditCard className="mr-2 w-5 h-5" />
+        Accéder à l’espace de transfert
+      </Button>
+    </Link>
+  </div>
+)}
+
+</CardContent>
                   </Card>
                 )}
 
@@ -1788,6 +1883,8 @@ export default function EspaceClient() {
   </Card>
 )}
 
+
+
 {isFundsTransferred && (
   <Card className="bg-green-500/10 border border-green-400/30 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
     <CardHeader>
@@ -1797,7 +1894,40 @@ export default function EspaceClient() {
       </CardTitle>
     </CardHeader>
 
-    {isFundsTransferred && (
+    <CardContent className="space-y-5">
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
+        <p className="text-sm text-green-300 font-semibold">
+          Transfert bancaire confirmé
+        </p>
+
+        <p className="text-4xl font-bold text-white mt-3">
+          {selectedDemande.montant.toLocaleString("fr-FR")} €
+        </p>
+
+        <p className="text-sm text-zinc-300 mt-3">
+          Le montant a été transféré selon les modalités validées. La référence
+          de confirmation est associée à votre dossier sécurisé.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+          <p className="text-sm text-zinc-400">Référence dossier</p>
+          <p className="font-mono text-white mt-2">{secureReference}</p>
+        </div>
+
+        <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+          <p className="text-sm text-zinc-400">Date de confirmation</p>
+          <p className="text-white mt-2">
+            {getTransferDate(selectedDemande)}
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{isFundsTransferred && (
   <Card className="bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
     <CardHeader>
       <CardTitle className="text-white flex items-center gap-3">
@@ -1828,12 +1958,16 @@ export default function EspaceClient() {
 
         <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
           <p className="text-sm text-zinc-400">Date d’émission</p>
-          <p className="text-white mt-2">{getTransferDate(selectedDemande)}</p>
+          <p className="text-white mt-2">
+            {getTransferDate(selectedDemande)}
+          </p>
         </div>
 
         <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
           <p className="text-sm text-zinc-400">Type</p>
-          <p className="text-white font-semibold mt-2">Reçu de transfert</p>
+          <p className="text-white font-semibold mt-2">
+            Reçu de transfert
+          </p>
         </div>
       </div>
 
@@ -1848,27 +1982,7 @@ export default function EspaceClient() {
   </Card>
 )}
 
-    <CardContent className="space-y-5">
-      <div className="bg-black/20 border border-white/10 rounded-3xl p-6">
-        <p className="text-sm text-green-300 font-semibold">
-          Transfert bancaire confirmé
-        </p>
-
-        <p className="text-4xl font-bold text-white mt-3">
-          {selectedDemande.montant.toLocaleString("fr-FR")} €
-        </p>
-
-        <p className="text-sm text-zinc-300 mt-3">
-          Le montant a été transféré selon les modalités validées. La référence
-          de confirmation est associée à votre dossier sécurisé.
-        </p>
-      </div>
-    </CardContent>
-  </Card>
-)}
-
                    
-
                 {isFundingPreparation ? (
                   <Card className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-2xl rounded-[2rem]">
                     <CardContent className="p-8">
