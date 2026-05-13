@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
     telephone: client.telephone || "",
     sexe: client.sexe || "",
   },
+
 });
+
   } catch (error) {
     console.error("Erreur login client :", error);
 

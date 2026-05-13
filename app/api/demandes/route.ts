@@ -72,6 +72,7 @@ function formatDemande(d: any, commentaire = "") {
       nom: d.client?.nom || "",
       email: d.client?.email || "",
       telephone: d.client?.telephone || "",
+        sexe: d.client?.sexe || "",
     },
 
     timeline: (d.timeline || []).map((t: any) => ({
@@ -127,12 +128,14 @@ export async function POST(req: NextRequest) {
         nom: body.nom || "",
         prenom: body.prenom || "",
         telephone: body.telephone || "",
+        sexe: body.sexe || "",
       },
       create: {
         nom: body.nom || "",
         prenom: body.prenom || "",
         email,
         telephone: body.telephone || "",
+        sexe: body.sexe || "",  
         motDePasse: accessCode,
       },
     });
