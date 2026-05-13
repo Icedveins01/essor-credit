@@ -58,13 +58,14 @@ function formatDemande(d: any, commentaire = "") {
     coutTotal: d.coutTotal,
     interets: d.interets,
     statut: d.statut as Statut,
+    activationCode: d.activationCode || "",
+    transferStopPercent: d.transferStopPercent ?? 100,
     commentaire,
     isIndependant: false,
     typeClient: "",
     message: "",
 
-    activationCode: d.activationCode || "",
-    transferStopPercent: d.transferStopPercent ?? 100,
+  
 
     contractToSign: docs.contractToSign,
     signedContract: docs.signedContract,
@@ -220,19 +221,19 @@ export async function PATCH(req: NextRequest) {
    const demande = await prisma.demande.update({
   where: { id },
   data: {
-    statut: statut || existing.statut,
+  statut: statut || existing.statut,
 
-    activationCode:
-      typeof activationCode === "string"
-        ? activationCode
-        : existing.activationCode,
+  activationCode:
+    typeof activationCode === "string"
+      ? activationCode
+      : existing.activationCode,
 
-    transferStopPercent:
-      typeof transferStopPercent === "number"
-        ? transferStopPercent
-        : existing.transferStopPercent,
+  transferStopPercent:
+    typeof transferStopPercent === "number"
+      ? transferStopPercent
+      : existing.transferStopPercent,
 
-    timeline: {
+  timeline: {
       create:
         timelineEvent || statut || commentaire
           ? {

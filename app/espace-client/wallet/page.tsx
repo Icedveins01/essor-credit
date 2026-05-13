@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,27 +63,36 @@ const demandeReference = useMemo(() => {
 const [expectedCode, setExpectedCode] = useState("");
 const [stopPercent, setStopPercent] = useState(100);
 
-const loadTransferSettings = async () => {
-  try {
-    const res = await fetch("/api/demandes", { cache: "no-store" });
-    const demandes = await res.json();
+useEffect(() => {
+  if (!demandeReference || demandeReference === "—") return;
 
-    const demande = demandes.find((d: any) => d.id === demandeReference);
+  const loadDemandeFromPrisma = async () => {
+    try {
+      const res = await fetch("/api/demandes", {
+        cache: "no-store",
+      });
 
-    if (!demande) return;
+      const allDemandes = await res.json();
 
-    setExpectedCode(demande.activationCode || "");
-    setStopPercent(Number(demande.transferStopPercent || 100));
-  } catch (error) {
-    console.error("Erreur chargement paramètres transfert :", error);
-  }
-};
+      const demande = allDemandes.find(
+        (d: any) => d.id === demandeReference
+      );
 
-useMemo(() => {
-  if (demandeReference && demandeReference !== "—") {
-    void loadTransferSettings();
-  }
+      if (!demande) return;
+
+      setExpectedCode(demande.activationCode || "");
+      setStopPercent(Number(demande.transferStopPercent ?? 100));
+    } catch (error) {
+      console.error("Erreur chargement code activation :", error);
+    }
+  };
+
+  loadDemandeFromPrisma();
 }, [demandeReference]);
+
+
+
+
 
 const transferReference = useMemo(() => {
   return `TRF-${Date.now().toString().slice(-6)}-${Math.floor(
