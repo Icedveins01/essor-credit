@@ -29,6 +29,13 @@ import {
   Bell,
   X,
   MessageSquare,
+  Building2,
+  Fingerprint,
+  Gauge,
+  ReceiptText,
+  Shield,
+  Smartphone,
+  TrendingUp,
 } from "lucide-react";
 
 type Statut =
@@ -122,6 +129,7 @@ export default function EspaceClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
 
+  
   
 
   useEffect(() => {
@@ -361,15 +369,23 @@ export default function EspaceClient() {
         return;
       }
 
-      const clients = JSON.parse(localStorage.getItem("clients") || "[]");
+      const existingClient = sessionStorage.getItem("currentClient");
 
-      const updatedClients = clients.map((c: ClientAccount) =>
-        c.email.toLowerCase() === emailToReset.toLowerCase()
-          ? { ...c, password: result.accessCode }
-          : c
-      );
+if (existingClient) {
+  const parsedClient = JSON.parse(existingClient);
 
-      localStorage.setItem("clients", JSON.stringify(updatedClients));
+  if (
+    parsedClient.email.toLowerCase() === emailToReset.toLowerCase()
+  ) {
+    sessionStorage.setItem(
+      "currentClient",
+      JSON.stringify({
+        ...parsedClient,
+        password: result.accessCode,
+      })
+    );
+  }
+}
 
       alert(
         `Nouveau code d’accès généré.\n\nEmail : ${emailToReset}\nNouveau code : ${result.accessCode}\n\nConservez ce code pour vous connecter.`
@@ -432,19 +448,19 @@ export default function EspaceClient() {
   };
 
   const logout = () => {
-    sessionStorage.removeItem("currentClient");
-    sessionStorage.removeItem("lastActivity");
+  sessionStorage.removeItem("currentClient");
+  sessionStorage.removeItem("lastActivity");
 
-    setIsLoggedIn(false);
-    setCurrentClient(null);
-    setEmail("");
-    setPassword("");
-    setDemandes([]);
-    setNotifications([]);
-    setHasNewUpdate(false);
-    setNewUpdateIds([]);
-    setShowNotificationPanel(false);
-  };
+  setIsLoggedIn(false);
+  setCurrentClient(null);
+  setEmail("");
+  setPassword("");
+  setDemandes([]);
+  setNotifications([]);
+  setHasNewUpdate(false);
+  setNewUpdateIds([]);
+  setShowNotificationPanel(false);
+};
 
   const selectedDemande =
   demandes.find((d) => d.id === selectedDemandeId) || demandes[0];
@@ -931,6 +947,22 @@ const userDemandes = allDemandes
     return sexe || "";
   };
 
+  const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+
+    return "Bonjour";
+
+  }
+  if (hour >= 12 && hour < 18) {
+
+    return "Bon après-midi";
+
+  }
+  return "Bonsoir";
+
+};
+
  const buildTimeline = (demande?: Demande) => {
   if (!demande) return [];
 
@@ -974,22 +1006,33 @@ const userDemandes = allDemandes
   return Clock;
 };
 
-  const getColor = (event: TimelineEvent) => {
+ const getColor = (event: TimelineEvent) => {
+  const lowerTitle = event.title.toLowerCase();
+
+  if (
+    lowerTitle.includes("fonds transférés") ||
+    lowerTitle.includes("transfert") ||
+    lowerTitle.includes("virement") ||
+    lowerTitle.includes("activation")
+  ) {
+    return "emerald";
+  }
+
   if (event.type === "created") return "emerald";
 
   if (
-    event.title.toLowerCase().includes("contrat") ||
-    event.title.toLowerCase().includes("justificatif")
+    lowerTitle.includes("contrat") ||
+    lowerTitle.includes("justificatif")
   ) {
     return "emerald";
   }
 
   if (event.type === "status") {
-    if (event.title.toLowerCase().includes("refusé")) return "red";
+    if (lowerTitle.includes("refusé")) return "red";
 
     if (
       successfulStatus.some((status) =>
-        event.title.toLowerCase().includes(status.toLowerCase())
+        lowerTitle.includes(status.toLowerCase())
       )
     ) {
       return "emerald";
@@ -1090,6 +1133,42 @@ const userDemandes = allDemandes
 
   const isFundsTransferred = selectedDemande?.statut === "Fonds transférés";
   const shouldShowFundingArea = isFundsAvailable || isFundsTransferred;
+
+  const activeStatusLabel = selectedDemande
+  ? getStatusText(selectedDemande.statut)
+  : "Aucun dossier";
+
+const clientDisplayName = [
+  getCivilite(currentClient?.sexe),
+  currentClient?.nom,
+].filter(Boolean).join(" ");
+
+const premiumCards = [
+  {
+    label: "Solde dossier",
+    value: `${totalMontant.toLocaleString("fr-FR")} €`,
+    icon: Wallet,
+    tone: "emerald",
+  },
+  {
+    label: "Statut actuel",
+    value: activeStatusLabel,
+    icon: Gauge,
+    tone: "cyan",
+  },
+  {
+    label: "Sécurité",
+    value: "Authentifié",
+    icon: Fingerprint,
+    tone: "violet",
+  },
+  {
+    label: "Documents",
+    value: `${uploadedDocsCount}/${requiredDocsCount || 0}`,
+    icon: FileText,
+    tone: "amber",
+  },
+];
 
   const transferSteps = [
   {
@@ -1348,9 +1427,7 @@ const userDemandes = allDemandes
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Bonjour, {[getCivilite(currentClient?.sexe), currentClient?.nom]
-                .filter(Boolean)
-                .join(" ")}
+              {getGreeting()}, {clientDisplayName || currentClient?.prenom || "Client"}
             </h1>
 
             <p className="text-zinc-400 mt-4 text-lg">
@@ -1369,81 +1446,129 @@ const userDemandes = allDemandes
         </div>
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          <Card className="lg:col-span-7 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-white/5 border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden">
-            <CardContent className="p-8 md:p-10">
-              <div className="flex items-start justify-between gap-6">
-                <div>
-                  <p className="text-zinc-300 mb-2">Montant total demandé</p>
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+  <Card className="xl:col-span-8 bg-gradient-to-br from-emerald-500/25 via-cyan-500/10 to-white/5 border-white/10 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden shadow-2xl">
+    <CardContent className="p-8 md:p-10">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+        <div>
+          <div className="inline-flex items-center gap-2 bg-black/20 border border-white/10 rounded-full px-4 py-2 text-sm text-emerald-300 mb-6">
+            <ShieldCheck className="w-4 h-4" />
+            Compte sécurisé actif
+          </div>
 
-                  <p className="text-5xl md:text-7xl font-bold tracking-tight">
-                    {totalMontant.toLocaleString("fr-FR")} €
-                  </p>
+          <p className="text-zinc-300 mb-2">Montant total suivi</p>
 
-                  <p className="text-zinc-400 mt-4">
-                    {demandes.length} dossier(s) enregistré(s)
-                  </p>
-                </div>
+          <p className="text-5xl md:text-7xl font-bold tracking-tight">
+            {totalMontant.toLocaleString("fr-FR")} €
+          </p>
 
-                <div className="w-16 h-16 rounded-3xl bg-white/10 border border-white/10 flex items-center justify-center">
-                  <Landmark className="w-8 h-8 text-emerald-300" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-10">
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-5">
-                  <p className="text-zinc-400 text-sm">En cours</p>
-                  <p className="text-3xl font-bold mt-2">{enCours}</p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-5">
-                  <p className="text-zinc-400 text-sm">Acceptées</p>
-                  <p className="text-3xl font-bold mt-2 text-emerald-300">
-                    {acceptes}
-                  </p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-5 col-span-2 md:col-span-1">
-                  <p className="text-zinc-400 text-sm">Sécurité</p>
-                  <p className="text-lg font-semibold mt-2 flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-emerald-300" />
-                    Vérifié
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-5 bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2rem]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white">
-                <Headphones className="w-6 h-6 text-emerald-300" />
-                Conseiller dédié
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
-                  <User className="w-7 h-7 text-emerald-300" />
-                </div>
-
-                <div>
-                  <p className="font-semibold">Service Client Essor Crédit</p>
-                  <p className="text-sm text-zinc-400">
-                    Assistance dossier & suivi
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-black/20 border border-white/10 rounded-3xl p-5 text-sm text-zinc-300">
-                Votre dossier est traité de manière sécurisée. Les informations
-                visibles ici sont synchronisées automatiquement avec votre espace
-                de suivi.
-              </div>
-            </CardContent>
-          </Card>
+          <p className="text-zinc-400 mt-4 max-w-xl">
+            Vos dossiers, documents, fonds disponibles et notifications sont synchronisés en temps réel dans votre espace sécurisé.
+          </p>
         </div>
+
+        <div className="w-full md:w-64 bg-black/25 border border-white/10 rounded-[2rem] p-5">
+          <p className="text-sm text-zinc-400">Référence sécurisée</p>
+          <p className="font-mono text-lg text-white mt-2 break-all">
+            {secureReference}
+          </p>
+
+          <div className="mt-5 h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          <p className="text-xs text-zinc-500 mt-3">
+            Progression : {progressPercent}%
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+        {premiumCards.map((card) => {
+          const Icon = card.icon;
+
+          const toneClass =
+            card.tone === "emerald"
+              ? "text-emerald-300 bg-emerald-500/15 border-emerald-400/25"
+              : card.tone === "cyan"
+              ? "text-cyan-300 bg-cyan-500/15 border-cyan-400/25"
+              : card.tone === "violet"
+              ? "text-violet-300 bg-violet-500/15 border-violet-400/25"
+              : "text-amber-300 bg-amber-500/15 border-amber-400/25";
+
+          return (
+            <div
+              key={card.label}
+              className="bg-black/20 border border-white/10 rounded-3xl p-5"
+            >
+              <div
+                className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 ${toneClass}`}
+              >
+                <Icon className="w-5 h-5" />
+              </div>
+
+              <p className="text-sm text-zinc-400">{card.label}</p>
+              <p className="text-xl font-bold text-white mt-2">
+                {card.value}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </CardContent>
+  </Card>
+
+  <Card className="xl:col-span-4 bg-white/10 border-white/10 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-3 text-white">
+        <Building2 className="w-6 h-6 text-emerald-300" />
+        Centre bancaire
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="space-y-5">
+      <div className="bg-black/20 border border-white/10 rounded-3xl p-5">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+            <Headphones className="w-7 h-7 text-emerald-300" />
+          </div>
+
+          <div>
+            <p className="font-semibold">Service Client Essor Crédit</p>
+            <p className="text-sm text-zinc-400">Assistance & suivi dossier</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+          <Smartphone className="w-5 h-5 text-cyan-300 mb-3" />
+          <p className="text-xs text-zinc-500">Accès</p>
+          <p className="font-semibold">Accès multi-appareils</p>
+        </div>
+
+        <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+          <Shield className="w-5 h-5 text-emerald-300 mb-3" />
+          <p className="text-xs text-zinc-500">Session</p>
+          <p className="font-semibold">Protégée</p>
+        </div>
+      </div>
+
+      <div className="bg-emerald-500/10 border border-emerald-400/20 rounded-3xl p-5 text-sm text-zinc-300">
+        Données synchronisées avec votre dossier sécurisé.
+        <br />
+        <span className="text-zinc-500">
+          Dernière synchronisation sécurisée : {secureSyncDate}
+        </span>
+      </div>
+    </CardContent>
+  </Card>
+</div>
+
+            
 
         {demandes.length === 0 ? (
           <Card className="bg-white/10 border-white/10 rounded-[2rem]">
@@ -1663,8 +1788,7 @@ const userDemandes = allDemandes
                         <p className="text-zinc-500 text-sm">Mensualité</p>
 
                         <p className="text-2xl font-semibold mt-2">
-                          {selectedDemande.mensualite
-                            ? `${selectedDemande.mensualite.toLocaleString(
+                          {selectedDemande.mensualite? `${selectedDemande.mensualite.toLocaleString(
                                 "fr-FR"
                               )} €`
                             : "—"}
@@ -1764,6 +1888,20 @@ const userDemandes = allDemandes
       </p>
     </div>
   </div>
+
+  <div className="grid grid-cols-2 gap-3">
+  <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+    <Landmark className="w-5 h-5 text-emerald-300 mb-3" />
+    <p className="text-xs text-zinc-500">Canal</p>
+    <p className="font-semibold">SEPA sécurisé</p>
+  </div>
+
+  <div className="bg-black/20 border border-white/10 rounded-2xl p-4">
+    <TrendingUp className="w-5 h-5 text-cyan-300 mb-3" />
+    <p className="text-xs text-zinc-500">Niveau</p>
+    <p className="font-semibold">Prioritaire</p>
+  </div>
+</div>
 
   {/* BOUTON D’ACCÈS WALLET */}
 {!isFundsTransferred && (
@@ -1974,11 +2112,30 @@ const userDemandes = allDemandes
       </div>
 
       <Button
-        disabled
-        className="w-full h-12 rounded-2xl bg-white/10 text-zinc-400 cursor-not-allowed"
-      >
+  onClick={() => {
+    const content = `
+REÇU DE TRANSFERT
+
+Référence dossier : ${secureReference}
+Montant : ${selectedDemande.montant.toLocaleString("fr-FR")} €
+Date : ${getTransferDate(selectedDemande)}
+Statut : Fonds transférés
+`;
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `recu-transfert-${secureReference}.txt`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }}
+  className="w-full h-12 rounded-2xl bg-white text-black hover:bg-zinc-200"
+>
         <Download className="mr-2 w-4 h-4" />
-        Téléchargement bientôt disponible
+        Télécharger le reçu
       </Button>
     </CardContent>
   </Card>
@@ -2077,7 +2234,7 @@ const userDemandes = allDemandes
                         <div className="text-emerald-300 text-sm flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl p-4">
                           <CheckCircle className="w-4 h-4" />
                           Contrat signé reçu :{" "}
-                          {selectedDemande.signedContract.name}
+                          {selectedDemande.signedContract?.name}
                         </div>
                       )}
 

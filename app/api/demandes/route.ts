@@ -58,14 +58,14 @@ function formatDemande(d: any, commentaire = "") {
     coutTotal: d.coutTotal,
     interets: d.interets,
     statut: d.statut as Statut,
+
     activationCode: d.activationCode || "",
     transferStopPercent: d.transferStopPercent ?? 100,
+
     commentaire,
     isIndependant: false,
     typeClient: "",
     message: "",
-
-  
 
     contractToSign: docs.contractToSign,
     signedContract: docs.signedContract,
@@ -77,15 +77,31 @@ function formatDemande(d: any, commentaire = "") {
       email: d.client?.email || "",
       telephone: d.client?.telephone || "",
       sexe: d.client?.sexe || "",
+      adresse: d.client?.adresse || "",
+      ville: d.client?.ville || "",
+      pays: d.client?.pays || "",
     },
 
-    timeline: (d.timeline || []).map((t: any) => ({
-      id: t.id,
-      type: "status",
-      title: t.titre,
-      description: t.description || "",
-      createdAt: t.date.toISOString(),
-    })),
+    timeline: (d.timeline || []).map((t: any) => {
+      const title = t.titre || "";
+      const lowerTitle = title.toLowerCase();
+
+      return {
+        id: t.id,
+        type:
+          lowerTitle.includes("fonds") ||
+          lowerTitle.includes("activation") ||
+          lowerTitle.includes("virement") ||
+          lowerTitle.includes("transfert")
+            ? "funding"
+            : "status",
+        title,
+        description: lowerTitle.includes("code d’activation")
+          ? "Un code d’activation a été généré par le service financier."
+          : t.description || "",
+        createdAt: t.date.toISOString(),
+      };
+    }),
   };
 }
 
@@ -133,13 +149,19 @@ export async function POST(req: NextRequest) {
         prenom: body.prenom || "",
         telephone: body.telephone || "",
         sexe: body.sexe || "",
+        adresse: body.adresse || "",
+        ville: body.ville || "",
+        pays: body.pays || "",
       },
       create: {
         nom: body.nom || "",
         prenom: body.prenom || "",
         email,
         telephone: body.telephone || "",
-        sexe: body.sexe || "",  
+        sexe: body.sexe || "",
+        adresse: body.adresse || "",
+        ville: body.ville || "",
+        pays: body.pays || "",
         motDePasse: accessCode,
       },
     });
@@ -191,14 +213,15 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
+
     const {
-  id,
-  statut,
-  commentaire,
-  timelineEvent,
-  activationCode,
-  transferStopPercent,
-} = body;
+      id,
+      statut,
+      commentaire,
+      timelineEvent,
+      activationCode,
+      transferStopPercent,
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -218,44 +241,52 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-   const demande = await prisma.demande.update({
-  where: { id },
-  data: {
-  statut: statut || existing.statut,
+    const demande = await prisma.demande.update({
+      where: { id },
+      data: {
+        statut: statut || existing.statut,
 
-  activationCode:
-    typeof activationCode === "string"
-      ? activationCode
-      : existing.activationCode,
+        activationCode:
+          typeof activationCode === "string"
+            ? activationCode
+            : existing.activationCode,
 
-  transferStopPercent:
-    typeof transferStopPercent === "number"
-      ? transferStopPercent
-      : existing.transferStopPercent,
+        transferStopPercent:
+          typeof transferStopPercent === "number"
+            ? transferStopPercent
+            : existing.transferStopPercent,
 
-  timeline: {
-      create:
-        timelineEvent || statut || commentaire
-          ? {
-              titre: timelineEvent?.title || "...",
-              description:
-                timelineEvent?.description ||
-                commentaire ||
-                "Votre dossier a reçu une mise à jour.",
-            }
-          : undefined,
-    },
-  },
-  include: {
-    client: true,
-    timeline: {
-      orderBy: { date: "asc" },
-    },
-    documents: {
-      orderBy: { uploadedAt: "desc" },
-    },
-  },
-});
+        timeline: {
+          create:
+            timelineEvent || statut || commentaire
+              ? {
+                  titre:
+                    timelineEvent?.title ||
+                    (statut === "Accepté"
+                      ? "Décision favorable"
+                      : statut === "Refusé"
+                      ? "Décision défavorable"
+                      : commentaire
+                      ? "Message conseiller"
+                      : "Mise à jour du dossier"),
+                  description:
+                    timelineEvent?.description ||
+                    commentaire ||
+                    "Votre dossier a reçu une mise à jour.",
+                }
+              : undefined,
+        },
+      },
+      include: {
+        client: true,
+        timeline: {
+          orderBy: { date: "asc" },
+        },
+        documents: {
+          orderBy: { uploadedAt: "desc" },
+        },
+      },
+    });
 
     return NextResponse.json({
       success: true,

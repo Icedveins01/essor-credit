@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import worldCountries from "world-countries";
@@ -71,8 +73,12 @@ const countries = worldCountries
 
 const phoneCountries = countries.filter((country) => country.code);
 
+
 export default function FaireDemande() {
   const searchParams = useSearchParams();
+
+  const [accessCodeCreated, setAccessCodeCreated] = useState("");
+
 
   const typeFromUrl = searchParams.get("type") || "Prêt Personnel";
   const montantFromUrl = parseInt(searchParams.get("montant") || "150000");
@@ -100,6 +106,33 @@ export default function FaireDemande() {
     charges: "",
     message: "",
   });
+
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+
+const searchAddress = async (value: string) => {
+  setFormData({ ...formData, adresse: value });
+
+  if (value.trim().length < 3) {
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `/api/address-autocomplete?q=${encodeURIComponent(value)}`
+    );
+
+    const data = await res.json();
+
+    setAddressSuggestions(Array.isArray(data) ? data : []);
+    setShowAddressSuggestions(true);
+
+  } catch (error) {
+    console.error("Erreur autocomplétion adresse :", error);
+  }
+};
 
   const TAUX_FIXE = 3.0;
 
@@ -185,25 +218,19 @@ export default function FaireDemande() {
         const accessCode =
           result.accessCode || randomPassword || "Code déjà existant";
 
-        const clients = JSON.parse(localStorage.getItem("clients") || "[]");
+        sessionStorage.setItem(
+  "currentClient",
+  JSON.stringify({
+    email: clientEmail.toLowerCase().trim(),
+    password: accessCode,
+    nom: formData.nom.trim(),
+    prenom: formData.prenom.trim(),
+    telephone: formData.indicatif + formData.telephone,
+    sexe: formData.sexe || "",
+  })
+);
 
-        const existingClient = clients.find(
-          (c: any) => c.email === clientEmail
-        );
-
-        if (!existingClient) {
-          clients.push({
-            email: clientEmail,
-            password: accessCode,
-            nom: formData.nom.trim(),
-            prenom: formData.prenom.trim(),
-            telephone: formData.indicatif + formData.telephone,
-          });
-
-          localStorage.setItem("clients", JSON.stringify(clients));
-        }
-
-        (window as any).tempPassword = accessCode;
+        setAccessCodeCreated(accessCode);
 
         alert(
           `Votre demande a été enregistrée avec succès.\n\nEmail : ${clientEmail}\nCode d’accès client : ${accessCode}\n\nConservez ces informations pour accéder à votre espace client.`
@@ -312,7 +339,7 @@ export default function FaireDemande() {
                     <div className="bg-white/7 border border-white/10 rounded-2xl p-4">
                       <p className="text-zinc-500">Mot de passe</p>
                       <p className="font-mono text-emerald-300 font-bold mt-1">
-                        {(window as any).tempPassword}
+                        {accessCodeCreated}
                       </p>
                     </div>
                   </div>
@@ -629,26 +656,67 @@ export default function FaireDemande() {
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                          <Label>Adresse *</Label>
-                          <div className="relative">
-                            <MapPin className="absolute left-4 top-4 w-5 h-5 text-zinc-500" />
-                            <Input
-                              value={formData.adresse}
-                              onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                              className="h-14 bg-white/10 border-white/10 text-white rounded-2xl pl-12"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Ville *</Label>
-                          <Input
-                            value={formData.ville}
-                            onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
-                            className="h-14 bg-white/10 border-white/10 text-white rounded-2xl"
-                          />
-                        </div>
-                      </div>
+  <div className="space-y-2 relative">
+    <Label>Adresse *</Label>
+
+    <div className="relative">
+      <MapPin className="absolute left-4 top-4 w-5 h-5 text-zinc-500" />
+
+      <Input
+        value={formData.adresse}
+        onChange={(e) => searchAddress(e.target.value)}
+        className="h-14 bg-white/10 border-white/10 text-white rounded-2xl pl-12"
+      />
+    </div>
+
+    {showAddressSuggestions && addressSuggestions.length > 0 && (
+      <div className="absolute z-50 mt-2 w-full bg-[#151927] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        {addressSuggestions.map((item, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={() => {
+  const cleanAddress = [
+    item.houseNumber,
+    item.street,
+    item.postcode,
+    item.city,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  setFormData({
+    ...formData,
+    adresse: cleanAddress,
+    ville: item.city || "",
+  });
+
+  setAddressSuggestions([]);
+  setShowAddressSuggestions(false);
+}}
+            className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/10"
+          >
+            <p>
+  {[item.houseNumber, item.street].filter(Boolean).join(" ")}
+</p>
+<p className="text-xs text-zinc-400">
+  {[item.postcode, item.city].filter(Boolean).join(" ")}
+</p>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div className="space-y-2">
+    <Label>Ville *</Label>
+    <Input
+      value={formData.ville}
+      onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+      className="h-14 bg-white/10 border-white/10 text-white rounded-2xl"
+    />
+  </div>
+</div>
 
                       <div className="grid md:grid-cols-2 gap-5">
                         <div className="space-y-2">

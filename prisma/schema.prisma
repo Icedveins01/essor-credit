@@ -14,22 +14,26 @@ model Client {
   telephone  String?
   motDePasse String
   sexe       String?
+  adresse    String?
+  ville      String?
+  pays       String?
   createdAt  DateTime  @default(now())
+
   demandes   Demande[]
 }
 
 model Demande {
-  id         String   @id @default(cuid())
-  clientId   String
-  typePret   String
-  montant    Float
-  duree      Int
-  mensualite Float
-  coutTotal  Float
-  interets   Float
-  statut     String   @default("Demande reçue")
-  createdAt  DateTime @default(now())
-  activationCode String?
+  id                  String   @id @default(cuid())
+  clientId            String
+  typePret            String
+  montant             Float
+  duree               Int
+  mensualite          Float
+  coutTotal           Float
+  interets            Float
+  statut              String   @default("Demande reçue")
+  createdAt           DateTime @default(now())
+  activationCode      String?
   transferStopPercent Int?
 
   client    Client          @relation(fields: [clientId], references: [id])
